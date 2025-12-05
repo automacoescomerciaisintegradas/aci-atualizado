@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient as SupabaseClientType } from "@supabase/supabase-js";
 import { Database } from "@/types/supabase";
 
 // Detectar ambiente
@@ -15,39 +15,58 @@ const supabaseAnonKey = isBrowser
 
 const supabaseServiceKey = isBrowser ? null : process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Validação de configuração
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    "Supabase URL or Anon Key is missing in environment variables."
-  );
-}
+// Singleton instances
+let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
+let serviceSupabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
 
-// Cliente Supabase (anon/public)
-export let supabase: ReturnType<typeof createClient<Database>> | null = null;
-
-try {
-  if (supabaseUrl && supabaseAnonKey) {
-    supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
-  } else {
-    console.warn(
-      "Supabase URL or Anon Key is missing. Supabase client will be null."
-    );
+// Cliente Supabase (anon/public) - Singleton Pattern
+export const getSupabaseClient = (): ReturnType<typeof createClient<Database>> | null => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn("Supabase URL or Anon Key is missing in environment variables.");
+    return null;
   }
-} catch (error) {
-  console.error("Error initializing Supabase client:", error);
-}
+
+  if (!supabaseInstance) {
+    try {
+      supabaseInstance = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storageKey: 'sb-udzptgbcgzcibhbipnur-auth-token',
+        }
+      });
+    } catch (error) {
+      console.error("Error initializing Supabase client:", error);
+      return null;
+    }
+  }
+
+  return supabaseInstance;
+};
+
+// Export the singleton instance
+export const supabase = getSupabaseClient();
 
 // Cliente Supabase com Service Role (apenas no servidor/backend)
-export let serviceSupabase: ReturnType<typeof createClient<Database>> | null =
-  null;
-
-if (!isBrowser && supabaseUrl && supabaseServiceKey) {
-  try {
-    serviceSupabase = createClient<Database>(supabaseUrl, supabaseServiceKey);
-  } catch (error) {
-    console.error("Error initializing Service Supabase client:", error);
+export const getServiceSupabaseClient = (): ReturnType<typeof createClient<Database>> | null => {
+  if (isBrowser || !supabaseUrl || !supabaseServiceKey) {
+    return null;
   }
-}
+
+  if (!serviceSupabaseInstance) {
+    try {
+      serviceSupabaseInstance = createClient<Database>(supabaseUrl, supabaseServiceKey);
+    } catch (error) {
+      console.error("Error initializing Service Supabase client:", error);
+      return null;
+    }
+  }
+
+  return serviceSupabaseInstance;
+};
+
+export const serviceSupabase = getServiceSupabaseClient();
 
 // Verificar se Supabase está configurado
 export const isSupabaseConfigured = (): boolean => {
