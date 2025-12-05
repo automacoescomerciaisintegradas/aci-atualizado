@@ -266,6 +266,210 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBackToLand
         </div>
       </section>
 
+      {/* About Section */}
+      <section id="about" className="py-32 bg-neutrals-background_secondary relative">
+        <div className="container mx-auto px-6 lg:px-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 border border-brand-primary/30 bg-brand-primary/10 text-brand-primary text-xs font-bold uppercase tracking-widest mb-8 rounded-full">
+                <span className="w-2 h-2 bg-brand-primary rounded-full"></span>
+                Sobre Nós
+              </div>
+              <h2 className="text-4xl md:text-5xl font-display font-black text-white mb-6 uppercase tracking-tight leading-tight">
+                Automatize seu negócio com <span className="text-brand-primary">inteligência</span>
+              </h2>
+              <p className="text-gray-400 text-lg leading-relaxed mb-6">
+                O ACI nasceu da necessidade de simplificar o marketing de afiliados. Somos uma plataforma brasileira que une a potência da <strong className="text-white">Inteligência Artificial</strong> com as principais plataformas de e-commerce.
+              </p>
+              <p className="text-gray-400 text-lg leading-relaxed mb-8">
+                Com ferramentas de geração de conteúdo, publicação automatizada e análise de dados, ajudamos você a escalar suas vendas sem aumentar sua carga de trabalho.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2 text-sm text-gray-300">
+                  <span className="w-2 h-2 bg-brand-secondary rounded-full"></span>
+                  +5.000 usuários ativos
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-300">
+                  <span className="w-2 h-2 bg-brand-secondary rounded-full"></span>
+                  +100.000 posts gerados
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-300">
+                  <span className="w-2 h-2 bg-brand-secondary rounded-full"></span>
+                  Suporte em português
+                </div>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 bg-brand-primary/20 blur-[100px] opacity-30 rounded-full"></div>
+              <div className="relative bg-black border border-white/10 rounded-2xl p-8">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="text-center p-6 bg-neutrals-background_card rounded-xl border border-white/5">
+                    <div className="text-4xl font-display font-black text-brand-primary mb-2">99%</div>
+                    <div className="text-sm text-gray-400">Uptime garantido</div>
+                  </div>
+                  <div className="text-center p-6 bg-neutrals-background_card rounded-xl border border-white/5">
+                    <div className="text-4xl font-display font-black text-brand-secondary mb-2">24/7</div>
+                    <div className="text-sm text-gray-400">Suporte disponível</div>
+                  </div>
+                  <div className="text-center p-6 bg-neutrals-background_card rounded-xl border border-white/5">
+                    <div className="text-4xl font-display font-black text-brand-accent mb-2">3s</div>
+                    <div className="text-sm text-gray-400">Tempo médio de resposta</div>
+                  </div>
+                  <div className="text-center p-6 bg-neutrals-background_card rounded-xl border border-white/5">
+                    <div className="text-4xl font-display font-black text-white mb-2">∞</div>
+                    <div className="text-sm text-gray-400">Possibilidades com IA</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-32 bg-neutrals-background_main relative">
+        <div className="container mx-auto px-6 lg:px-16">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 border border-brand-secondary/30 bg-brand-secondary/10 text-brand-secondary text-xs font-bold uppercase tracking-widest mb-8 rounded-full">
+              <span className="w-2 h-2 bg-brand-secondary rounded-full"></span>
+              Planos
+            </div>
+            <h2 className="text-4xl md:text-5xl font-display font-black text-white mb-4 uppercase tracking-tight">
+              Escolha seu <span className="text-brand-primary">Plano</span>
+            </h2>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+              Comece gratuitamente e escale conforme seu negócio cresce. Sem surpresas.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Starter Plan */}
+            <div className="group relative bg-black border border-white/10 rounded-2xl p-8 hover:border-brand-primary/50 transition-all duration-300">
+              <div className="mb-6">
+                <h3 className="text-xl font-display font-bold text-white mb-2">Starter</h3>
+                <p className="text-gray-400 text-sm">Perfeito para começar</p>
+              </div>
+              <div className="mb-6">
+                <span className="text-4xl font-display font-black text-white">Grátis</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-3 text-gray-300 text-sm">
+                  <span className="w-5 h-5 bg-brand-primary/20 rounded-full flex items-center justify-center text-brand-primary text-xs">✓</span>
+                  100 créditos/mês
+                </li>
+                <li className="flex items-center gap-3 text-gray-300 text-sm">
+                  <span className="w-5 h-5 bg-brand-primary/20 rounded-full flex items-center justify-center text-brand-primary text-xs">✓</span>
+                  Geração de conteúdo
+                </li>
+                <li className="flex items-center gap-3 text-gray-300 text-sm">
+                  <span className="w-5 h-5 bg-brand-primary/20 rounded-full flex items-center justify-center text-brand-primary text-xs">✓</span>
+                  1 integração
+                </li>
+                <li className="flex items-center gap-3 text-gray-500 text-sm">
+                  <span className="w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center text-gray-600 text-xs">✕</span>
+                  Publicação automática
+                </li>
+              </ul>
+              <button
+                onClick={() => setView('signup')}
+                className="w-full py-3 border border-white/20 text-white font-bold uppercase tracking-wider text-sm rounded-lg hover:bg-white hover:text-black transition-all"
+              >
+                Começar Grátis
+              </button>
+            </div>
+
+            {/* Pro Plan - Highlighted */}
+            <div className="group relative bg-gradient-to-b from-brand-primary/20 to-black border-2 border-brand-primary rounded-2xl p-8 transform scale-105 shadow-[0_0_60px_rgba(30,64,175,0.3)]">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-brand-primary text-white text-xs font-bold uppercase tracking-wider rounded-full">
+                Mais Popular
+              </div>
+              <div className="mb-6">
+                <h3 className="text-xl font-display font-bold text-white mb-2">Pro</h3>
+                <p className="text-gray-300 text-sm">Para profissionais</p>
+              </div>
+              <div className="mb-6">
+                <span className="text-4xl font-display font-black text-white">R$ 97</span>
+                <span className="text-gray-400">/mês</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-3 text-gray-200 text-sm">
+                  <span className="w-5 h-5 bg-brand-primary rounded-full flex items-center justify-center text-white text-xs">✓</span>
+                  5.000 créditos/mês
+                </li>
+                <li className="flex items-center gap-3 text-gray-200 text-sm">
+                  <span className="w-5 h-5 bg-brand-primary rounded-full flex items-center justify-center text-white text-xs">✓</span>
+                  IA avançada (GPT-4)
+                </li>
+                <li className="flex items-center gap-3 text-gray-200 text-sm">
+                  <span className="w-5 h-5 bg-brand-primary rounded-full flex items-center justify-center text-white text-xs">✓</span>
+                  Todas as integrações
+                </li>
+                <li className="flex items-center gap-3 text-gray-200 text-sm">
+                  <span className="w-5 h-5 bg-brand-primary rounded-full flex items-center justify-center text-white text-xs">✓</span>
+                  Publicação automática
+                </li>
+                <li className="flex items-center gap-3 text-gray-200 text-sm">
+                  <span className="w-5 h-5 bg-brand-primary rounded-full flex items-center justify-center text-white text-xs">✓</span>
+                  Suporte prioritário
+                </li>
+              </ul>
+              <button
+                onClick={() => setView('signup')}
+                className="w-full py-3 bg-brand-primary text-white font-bold uppercase tracking-wider text-sm rounded-lg hover:bg-brand-primary_hover transition-all shadow-button"
+              >
+                Assinar Pro
+              </button>
+            </div>
+
+            {/* Enterprise Plan */}
+            <div className="group relative bg-black border border-white/10 rounded-2xl p-8 hover:border-brand-secondary/50 transition-all duration-300">
+              <div className="mb-6">
+                <h3 className="text-xl font-display font-bold text-white mb-2">Enterprise</h3>
+                <p className="text-gray-400 text-sm">Para grandes operações</p>
+              </div>
+              <div className="mb-6">
+                <span className="text-4xl font-display font-black text-white">R$ 297</span>
+                <span className="text-gray-400">/mês</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-3 text-gray-300 text-sm">
+                  <span className="w-5 h-5 bg-brand-secondary/20 rounded-full flex items-center justify-center text-brand-secondary text-xs">✓</span>
+                  Créditos ilimitados
+                </li>
+                <li className="flex items-center gap-3 text-gray-300 text-sm">
+                  <span className="w-5 h-5 bg-brand-secondary/20 rounded-full flex items-center justify-center text-brand-secondary text-xs">✓</span>
+                  API dedicada
+                </li>
+                <li className="flex items-center gap-3 text-gray-300 text-sm">
+                  <span className="w-5 h-5 bg-brand-secondary/20 rounded-full flex items-center justify-center text-brand-secondary text-xs">✓</span>
+                  White-label
+                </li>
+                <li className="flex items-center gap-3 text-gray-300 text-sm">
+                  <span className="w-5 h-5 bg-brand-secondary/20 rounded-full flex items-center justify-center text-brand-secondary text-xs">✓</span>
+                  Gerente de conta
+                </li>
+                <li className="flex items-center gap-3 text-gray-300 text-sm">
+                  <span className="w-5 h-5 bg-brand-secondary/20 rounded-full flex items-center justify-center text-brand-secondary text-xs">✓</span>
+                  SLA garantido
+                </li>
+              </ul>
+              <button
+                onClick={() => setView('signup')}
+                className="w-full py-3 border border-brand-secondary text-brand-secondary font-bold uppercase tracking-wider text-sm rounded-lg hover:bg-brand-secondary hover:text-black transition-all"
+              >
+                Falar com Vendas
+              </button>
+            </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <p className="text-gray-500 text-sm">
+              Todos os planos incluem: SSL gratuito • Atualizações contínuas • Sem taxa de setup
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 bg-neutrals-background_secondary relative border-t border-white/5">
         <div className="container mx-auto px-6 lg:px-16 text-center">
@@ -333,10 +537,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBackToLand
               <div>
                 <h4 className="text-white font-bold uppercase tracking-wider mb-6">Produto</h4>
                 <ul className="space-y-3 text-sm text-gray-400">
-                  <li><a href="#features" className="hover:text-brand-primary transition-colors">Funcionalidades</a></li>
-                  <li><a href="#pricing" className="hover:text-brand-primary transition-colors">Planos</a></li>
-                  <li><a href="#faq" className="hover:text-brand-primary transition-colors">FAQ</a></li>
-                  <li><a href="#" className="hover:text-brand-primary transition-colors">Changelog</a></li>
+                  <li><a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-brand-primary transition-colors cursor-pointer">Funcionalidades</a></li>
+                  <li><a href="#pricing" onClick={(e) => { e.preventDefault(); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-brand-primary transition-colors cursor-pointer">Planos</a></li>
+                  <li><a href="#faq" onClick={(e) => { e.preventDefault(); document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-brand-primary transition-colors cursor-pointer">FAQ</a></li>
+                  <li><a href="#about" onClick={(e) => { e.preventDefault(); document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-brand-primary transition-colors cursor-pointer">Sobre</a></li>
                 </ul>
               </div>
               <div>

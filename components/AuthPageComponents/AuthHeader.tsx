@@ -15,17 +15,26 @@ export const AuthHeader: React.FC<HeaderProps> = ({ onBackToLanding, setView }) 
         <span className="text-2xl font-display font-bold text-white tracking-tighter">ACI<span className="text-brand-secondary">.</span></span>
       </div>
       <nav className="hidden md:flex items-center gap-10">
-        <a href="#features" className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-brand-primary transition-colors relative pb-1">
+        <a
+          href="#features"
+          onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); }}
+          className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-brand-primary transition-colors relative pb-1 cursor-pointer"
+        >
           Funcionalidades
-          <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></span>
         </a>
-        <a href="#features" className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-brand-primary transition-colors relative pb-1">
+        <a
+          href="#about"
+          onClick={(e) => { e.preventDefault(); document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }); }}
+          className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-brand-primary transition-colors relative pb-1 cursor-pointer"
+        >
           Sobre
-          <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></span>
         </a>
-        <a href="#pricing" className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-brand-primary transition-colors relative pb-1">
+        <a
+          href="#pricing"
+          onClick={(e) => { e.preventDefault(); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }); }}
+          className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-brand-primary transition-colors relative pb-1 cursor-pointer"
+        >
           Planos
-          <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></span>
         </a>
       </nav>
       <div className="flex items-center gap-6">
