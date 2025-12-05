@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="dark" style="scroll-behavior: smooth;">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ACI - Automações Comerciais Integradas</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description"
+    content="Painel ACI: A suíte completa de ferramentas com IA para automação comercial, marketing de afiliados e gerenciamento de conteúdo." />
+  <meta name="keywords"
+    content="automação comercial, marketing de afiliados, shopee, telegram, IA, inteligência artificial, gerador de conteúdo" />
+  <meta name="author" content="ACI" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="/index.html" />
+  <meta property="og:title" content="ACI - Automações Comerciais Integradas" />
+  <meta property="og:description"
+    content="Potencialize seu marketing de afiliados com ferramentas de IA para automação comercial." />
+  <meta property="og:image" content="/og-image.png" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="/index.html" />
+  <meta property="twitter:title" content="ACI - Automações Comerciais Integradas" />
+  <meta property="twitter:description"
+    content="Potencialize seu marketing de afiliados com ferramentas de IA para automação comercial." />
+  <meta property="twitter:image" content="/og-image.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700;900&family=Poppins:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            roboto: ['Roboto', 'sans-serif'],
+            poppins: ['Poppins', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'Noto Sans', 'sans-serif'],
+          },
+          colors: {
+            'brand-primary': 'var(--color-brand-primary, #4f46e5)',
+            'brand-secondary': 'var(--color-brand-secondary, #7c3aed)',
+            'lime-accent': '#CCFF00',
+            'dark-bg': '#0A0A0A',
+            'dark-card': '#141414',
+            'dark-border': '#262626',
+            'dark-text-primary': '#f1f5f9',
+            'dark-text-secondary': '#94a3b8',
+          },
+          animation: {
+            'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'fade-in': 'fadeIn 0.5s ease-out forwards',
+            'scale-in': 'scaleIn 0.5s ease-out forwards',
+            'infinite-scroll': 'infinite-scroll 80s linear infinite',
+            'infinite-scroll-reverse': 'infinite-scroll-reverse 80s linear infinite',
+            'pulse-discount': 'pulse-discount 2s ease-in-out infinite',
+            'slide-in-up': 'slideInUp 0.6s ease-out forwards',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: 0 },
+              '100%': { opacity: 1 },
+            },
+            scaleIn: {
+              '0%': { opacity: 0, transform: 'scale(0.95)' },
+              '100%': { opacity: 1, transform: 'scale(1)' },
+            },
+            'infinite-scroll': {
+              '0%': { transform: 'translateX(0)' },
+              '100%': { transform: 'translateX(-50%)' },
+            },
+            'infinite-scroll-reverse': {
+              '0%': { transform: 'translateX(-50%)' },
+              '100%': { transform: 'translateX(0)' },
+            },
+            'pulse-discount': {
+              '0%, 100%': { transform: 'scale(1)' },
+              '50%': { transform: 'scale(1.05)' },
+            },
+            slideInUp: {
+              '0%': { opacity: 0, transform: 'translateY(20px)' },
+              '100%': { opacity: 1, transform: 'translateY(0)' },
+            },
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+<body class="bg-white dark:bg-dark-bg text-gray-800 dark:text-dark-text-secondary font-sans">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>

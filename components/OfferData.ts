@@ -1,0 +1,148 @@
+export interface OfferProduct {
+  id: number;
+  name: string;
+  image: string;
+  category: string;
+  platform: 'Shopee' | 'Mercado Livre' | 'Amazon';
+  oldPrice: string;
+  newPrice: string;
+  discount: string;
+  url: string;
+}
+
+const affiliateLink = 'https://shopee.com.br/product/1006215031/22596833753?af_id=18372150411';
+
+export const offerProducts: OfferProduct[] = [
+  {
+    id: 1,
+    name: 'Smartphone Gamer Pro X com Tela 144Hz',
+    image: 'https://i.imgur.com/L33UGa0.png',
+    category: 'Eletrônicos',
+    platform: 'Shopee',
+    oldPrice: 'R$ 2.499,90',
+    newPrice: 'R$ 1.999,90',
+    discount: '20%',
+    url: affiliateLink,
+  },
+  {
+    id: 2,
+    name: 'Tênis de Corrida Performance UltraBoost',
+    image: 'https://i.imgur.com/vHq447d.png',
+    category: 'Moda',
+    platform: 'Mercado Livre',
+    oldPrice: 'R$ 899,00',
+    newPrice: 'R$ 649,00',
+    discount: '28%',
+    url: affiliateLink,
+  },
+  {
+    id: 3,
+    name: 'Aspirador Robô Inteligente CleanMax Pro',
+    image: 'https://i.imgur.com/J3aYpgr.png',
+    category: 'Casa',
+    platform: 'Amazon',
+    oldPrice: 'R$ 1.800,00',
+    newPrice: 'R$ 1.299,00',
+    discount: '28%',
+    url: affiliateLink,
+  },
+  {
+    id: 4,
+    name: 'Kit Skincare Vitamina C + Ácido Hialurônico',
+    image: 'https://i.imgur.com/Q68mJ71.png',
+    category: 'Beleza',
+    platform: 'Shopee',
+    oldPrice: 'R$ 159,90',
+    newPrice: 'R$ 99,90',
+    discount: '38%',
+    url: affiliateLink,
+  },
+   {
+    id: 5,
+    name: 'Teclado Mecânico Gamer RGB',
+    image: 'https://i.imgur.com/kSjJg2m.png',
+    category: 'Informática',
+    platform: 'Amazon',
+    oldPrice: 'R$ 450,00',
+    newPrice: 'R$ 299,90',
+    discount: '33%',
+    url: affiliateLink,
+  },
+  {
+    id: 6,
+    name: 'Smartwatch Fitness com GPS Integrado',
+    image: 'https://i.imgur.com/2s4P13m.png',
+    category: 'Esportes',
+    platform: 'Mercado Livre',
+    oldPrice: 'R$ 799,00',
+    newPrice: 'R$ 549,00',
+    discount: '31%',
+    url: affiliateLink,
+  },
+   {
+    id: 7,
+    name: 'Air Fryer Digital 5L com Painel Touch',
+    image: 'https://i.imgur.com/B9z3yS3.png',
+    category: 'Casa',
+    platform: 'Shopee',
+    oldPrice: 'R$ 599,00',
+    newPrice: 'R$ 399,00',
+    discount: '33%',
+    url: affiliateLink,
+  },
+  {
+    id: 8,
+    name: 'Jaqueta Corta-Vento Impermeável',
+    image: 'https://i.imgur.com/lJ4F8h5.png',
+    category: 'Moda',
+    platform: 'Amazon',
+    oldPrice: 'R$ 250,00',
+    newPrice: 'R$ 179,90',
+    discount: '28%',
+    url: affiliateLink,
+  },
+  {
+    id: 9,
+    name: 'Fone de Ouvido Bluetooth TWS com Cancelamento de Ruído',
+    image: 'https://i.imgur.com/G5g2w6g.png',
+    category: 'Eletrônicos',
+    platform: 'Mercado Livre',
+    oldPrice: 'R$ 350,00',
+    newPrice: 'R$ 219,90',
+    discount: '37%',
+    url: affiliateLink,
+  },
+   {
+    id: 10,
+    name: 'Kit de Maquiagem Profissional Completo',
+    image: 'https://i.imgur.com/C9uJgYc.png',
+    category: 'Beleza',
+    platform: 'Shopee',
+    oldPrice: 'R$ 220,00',
+    newPrice: 'R$ 149,99',
+    discount: '32%',
+    url: affiliateLink,
+  },
+  {
+    id: 11,
+    name: 'Mousepad Gamer Extra Grande RGB',
+    image: 'https://i.imgur.com/2Y0sE1R.png',
+    category: 'Informática',
+    platform: 'Amazon',
+    oldPrice: 'R$ 180,00',
+    newPrice: 'R$ 119,90',
+    discount: '33%',
+    url: affiliateLink,
+  },
+  {
+    id: 12,
+    name: 'Bicicleta Ergométrica Spinning Profissional',
+    image: 'https://i.imgur.com/5J3T0B3.png',
+    category: 'Esportes',
+    platform: 'Mercado Livre',
+    oldPrice: 'R$ 2.100,00',
+    newPrice: 'R$ 1.599,00',
+    discount: '24%',
+    url: affiliateLink,
+  },
+];

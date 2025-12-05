@@ -1,0 +1,39 @@
+// Configuração do compilador SCSS para o projeto
+
+// Este arquivo configura o compilador SCSS para processar os estilos do projeto
+// e gerar o arquivo CSS final que será utilizado pela aplicação.
+
+{
+  "compilerOptions": {
+    // Diretório de saída para os arquivos CSS compilados
+    "outDir": "./public/styles",
+    
+    // Diretório raiz dos arquivos SCSS
+    "rootDir": "./src/styles",
+    
+    // Habilita a geração de source maps para debugging
+    "sourceMap": true,
+    
+    // Habilita o watch mode para recompilação automática
+    "watch": true,
+    
+    // Configurações de compatibilidade
+    "compatibility": {
+      "ie": false,
+      "firefox": 60,
+      "chrome": 65,
+      "safari": 12
+    }
+  },
+  
+  // Arquivos de entrada para compilação
+  "include": [
+    "src/styles/main.scss"
+  ],
+  
+  // Arquivos e diretórios a serem excluídos
+  "exclude": [
+    "node_modules",
+    "public"
+  ]
+}

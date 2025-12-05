@@ -1,0 +1,19 @@
+// Configuração das Fontes do Google Fonts
+
+// Importação das fontes Inter, Montserrat e Roboto
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Montserrat:wght@400;500;700;900&family=Roboto:wght@400;500;700&display=swap');
+
+// Definição das famílias de fontes
+body {
+  font-family: var(--font-family-primary);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-body);
+  line-height: var(--font-line-height-body);
+  color: var(--color-neutrals-text-primary);
+  background-color: var(--color-neutrals-background-main);
+}
+
+// Aplicação das fontes secundárias onde necessário
+.secondary-font {
+  font-family: var(--font-family-secondary);
+}

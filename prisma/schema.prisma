@@ -1,0 +1,243 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public"
+}
+
+// ==========================================================
+// 1. FUNDAÇÃO E AUTENTICAÇÃO (User & Auth)
+// ==========================================================
+
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String    @unique
+  passwordHash  String?   // Para login via email/senha
+  avatarUrl     String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relacionamentos
+  wallet        Wallet?
+  integrations  Integration[]
+  blogs         Blog[]
+  contents      AiContent[]
+  socialPosts   SocialPost[]
+  products      AffiliateProduct[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPPORT
+}
+
+// ==========================================================
+// 2. CORE FINANCEIRO (Pay-per-use Engine)
+// ==========================================================
+
+model Wallet {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  balance     Decimal  @default(0.00) @db.Decimal(10, 2) // Saldo atual de créditos
+  currency    String   @default("BRL")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("wallets")
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  walletId    String
+  amount      Decimal         @db.Decimal(10, 2) // Positivo (recarga) ou Negativo (uso)
+  type        TransactionType
+  description String          // Ex: "Geração de Artigo - IA", "Post Instagram"
+  metadata    Json?           // Dados extras (ex: ID do post gerado, Gateway Trans ID)
+  createdAt   DateTime        @default(now())
+
+  wallet      Wallet @relation(fields: [walletId], references: [id])
+
+  @@index([walletId])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  DEPOSIT       // Compra de créditos (Entrada)
+  USAGE_AI      // Geração de texto/imagem (Saída)
+  USAGE_SOCIAL  // Postagem ou Automação (Saída)
+  REFUND        // Estorno (Entrada)
+  BONUS         // Crédito promocional (Entrada)
+}
+
+// ==========================================================
+// 3. INTEGRAÇÕES (Hub de Conexões)
+// ==========================================================
+
+model Integration {
+  id          String          @id @default(uuid())
+  userId      String
+  provider    ProviderType    // Ex: INSTAGRAM, SHOPEE, WORDPRESS
+  name        String?         // Nome amigável (ex: "Insta da Loja X")
+  credentials Json            // Tokens criptografados (access_token, refresh_token)
+  status      ConnectionStatus @default(ACTIVE)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Relacionamento reverso para automações específicas
+  blogs       Blog[]
+  socialPosts SocialPost[]
+
+  @@map("integrations")
+}
+
+enum ProviderType {
+  OPENAI
+  INSTAGRAM
+  TELEGRAM
+  SHOPEE
+  WORDPRESS
+  WOOCOMMERCE
+}
+
+enum ConnectionStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+// ==========================================================
+// 4. MÓDULO DE BLOGS & CMS
+// ==========================================================
+
+model Blog {
+  id            String   @id @default(uuid())
+  userId        String
+  integrationId String?  // Conexão usada para publicar (WP Credenciais)
+  name          String
+  url           String
+  username      String   // Added for direct WP auth
+  password      String   // Added for direct WP auth (Encrypted)
+  status        String   @default("pending") // connected, error, pending
+  lastSync      DateTime?
+  platform      String   @default("WORDPRESS") // WORDPRESS, WOOCOMMERCE
+  createdAt     DateTime @default(now())
+
+  user          User        @relation(fields: [userId], references: [id])
+  integration   Integration? @relation(fields: [integrationId], references: [id])
+  posts         AiContent[]
+
+  @@map("blogs")
+}
+
+// ==========================================================
+// 5. MÓDULO DE IA & CONTEÚDO (Core Product)
+// ==========================================================
+
+model AiContent {
+  id          String      @id @default(uuid())
+  userId      String
+  blogId      String?     // Se for publicado em um blog
+  title       String
+  body        String      @db.Text // Conteúdo gerado (HTML/Markdown)
+  type        ContentType // ARTICLE, REVIEW, CAPTION, EBOOK
+  status      ContentStatus @default(DRAFT)
+  cost        Decimal     @db.Decimal(10, 2) // Quanto custou gerar isso
+  tokensUsed  Int?        // Métricas da OpenAI
+  createdAt   DateTime    @default(now())
+
+  user        User  @relation(fields: [userId], references: [id])
+  blog        Blog? @relation(fields: [blogId], references: [id])
+
+  @@map("ai_contents")
+}
+
+enum ContentType {
+  ARTICLE
+  PRODUCT_REVIEW
+  SOCIAL_CAPTION
+  IMAGE
+  EBOOK
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+}
+
+// ==========================================================
+// 6. AFILIADOS & PRODUTOS (E-commerce)
+// ==========================================================
+
+model AffiliateProduct {
+  id              String   @id @default(uuid())
+  userId          String
+  externalId      String   // ID do produto na Shopee
+  name            String
+  originalLink    String
+  affiliateLink   String?  // Link gerado com tracking
+  price           Decimal?
+  imageUrl        String?
+  createdAt       DateTime @default(now())
+
+  user            User @relation(fields: [userId], references: [id])
+
+  @@map("affiliate_products")
+}
+
+// ==========================================================
+// 7. AUTOMAÇÃO SOCIAL (Instagram/Telegram)
+// ==========================================================
+
+model SocialPost {
+  id            String      @id @default(uuid())
+  userId        String
+  integrationId String      // Conta onde será postado (Insta/Telegram)
+  caption       String?
+  mediaUrls     String[]    // Array de URLs de imagens/vídeos
+  scheduledFor  DateTime?   // Data de agendamento
+  postedAt      DateTime?   // Data real da postagem
+  status        PostStatus  @default(PENDING)
+  
+  // Gatilhos de Comentário (Automação específica do post)
+  triggers      CommentTrigger[]
+
+  user          User        @relation(fields: [userId], references: [id])
+  integration   Integration @relation(fields: [integrationId], references: [id])
+
+  @@map("social_posts")
+}
+
+model CommentTrigger {
+  id            String   @id @default(uuid())
+  socialPostId  String
+  keyword       String   // Ex: "EU QUERO"
+  replyText     String   // Resposta pública no comentário
+  dmText        String?  // Mensagem privada (Direct) com link
+  isActive      Boolean  @default(true)
+
+  socialPost    SocialPost @relation(fields: [socialPostId], references: [id], onDelete: Cascade)
+
+  @@map("comment_triggers")
+}
+
+enum PostStatus {
+  PENDING
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="dark" style="scroll-behavior: smooth;">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ACI - Automações Comerciais Integradas | Plataforma de IA para Afiliados</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description"
+    content="Painel ACI: A suíte completa de ferramentas com IA para automação comercial, marketing de afiliados e gerenciamento de conteúdo. Integração com Shopee, Telegram, Instagram e WordPress." />
+  <meta name="keywords"
+    content="automação comercial, marketing de afiliados, shopee, telegram, instagram, wordpress, IA, inteligência artificial, gerador de conteúdo, blog automation, affiliate marketing" />
+  <meta name="author" content="ACI - Automações Comerciais Integradas" />
+  <meta name="robots" content="index, follow" />
+  <meta name="language" content="Portuguese" />
+  <meta property="og:locale" content="pt_BR" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://automacoescomerciais.com.br/" />
+  <meta name="twitter:title" content="ACI - Automações Comerciais Integradas" />
+  <meta name="twitter:description"
+    content="Potencialize seu marketing de afiliados com ferramentas de IA para automação comercial." />
+  <meta name="twitter:image" content="/og-image.png" />
+  <meta name="twitter:creator" content="@aci_oficial" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+
+  <!-- Preconnect to external domains -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" />
+  <link rel="preconnect" href="https://esm.sh" />
+
+  <!-- DNS Prefetch -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
+
+  <!-- Fonts with display=swap for better performance -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700;900&family=Poppins:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+
+  <!-- Google Fonts do Design System -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Montserrat:wght@400;500;700;900&family=Roboto:wght@400;500;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Preload critical CSS -->
+  <link rel="preload" href="/index.css" as="style" />
+  <link rel="stylesheet" href="/index.css" />
+  <link rel="stylesheet" href="/styles/main.css" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            roboto: ['Roboto', 'sans-serif'],
+            poppins: ['Poppins', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            'brand-primary': 'var(--color-brand-primary, #4f46e5)',
+            'brand-secondary': 'var(--color-brand-secondary, #7c3aed)',
+            'lime-accent': '#CCFF00',
+            'dark-bg': '#0A0A0A',
+            'dark-card': '#141414',
+            'dark-border': '#262626',
+            'dark-text-primary': '#f1f5f9',
+            'dark-text-secondary': '#94a3b8',
+          },
+          animation: {
+            'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'fade-in': 'fadeIn 0.5s ease-out forwards',
+            'scale-in': 'scaleIn 0.5s ease-out forwards',
+            'infinite-scroll': 'infinite-scroll 80s linear infinite',
+            'infinite-scroll-reverse': 'infinite-scroll-reverse 80s linear infinite',
+            'pulse-discount': 'pulse-discount 2s ease-in-out infinite',
+            'slide-in-up': 'slideInUp 0.6s ease-out forwards',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: 0 },
+              '100%': { opacity: 1 },
+            },
+            scaleIn: {
+              '0%': { opacity: 0, transform: 'scale(0.95)' },
+              '100%': { opacity: 1, transform: 'scale(1)' },
+            },
+            'infinite-scroll': {
+              '0%': { transform: 'translateX(0)' },
+              '100%': { transform: 'translateX(-50%)' },
+            },
+            'infinite-scroll-reverse': {
+              '0%': { transform: 'translateX(-50%)' },
+              '100%': { transform: 'translateX(0)' },
+            },
+            'pulse-discount': {
+              '0%, 100%': { transform: 'scale(1)' },
+              '50%': { transform: 'scale(1.05)' },
+            },
+            slideInUp: {
+              '0%': { opacity: 0, transform: 'translateY(20px)' },
+              '100%': { opacity: 1, transform: 'translateY(0)' },
+            },
+          },
+        },
+      },
+    }
+  </script>
+
+  <!-- Import Map for ES Modules -->
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@^19.1.0?external=*",
+        "react-dom": "https://esm.sh/react-dom@^19.1.0?external=*",
+        "react/jsx-runtime": "https://esm.sh/react@^19.1.0/jsx-runtime?external=*",
+        "@google/genai": "https://esm.sh/@google/genai@^1.8.0"
+      }
+    }
+  </script>
+
+  <!-- Structured Data (JSON-LD) for SEO -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "ACI - Automações Comerciais Integradas",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "BRL"
+      },
+      "description": "Plataforma completa de automação comercial com IA para marketing de afiliados",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "150"
+      }
+    }
+  </script>
+</head>
+
+<body class="bg-white dark:bg-dark-bg text-gray-800 dark:text-dark-text-secondary font-sans">
+  <!-- Loading Screen (opcional) -->
+  <noscript>
+    <div style="text-align: center; padding: 50px; font-family: sans-serif;">
+      <h1>JavaScript Necessário</h1>
+      <p>Por favor, habilite o JavaScript no seu navegador para usar o ACI.</p>
+    </div>
+  </noscript>
+
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>

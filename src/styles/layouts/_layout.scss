@@ -1,0 +1,45 @@
+// Estilos para Layout Principal
+
+// Seção Hero
+.hero-section {
+  background-color: var(--color-neutrals-background-main);
+  padding: var(--spacing-section-padding) 0;
+  text-align: center;
+}
+
+// Wrapper principal
+.wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+// Grid de Cards
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+  margin: var(--spacing-xl) 0;
+}
+
+// Card
+.card {
+  background-color: var(--color-neutrals-background-card);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+  }
+}
+
+// Seção
+.section {
+  padding: var(--spacing-section-padding) 0;
+}
+
+.section--secondary {
+  background-color: var(--color-neutrals-background-secondary);
+}
