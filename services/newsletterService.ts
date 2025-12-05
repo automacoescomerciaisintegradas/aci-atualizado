@@ -139,11 +139,10 @@ export async function subscribeToNewsletter(
 }
 
 /**
- * Envia email de boas-vindas para o lead
+ * Envia email de boas-vindas para o lead usando a Edge Function resend-email
  */
 export async function sendWelcomeEmail(email: string, name?: string): Promise<boolean> {
     try {
-        // Chamar a Edge Function do Supabase
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -152,17 +151,21 @@ export async function sendWelcomeEmail(email: string, name?: string): Promise<bo
             return false;
         }
 
-        const response = await fetch(`${supabaseUrl}/functions/v1/send-welcome-email`, {
+        const response = await fetch(`${supabaseUrl}/functions/v1/resend-email`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${supabaseAnonKey}`,
             },
-            body: JSON.stringify({ email, name }),
+            body: JSON.stringify({
+                email,
+                name,
+                type: 'welcome'
+            }),
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
             console.error('Error sending welcome email:', errorData);
             return false;
         }
