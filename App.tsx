@@ -57,7 +57,7 @@ const App: React.FC = () => {
   }
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [view, setView] = useState<'landing' | 'auth'>('auth');
+  const [view, setView] = useState<'landing' | 'auth'>('landing'); // Start with landing page
   const [activePage, setActivePage] = useState<Page>('home');
   const { settings, saveSettings, isLoading: isLoadingSettings } = useSettings();
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
