@@ -473,12 +473,57 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBackToLand
       {/* CTA Section */}
       <section className="py-20 bg-neutrals-background_secondary relative border-t border-white/5">
         <div className="container mx-auto px-6 lg:px-16 text-center">
-          <div className="bg-gradient-to-r from-brand-primary to-brand-secondary p-12 rounded-2xl shadow-2xl max-w-4xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-display font-black text-white mb-4">Não Perca Nenhuma Novidade!</h2>
-            <p className="text-lg text-white/90 mb-6">Confira o link na bio para mais detalhes e acesso exclusivo às nossas ferramentas!</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <a href="#" className="px-8 py-4 bg-white text-brand-primary font-bold rounded-lg hover:bg-gray-100 transition-all shadow-lg">Ver Link na Bio →</a>
-              <p className="text-white/80 text-sm">Ou faça login abaixo para começar</p>
+          <div className="bg-gradient-to-r from-brand-primary to-brand-secondary p-12 rounded-2xl shadow-2xl max-w-4xl mx-auto relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 left-0 w-32 h-32 bg-white rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl"></div>
+            </div>
+
+            <div className="relative z-10">
+              <h2 className="text-3xl md:text-4xl font-display font-black text-white mb-4">
+                Pronto para Automatizar suas Vendas?
+              </h2>
+              <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
+                Junte-se a milhares de afiliados que já estão escalando seus negócios com IA.
+                <strong className="text-white"> Comece grátis, sem cartão de crédito.</strong>
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <button
+                  onClick={() => setView('signup')}
+                  className="px-10 py-4 bg-white text-brand-primary font-display font-bold text-lg uppercase tracking-wider rounded-lg hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl hover:scale-105 transform"
+                >
+                  Comece Grátis Agora →
+                </button>
+                <button
+                  onClick={() => setView('login')}
+                  className="px-10 py-4 bg-transparent border-2 border-white text-white font-bold text-lg uppercase tracking-wider rounded-lg hover:bg-white hover:text-brand-primary transition-all"
+                >
+                  Já tenho conta
+                </button>
+              </div>
+
+              <div className="mt-8 flex items-center justify-center gap-8 text-white/80 text-sm">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Sem cartão necessário</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Cancele quando quiser</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Suporte 24/7</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
