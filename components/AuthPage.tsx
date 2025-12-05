@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { InfiniteCarousel, SecondInfiniteCarousel } from './InfiniteCarousel.js';
 import { AuthHeader } from './AuthPageComponents/AuthHeader.js';
 import { StatsSection } from './AuthPageComponents/StatsSection.js';
 import { AuthForm } from './AuthPageComponents/AuthForm.js';
 import { useAuth } from './AuthPageComponents/useAuth.js';
 import { WhatsAppIcon, TelegramIcon, InstagramIcon, BrainCircuitIcon, BookIcon, ShoppingCartSendIcon } from './Icons.js';
+import { subscribeToNewsletter } from '../services/newsletterService';
 
 interface AuthPageProps {
   onLoginSuccess: (user: { name: string; email: string; photoUrl: string; isAdmin: boolean }) => void;
@@ -12,6 +13,11 @@ interface AuthPageProps {
 }
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBackToLanding }) => {
+  // Newsletter state
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterMessage, setNewsletterMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+
   const {
     view,
     setView,
@@ -602,23 +608,70 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBackToLand
               <div>
                 <h4 className="text-white font-bold uppercase tracking-wider mb-6">Receba Novidades</h4>
                 <p className="text-gray-400 text-sm mb-4">Inscreva-se para receber atualizações exclusivas sobre automações e ofertas.</p>
-                <form onSubmit={(e) => {
+
+                <form onSubmit={async (e) => {
                   e.preventDefault();
-                  const emailInput = e.currentTarget.email as HTMLInputElement;
-                  if (emailInput.value) {
-                    alert('✅ Obrigado por se inscrever! Você receberá nossas novidades em breve.');
-                    emailInput.value = '';
+                  setNewsletterLoading(true);
+                  setNewsletterMessage(null);
+
+                  const response = await subscribeToNewsletter(newsletterEmail);
+
+                  setNewsletterLoading(false);
+
+                  if (response.success) {
+                    setNewsletterMessage({
+                      type: response.alreadySubscribed ? 'info' : 'success',
+                      text: response.message
+                    });
+                    setNewsletterEmail('');
+                  } else {
+                    setNewsletterMessage({
+                      type: 'error',
+                      text: response.message
+                    });
                   }
+
+                  // Limpar mensagem após 5 segundos
+                  setTimeout(() => setNewsletterMessage(null), 5000);
                 }} className="space-y-3">
                   <input
                     type="email"
-                    name="email"
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
                     required
+                    disabled={newsletterLoading}
                     placeholder="Seu melhor e-mail"
-                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 text-white rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-all"
+                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 text-white rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
-                  <button type="submit" className="w-full px-4 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-primary_hover transition-all shadow-button">
-                    Inscrever-se
+
+                  {/* Feedback Message */}
+                  {newsletterMessage && (
+                    <div className={`px-4 py-2 rounded-lg text-sm font-medium ${newsletterMessage.type === 'success'
+                        ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                        : newsletterMessage.type === 'error'
+                          ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                          : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                      }`}>
+                      {newsletterMessage.text}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={newsletterLoading}
+                    className="w-full px-4 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-primary_hover transition-all shadow-button disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {newsletterLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Inscrevendo...
+                      </>
+                    ) : (
+                      'Inscrever-se'
+                    )}
                   </button>
                 </form>
               </div>
