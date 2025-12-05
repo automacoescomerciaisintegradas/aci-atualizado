@@ -41,6 +41,13 @@ export async function subscribeToNewsletter(
             };
         }
 
+        if (!supabase) {
+            return {
+                success: false,
+                message: 'Erro de configuração. Tente novamente mais tarde.',
+            };
+        }
+
         // Verificar se o email já existe
         const { data: existingLead, error: checkError } = await supabase
             .from('newsletter_leads')
@@ -72,7 +79,7 @@ export async function subscribeToNewsletter(
                 }
 
                 // Enviar email de boas-vindas
-                await sendWelcomeEmail(email);
+                await sendWelcomeEmail(email, name);
 
                 return {
                     success: true,
@@ -115,7 +122,7 @@ export async function subscribeToNewsletter(
         }
 
         // Enviar email de boas-vindas
-        await sendWelcomeEmail(email);
+        await sendWelcomeEmail(email, name);
 
         return {
             success: true,
@@ -134,18 +141,34 @@ export async function subscribeToNewsletter(
 /**
  * Envia email de boas-vindas para o lead
  */
-export async function sendWelcomeEmail(email: string): Promise<boolean> {
+export async function sendWelcomeEmail(email: string, name?: string): Promise<boolean> {
     try {
-        // Chamar a função do Supabase para enviar o email
-        const { data, error } = await supabase.rpc('send_welcome_email', {
-            lead_email: email,
-        });
+        // Chamar a Edge Function do Supabase
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-        if (error) {
-            console.error('Error sending welcome email:', error);
+        if (!supabaseUrl || !supabaseAnonKey) {
+            console.error('Supabase credentials missing');
             return false;
         }
 
+        const response = await fetch(`${supabaseUrl}/functions/v1/send-welcome-email`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseAnonKey}`,
+            },
+            body: JSON.stringify({ email, name }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error sending welcome email:', errorData);
+            return false;
+        }
+
+        const data = await response.json();
+        console.log('Welcome email sent successfully:', data);
         return true;
     } catch (error) {
         console.error('Welcome email error:', error);
@@ -158,6 +181,13 @@ export async function sendWelcomeEmail(email: string): Promise<boolean> {
  */
 export async function unsubscribeFromNewsletter(email: string): Promise<NewsletterResponse> {
     try {
+        if (!supabase) {
+            return {
+                success: false,
+                message: 'Erro de configuração',
+            };
+        }
+
         const { data, error } = await supabase
             .from('newsletter_leads')
             .update({
@@ -194,6 +224,10 @@ export async function unsubscribeFromNewsletter(email: string): Promise<Newslett
  */
 export async function checkEmailSubscribed(email: string): Promise<boolean> {
     try {
+        if (!supabase) {
+            return false;
+        }
+
         const { data, error } = await supabase
             .from('newsletter_leads')
             .select('id, status')
