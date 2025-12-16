@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { apiClient } from '../src/services/apiClient';
 import { creditService, PRICING_MODELS, CREDIT_PACKAGES } from '../services/creditService';
 import {
     CreditServiceType,
@@ -160,10 +160,10 @@ export function useCredits(options: UseCreditsOptions = {}): UseCreditsReturn {
                 setError(null);
 
                 // Obter usuário atual
-                const { data: { user } } = await supabase.auth.getUser();
+                const userId = apiClient.getUserId();
 
-                if (user) {
-                    await creditService.setCurrentUser(user.id);
+                if (userId) {
+                    await creditService.setCurrentUser(userId);
 
                     if (mounted) {
                         await refreshBalance();
@@ -191,26 +191,8 @@ export function useCredits(options: UseCreditsOptions = {}): UseCreditsReturn {
 
         initialize();
 
-        // Listener para mudanças de autenticação
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_IN' && session?.user) {
-                await creditService.setCurrentUser(session.user.id);
-                if (mounted) {
-                    await refreshBalance();
-                    await refreshTransactions(10);
-                }
-            } else if (event === 'SIGNED_OUT') {
-                await creditService.setCurrentUser(null);
-                if (mounted) {
-                    setBalance(null);
-                    setTransactions([]);
-                }
-            }
-        });
-
         return () => {
             mounted = false;
-            subscription.unsubscribe();
         };
     }, []);
 

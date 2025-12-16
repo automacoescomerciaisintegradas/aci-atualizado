@@ -9,7 +9,8 @@ export interface WordPressCredentials {
 export interface WordPressPost {
     title: string;
     content: string;
-    status?: 'publish' | 'draft' | 'pending' | 'private';
+    status?: 'publish' | 'draft' | 'pending' | 'private' | 'future';
+    date?: string; // ISO 8601 date string for scheduling
     categories?: number[];
     tags?: number[];
     featured_media?: number;
@@ -123,6 +124,7 @@ export async function publishWordPressPost(
                 title: post.title,
                 content: contentWithStyles,
                 status: post.status || 'draft',
+                date: post.date, // Add scheduled date if present
                 categories: post.categories || [],
                 tags: post.tags || [],
                 featured_media: post.featured_media,

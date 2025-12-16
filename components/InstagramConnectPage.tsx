@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { InstagramIcon, AlertTriangleIcon, CheckCircleIcon, ChevronLeftIcon, SpinnerIcon } from './Icons';
 import { useSettings } from '../hooks/useSettings';
-import { supabase } from '../services/supabaseClient';
+import { apiClient } from '../src/services/apiClient';
 
 const ConsentWarningModal: React.FC<{ isOpen: boolean; onClose: () => void; onConfirm: () => void }> = ({ isOpen, onClose, onConfirm }) => {
     if (!isOpen) return null;
@@ -86,27 +86,19 @@ export const InstagramConnectPage: React.FC<{ onBack?: () => void }> = ({ onBack
         setError(null);
 
         try {
-            if (!supabase) {
-                throw new Error('Cliente Supabase não inicializado. Verifique as configurações.');
-            }
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            // Usar apiClient que já tem a porta correta configurada (3002)
+            // e também já obtém o token do localStorage
 
-            // URL da API
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4001';
-
-            const response = await fetch(`${apiUrl}/api/integrations/instagram/auth`, {
-                headers: {
-                    'Authorization': `Bearer ${token || ''}`
-                }
-            });
-
-            if (!response.ok) {
-                const errText = await response.text();
-                throw new Error(`Falha ao iniciar conexão: ${errText}`);
+            // Mas precisamos validar o token antes para exibir erro amigável se necessário
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                throw new Error('Usuário não autenticado. Faça login novamente.');
             }
 
-            const data = await response.json();
+            // O apiClient.request já adiciona o token no header
+            // Precisamos tipar o retorno
+            const data = await apiClient['request']<{ success: boolean; url?: string }>('/api/integrations/instagram/auth');
+
             if (data.url) {
                 window.location.href = data.url;
             } else {

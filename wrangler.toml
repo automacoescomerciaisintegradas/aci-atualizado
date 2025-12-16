@@ -1,0 +1,133 @@
+name = "aci-platform"
+main = "src/index.ts"
+compatibility_date = "2024-12-05"
+
+# Cloudflare D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "aci-db"
+database_id = "f176db95-a06a-4b20-8845-87ed5fa570d1"
+
+[vars]
+# ========================================
+# APP CONFIG
+# ========================================
+ENVIRONMENT = "development"
+NODE_ENV = "development"
+PORT = "4001"
+FRONTEND_URL = "http://localhost:3000"
+API_URL = "http://localhost:8787"
+
+# ========================================
+# CLOUDFLARE R2 (Storage)
+# ========================================
+R2_PUBLIC_URL = "https://62e8a90b2b0a16b3b8c4098924d1a273.r2.cloudflarestorage.com"
+
+# ========================================
+# EMAIL (Resend + SMTP Backup)
+# ========================================
+SMTP_USERNAME = "automacoescomerciais@gmail.com"
+SMTP_PASSWORD = "nzhyikkbecdamomf"
+RESEND_API_KEY = "re_MmTAe1eu_8D1mJ7qpMt1rEE7wCmTYBSTe"
+
+# ========================================
+# SUPABASE (Backup/Legacy)
+# ========================================
+DATABASE_URL = "psql -h db.udzptgbcgzcibhbipnur.supabase.co -p 5432 -d postgres -U postgres"
+SUPABASE_URL = "https://udzptgbcgzcibhbipnur.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkenB0Z2JjZ3pjaWJoYmlwbnVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNzU3MTIsImV4cCI6MjA3ODg1MTcxMn0.ddLF2U-7hue-hena6c_3qRBXXxR6-dLligG6Tivji54"
+
+# ========================================
+# GOOGLE OAUTH
+# ========================================
+GOOGLE_CLIENT_ID = "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.apps.googleusercontent.com"
+
+# ========================================
+# JWT
+# ========================================
+JWT_SECRET = "c0c8e48b2412f371baf7709ad38b2f3f5720a3cb604518d4e718a8cb55c987db"
+JWT_EXPIRES_IN = "7d"
+
+# ========================================
+# OPENAI
+# ========================================
+OPENAI_API_KEY = "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"
+OPENAI_MODEL_TEXT = "gpt-4-turbo-preview"
+OPENAI_MODEL_IMAGE = "dall-e-3"
+OPENAI_MAX_TOKENS = "2000"
+
+# ========================================
+# GOOGLE GEMINI
+# ========================================
+GEMINI_API_KEY = "AIzaSyCeG_7l-DvkLbDxWQ9cZJLRgmQAJE26bsM"
+
+# ========================================
+# REDIS
+# ========================================
+REDIS_HOST = "redis-14487.crce181.sa-east-1-2.ec2.redns.redis-cloud.com"
+REDIS_PORT = "14487"
+REDIS_PASSWORD = "T3FibbOpzclJKaGc9teGvonLSNjeTreX"
+REDIS_DATABASE = "database-MEELLH3D"
+
+# ========================================
+# META / FACEBOOK / INSTAGRAM
+# ========================================
+FACEBOOK_APP_ID = "3728761024095089"
+FACEBOOK_APP_SECRET = "ddfc2bf4eeb041514ba7beb41567f209"
+INSTAGRAM_APP_SECRET = "ddfc2bf4eeb041514ba7beb41567f209"
+INSTAGRAM_REDIRECT_URI = "https://aci.automacoescomerciais.com.br/dashboard/callback"
+INSTAGRAM_ACCESS_TOKEN = "IGAAPeloavLPxBZAFAwUUdFaDN2LUMzaFhSRDhFRDNnQ1BjRFVHUmJJWmJ5LVRMUkNjQmdXYndkY3NwYmR0RWRXUXdweWh4a3B4MUk4ZAFJUeTFRbE5OcUtxSzJ0MG13MllYRVVSQnZAzR09OVlVvNEFLdlJpSXhHMEM5SkZAYVUhlbwZDZD"
+META_WEBHOOK_VERIFY_TOKEN = "a3f8b2c1d4e5f6g7h8i9j0k1l2m3n4o5"
+META_REDIRECT_URI = "http://localhost:8787/api/integrations/instagram/callback"
+META_API_VERSION = "v23.0"
+
+# ========================================
+# SHOPEE
+# ========================================
+SHOPEE_AFFILIATE_ID = "seu_id_afiliado"
+# SHOPEE_PARTNER_ID = "18372150411"
+# SHOPEE_PARTNER_KEY = "ASUN3TIEV5MLORIMTXYJTRKULNG25ZFF"
+
+# ========================================
+# MERCADO PAGO (PIX)
+# ========================================
+MERCADOPAGO_ACCESS_TOKEN = "TEST-1234567890-123456-abcdef123456-1234567890"
+MERCADOPAGO_PUBLIC_KEY = "TEST-abcd1234-efgh-5678-ijkl-9012mnop3456"
+# Produção (descomente quando for para produção)
+# MERCADOPAGO_ACCESS_TOKEN = "APP_USR-3064531609380417-080713-b42b2861424929260ce2e78c91be76f0-1035963718"
+
+# ========================================
+# MERCADO LIVRE
+# ========================================
+ML_APP_ID = "3064531609380417"
+ML_CLIENT_SECRET = "i3kZKx0OXSEGysvpqWQ3Wwt9i4ppmXyS"
+ML_REDIRECT_URI = "https://automacoescomerciais.com.br"
+ML_ACCESS_TOKEN = "APP_USR-3064531609380417-080713-b42b2861424929260ce2e78c91be76f0-1035963718"
+ML_REFRESH_TOKEN = "TG-6894e949e22d8b0001b28448-1035963718"
+ML_TOKEN_EXPIRES_AT = "1754611113408"
+ML_USER_ID = "1035963718"
+
+# ========================================
+# ENCRYPTION
+# ========================================
+ENCRYPTION_KEY = "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2"
+
+# ========================================
+# RATE LIMITING
+# ========================================
+RATE_LIMIT_TTL = "60"
+RATE_LIMIT_MAX = "100"
+
+# ========================================
+# CREDITS PRICING (em reais)
+# ========================================
+CREDIT_COST_GPT4_PER_1K_TOKENS = "0.05"
+CREDIT_COST_DALLE_PER_IMAGE = "0.20"
+CREDIT_COST_INSTAGRAM_POST = "0.10"
+CREDIT_COST_INSTAGRAM_DM = "0.05"
+CREDIT_COST_COMMENT_REPLY = "0.03"
+
+# Cloudflare R2 Storage (para avatares e arquivos)
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "aci-storage"

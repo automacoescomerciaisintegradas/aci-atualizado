@@ -11,18 +11,16 @@ import {
 
 const router = Router();
 
-// Middleware to ensure authentication (mock for now, replace with real auth)
+// Middleware to ensure authentication
 const requireAuth = (req: any, res: any, next: any) => {
-    // In a real app, verify JWT here. For now, we assume req.user is populated by previous middleware
-    // or we just mock a user ID if not present for testing purposes.
-    if (!req.user) {
-        // For development/testing without full auth flow, let's mock a user if not present
-        // req.user = { id: 'default-user-id' }; 
-        // Uncomment above line if you want to bypass auth for testing
+    // For development, we'll use a simple user ID from headers or default
+    const userId = req.headers['x-user-id'] || 'default-user-id';
 
-        // If strict auth is needed:
-        // return res.status(401).json({ error: "Não autenticado" });
+    if (!userId) {
+        return res.status(401).json({ error: "Não autenticado. Forneça X-User-Id no header." });
     }
+
+    req.user = { id: userId };
     next();
 };
 
@@ -48,13 +46,51 @@ router.get('/', requireAuth, async (req: any, res) => {
     }
 });
 
+// POST - Validar credenciais (sem salvar)
+router.post('/validate', async (req: any, res) => {
+    try {
+        // Accept both new generic format and old WordPress specific format
+        const { url, clientId, clientSecret, wordpressUrl, wordpressUsername, wordpressAppPassword } = req.body;
+
+        // Map inputs
+        const targetUrl = url || wordpressUrl;
+        const targetUsername = clientId || wordpressUsername;
+        const targetPassword = clientSecret || wordpressAppPassword;
+
+        if (!targetUrl || !targetUsername || !targetPassword) {
+            return res.status(400).json({ success: false, message: "Todos os campos (URL, Client ID, Secret ID) são obrigatórios" });
+        }
+
+        try {
+            new URL(targetUrl);
+        } catch {
+            return res.status(400).json({ success: false, message: "URL inválida" });
+        }
+
+        const testResult = await testWordPressConnection({
+            url: targetUrl,
+            username: targetUsername,
+            password: targetPassword,
+        });
+
+        res.json(testResult);
+    } catch (error: any) {
+        console.error("Erro na validação:", error);
+        res.status(500).json({ success: false, message: "Erro interno na validação" });
+    }
+});
+
 // POST - Adicionar novo blog
 router.post('/', requireAuth, async (req: any, res) => {
     try {
         const userId = req.user?.id || 'default-user-id';
-        const { name, url, username, password, apiType } = req.body;
+        const { name, url, username, password, clientId, clientSecret, apiType } = req.body;
 
-        if (!name || !url || !username || !password) {
+        // Map generic fields to our DB schema (Client ID -> username, Secret ID -> password)
+        const finalUsername = clientId || username;
+        const finalPassword = clientSecret || password;
+
+        if (!name || !url || !finalUsername || !finalPassword) {
             return res.status(400).json({ error: "Todos os campos são obrigatórios" });
         }
 
@@ -66,15 +102,15 @@ router.post('/', requireAuth, async (req: any, res) => {
 
         const testResult = await testWordPressConnection({
             url,
-            username,
-            password,
+            username: finalUsername,
+            password: finalPassword, // Validation uses raw password
         });
 
         if (!testResult.success) {
             return res.status(400).json({ error: testResult.message });
         }
 
-        const encryptedPassword = encrypt(password);
+        const encryptedPassword = encrypt(finalPassword);
 
         // Ensure user exists (for dev purposes, create if not exists)
         let user = await prisma.user.findUnique({ where: { id: userId } });
@@ -94,7 +130,7 @@ router.post('/', requireAuth, async (req: any, res) => {
                 userId,
                 name,
                 url: url.replace(/\/$/, ''),
-                username,
+                username: finalUsername,
                 password: encryptedPassword,
                 platform: 'WORDPRESS', // Using 'platform' from schema instead of 'apiType'
                 // status: 'connected', // 'status' not in schema provided in prompt, maybe add it? 
@@ -191,12 +227,10 @@ router.post('/:id/test', requireAuth, async (req: any, res) => {
             return res.status(404).json({ error: "Blog não encontrado" });
         }
 
-        // @ts-ignore - Assuming schema update
         const decryptedPassword = decrypt(blog.password);
 
         const testResult = await testWordPressConnection({
             url: blog.url,
-            // @ts-ignore
             username: blog.username,
             password: decryptedPassword,
         });
@@ -216,7 +250,7 @@ router.post('/:id/publish', requireAuth, async (req: any, res) => {
     try {
         const userId = req.user?.id || 'default-user-id';
         const blogId = req.params.id;
-        const { contentId, title, content, status, categories, tags } = req.body;
+        const { contentId, title, content, status, categories, tags, scheduledDate } = req.body;
 
         if (!title || !content) {
             return res.status(400).json({ error: "Título e conteúdo são obrigatórios" });
@@ -257,6 +291,7 @@ router.post('/:id/publish', requireAuth, async (req: any, res) => {
                 title,
                 content,
                 status: status || 'draft',
+                date: scheduledDate, // Pass scheduled date
                 categories,
                 tags,
             }

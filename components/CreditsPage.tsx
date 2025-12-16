@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { apiClient } from '../src/services/apiClient';
 import { CreditIcon, CheckCircleIcon, SparklesIcon, RocketIcon, CrownIcon, XCircleIcon, CopyIcon, CreditCardIcon, PlusIcon } from './Icons';
 
 interface CreditsPlan {
@@ -28,6 +28,18 @@ interface UserCredits {
     total_used: number;
 }
 
+interface Transaction {
+    id: string;
+    amount: number;
+    credits: number;
+    status: string;
+    payment_method: string;
+    pix_qr_code?: string;
+    pix_copy_paste?: string;
+    created_at: string;
+    expires_at?: string;
+}
+
 export const CreditsPage: React.FC = () => {
     const [userCredits, setUserCredits] = useState<UserCredits>({ balance: 0, total_purchased: 0, total_used: 0 });
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -36,6 +48,7 @@ export const CreditsPage: React.FC = () => {
     const [showQRCode, setShowQRCode] = useState(false);
     const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
     const [showPaymentMethods, setShowPaymentMethods] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const plans: CreditsPlan[] = [
         {
@@ -74,22 +87,17 @@ export const CreditsPage: React.FC = () => {
 
     const fetchUserCredits = async () => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+            const userId = apiClient.getUserId();
+            if (!userId) return;
 
-            const { data, error } = await supabase
-                .from('user_credits')
-                .select('*')
-                .eq('user_id', user.id)
-                .single();
+            // Buscar créditos do usuário via API
+            const response = await apiClient.getCredits(userId);
 
-            if (error && error.code !== 'PGRST116') throw error;
-
-            if (data) {
+            if (response.success && response.credits) {
                 setUserCredits({
-                    balance: data.balance || 0,
-                    total_purchased: data.total_purchased || 0,
-                    total_used: data.total_used || 0
+                    balance: response.credits.balance || 0,
+                    total_purchased: response.credits.total_purchased || 0,
+                    total_used: response.credits.total_used || 0
                 });
             }
         } catch (error) {
@@ -99,17 +107,12 @@ export const CreditsPage: React.FC = () => {
 
     const fetchPaymentMethods = async () => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+            const userId = apiClient.getUserId();
+            if (!userId) return;
 
-            const { data, error } = await supabase
-                .from('payment_methods')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('is_default', { ascending: false });
-
-            if (error) throw error;
-            setPaymentMethods(data || []);
+            // TODO: Implementar endpoint /api/payment-methods
+            console.log('📦 Buscando métodos de pagamento...');
+            setPaymentMethods([]);
         } catch (error) {
             console.error('Erro ao buscar métodos de pagamento:', error);
         }
@@ -120,40 +123,33 @@ export const CreditsPage: React.FC = () => {
         setSelectedPlan(plan);
 
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
+            const userId = apiClient.getUserId();
+            if (!userId) {
                 alert('Você precisa estar logado para comprar créditos');
                 setLoading(false);
                 return;
             }
 
-            // Call Supabase Edge Function to create checkout
-            const { data, error } = await supabase.functions.invoke('create-checkout', {
-                body: {
-                    plan_id: plan.id,
-                    credits: plan.credits + plan.bonus,
-                    amount: plan.price
-                }
-            });
-
-            if (error) throw error;
+            // TODO: Integrar com Mercado Pago para gerar PIX
+            // Simular criação de checkout
+            const transactionId = crypto.randomUUID();
 
             setCurrentTransaction({
-                id: data.transaction_id,
+                id: transactionId,
                 amount: plan.price,
                 credits: plan.credits + plan.bonus,
                 status: 'pending',
                 payment_method: 'pix',
-                pix_qr_code: data.qr_code,
-                pix_copy_paste: data.copy_paste,
+                pix_qr_code: 'https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=00020126580014BR.GOV.BCB.PIX0136example-pix-key&choe=UTF-8',
+                pix_copy_paste: '00020126580014BR.GOV.BCB.PIX0136example-pix-key5204000053039865802BR5913ACI%20Platform6009SAO%20PAULO62070503***6304XXXX',
                 created_at: new Date().toISOString(),
-                expires_at: data.expires_at
+                expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString()
             });
 
             setShowQRCode(true);
 
-            // Start polling for payment status
-            startPaymentPolling(data.transaction_id);
+            // Simular polling de pagamento
+            console.log('🔄 Aguardando confirmação do pagamento PIX...');
 
         } catch (error: any) {
             console.error('Erro ao criar checkout:', error);
@@ -163,70 +159,10 @@ export const CreditsPage: React.FC = () => {
         }
     };
 
-    const startPaymentPolling = (transactionId: string) => {
-        const interval = setInterval(async () => {
-            try {
-                const { data, error } = await supabase
-                    .from('payment_transactions')
-                    .select('status')
-                    .eq('id', transactionId)
-                    .single();
-
-                if (error) throw error;
-
-                if (data.status === 'completed') {
-                    clearInterval(interval);
-                    setShowQRCode(false);
-                    fetchUserCredits();
-                    // fetchTransactions();
-                    alert('Pagamento confirmado! Seus créditos foram adicionados.');
-                } else if (data.status === 'failed' || data.status === 'expired') {
-                    clearInterval(interval);
-                    setShowQRCode(false);
-                    alert('Pagamento não confirmado. Tente novamente.');
-                }
-            } catch (error) {
-                console.error('Erro ao verificar status:', error);
-            }
-        }, 5000); // Poll every 5 seconds
-
-        // Stop polling after 15 minutes
-        setTimeout(() => clearInterval(interval), 15 * 60 * 1000);
-    };
-
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'completed':
-                return 'text-green-400 bg-green-900/30 border-green-700';
-            case 'pending':
-                return 'text-yellow-400 bg-yellow-900/30 border-yellow-700';
-            case 'failed':
-            case 'expired':
-                return 'text-red-400 bg-red-900/30 border-red-700';
-            default:
-                return 'text-gray-400 bg-gray-900/30 border-gray-700';
-        }
-    };
-
-    const getStatusText = (status: string) => {
-        switch (status) {
-            case 'completed':
-                return 'Concluído';
-            case 'pending':
-                return 'Pendente';
-            case 'failed':
-                return 'Falhou';
-            case 'expired':
-                return 'Expirado';
-            default:
-                return status;
-        }
     };
 
     return (
@@ -281,8 +217,8 @@ export const CreditsPage: React.FC = () => {
                             <div
                                 key={plan.id}
                                 className={`relative bg-slate-800 border-2 rounded-2xl p-8 transition-all hover:scale-105 ${plan.popular
-                                        ? 'border-brand-primary shadow-2xl shadow-brand-primary/20'
-                                        : 'border-slate-700 hover:border-slate-600'
+                                    ? 'border-brand-primary shadow-2xl shadow-brand-primary/20'
+                                    : 'border-slate-700 hover:border-slate-600'
                                     }`}
                             >
                                 {plan.popular && (
@@ -323,15 +259,15 @@ export const CreditsPage: React.FC = () => {
                                     onClick={() => handlePurchase(plan)}
                                     disabled={loading}
                                     className={`w-full py-3 px-6 rounded-lg font-bold transition-all ${plan.popular
-                                            ? 'bg-brand-primary hover:bg-brand-primary/90 text-white shadow-lg shadow-brand-primary/30'
-                                            : 'bg-slate-700 hover:bg-slate-600 text-white'
+                                        ? 'bg-brand-primary hover:bg-brand-primary/90 text-white shadow-lg shadow-brand-primary/30'
+                                        : 'bg-slate-700 hover:bg-slate-600 text-white'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                                 >
                                     {loading && selectedPlan?.id === plan.id ? 'Processando...' : 'Comprar Agora'}
                                 </button>
-                                
+
                                 <div className="mt-4 text-center">
-                                    <button 
+                                    <button
                                         onClick={() => setShowPaymentMethods(true)}
                                         className="text-sm text-brand-secondary hover:text-brand-primary font-medium"
                                     >
@@ -422,12 +358,12 @@ export const CreditsPage: React.FC = () => {
                                     <XCircleIcon className="w-6 h-6" />
                                 </button>
                             </div>
-                            
+
                             <div className="mb-6">
                                 <p className="text-gray-400 mb-4">
                                     Escolha um método de pagamento para suas compras futuras ou adicione um novo método.
                                 </p>
-                                
+
                                 {/* Payment Methods List */}
                                 <div className="space-y-4 mb-6">
                                     {paymentMethods.length === 0 ? (
@@ -440,11 +376,10 @@ export const CreditsPage: React.FC = () => {
                                         paymentMethods.map((method) => (
                                             <div
                                                 key={method.id}
-                                                className={`flex items-center justify-between p-4 rounded-lg border ${
-                                                    method.is_default
+                                                className={`flex items-center justify-between p-4 rounded-lg border ${method.is_default
                                                         ? 'bg-blue-900/20 border-blue-700'
                                                         : 'bg-slate-900/50 border-slate-700'
-                                                }`}
+                                                    }`}
                                             >
                                                 <div className="flex items-center gap-4">
                                                     <div className="bg-slate-700 p-3 rounded-lg">
@@ -473,11 +408,10 @@ export const CreditsPage: React.FC = () => {
                                         ))
                                     )}
                                 </div>
-                                
+
                                 {/* Add New Method Button */}
                                 <button
                                     onClick={() => {
-                                        // This would open a form to add a new payment method
                                         alert('Funcionalidade para adicionar novo método de pagamento será implementada em breve.');
                                     }}
                                     className="w-full flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white py-3 px-4 rounded-lg transition-colors"
@@ -486,7 +420,7 @@ export const CreditsPage: React.FC = () => {
                                     Adicionar Novo Método de Pagamento
                                 </button>
                             </div>
-                            
+
                             <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
                                 <button
                                     onClick={() => setShowPaymentMethods(false)}

@@ -4,37 +4,44 @@ import type { Settings } from '../hooks/useSettings';
 
 // Helper to get settings from local storage
 const getSettings = (): Partial<Settings> => {
-    try {
-        const storedSettings = localStorage.getItem('aci-settings');
-        return storedSettings ? JSON.parse(storedSettings) : {};
-    } catch (e) {
-        console.error("Could not parse settings from localStorage", e);
-        return {};
-    }
+  try {
+    const storedSettings = localStorage.getItem('aci-settings');
+    return storedSettings ? JSON.parse(storedSettings) : {};
+  } catch (e) {
+    console.error("Could not parse settings from localStorage", e);
+    return {};
+  }
 };
 
-// FIX: Modified to use process.env.API_KEY as per guidelines.
 const getAiClient = (): GoogleGenAI => {
-    // The API key must be sourced from environment variables for security.
-    return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const settings = getSettings();
+  // Prioriza a chave nas configurações locais (definida no Admin), fallback para env var de forma segura
+  const envApiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+  const apiKey = settings.geminiApiKey ? settings.geminiApiKey.trim() : (envApiKey ? envApiKey.trim() : undefined);
+
+  if (!apiKey || !apiKey.startsWith("AIza")) {
+    throw new Error("Chave de API do Gemini inválida ou ausente. A chave deve começar com 'AIza'. Verifique o Painel Administrativo.");
+  }
+
+  return new GoogleGenAI({ apiKey });
 };
 
 function parseJsonFromGeminiResponse<T>(text: string): T {
-    let jsonStr = text.trim();
-    // Handle markdown code fences
-    const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
-    const match = jsonStr.match(fenceRegex);
-    if (match && match[2]) {
-        jsonStr = match[2].trim();
-    }
-    
-    try {
-        const parsedData = JSON.parse(jsonStr);
-        return parsedData as T;
-    } catch (error) {
-        console.error("Failed to parse JSON string:", jsonStr);
-        throw new Error("A API retornou um formato JSON inválido.");
-    }
+  let jsonStr = text.trim();
+  // Handle markdown code fences
+  const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
+  const match = jsonStr.match(fenceRegex);
+  if (match && match[2]) {
+    jsonStr = match[2].trim();
+  }
+
+  try {
+    const parsedData = JSON.parse(jsonStr);
+    return parsedData as T;
+  } catch (error) {
+    console.error("Failed to parse JSON string:", jsonStr);
+    throw new Error("A API retornou um formato JSON inválido.");
+  }
 }
 
 
@@ -48,7 +55,7 @@ export interface Product {
 
 export const generateShopeeLinkFromApi = async (productUrl: string, affiliateId: string, subIds: string[]): Promise<string> => {
   const filteredSubIds = subIds.filter(id => id.trim() !== '');
-  
+
   const prompt = `
     Gere um link de afiliado da Shopee Brasil com base nas informações abaixo.
 
@@ -67,7 +74,7 @@ export const generateShopeeLinkFromApi = async (productUrl: string, affiliateId:
   try {
     const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-2.5-flash';
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
     const temperature = settings.aiTemperature ?? 0.2;
 
     const response = await ai.models.generateContent({
@@ -80,7 +87,7 @@ export const generateShopeeLinkFromApi = async (productUrl: string, affiliateId:
         topK: 32,
       }
     });
-    
+
     // Trim to remove any potential whitespace or newlines from the model's output
     return response.text.trim();
   } catch (error) {
@@ -122,7 +129,7 @@ export const searchShopeeProductsFromApi = async (keyword: string): Promise<Prod
   try {
     const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-2.5-flash';
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
     const temperature = settings.aiTemperature ?? 0.1;
 
     const response = await ai.models.generateContent({
@@ -133,13 +140,13 @@ export const searchShopeeProductsFromApi = async (keyword: string): Promise<Prod
         temperature: temperature,
       }
     });
-    
+
     const parsedData = parseJsonFromGeminiResponse<Product[]>(response.text);
-    
+
     if (!Array.isArray(parsedData)) {
-        throw new Error("A API não retornou um array de produtos válido.");
+      throw new Error("A API não retornou um array de produtos válido.");
     }
-    
+
     return parsedData;
 
   } catch (error) {
@@ -170,7 +177,7 @@ export const getTopSalesFromApi = async (category: string): Promise<Product[]> =
   try {
     const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-2.5-flash';
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
     const temperature = settings.aiTemperature ?? 0.1;
 
     const response = await ai.models.generateContent({
@@ -181,13 +188,13 @@ export const getTopSalesFromApi = async (category: string): Promise<Product[]> =
         temperature: temperature,
       }
     });
-    
+
     const parsedData = parseJsonFromGeminiResponse<Product[]>(response.text);
-    
+
     if (!Array.isArray(parsedData)) {
-        throw new Error("A API não retornou um array de produtos válido.");
+      throw new Error("A API não retornou um array de produtos válido.");
     }
-    
+
     return parsedData;
 
   } catch (error) {
@@ -198,7 +205,7 @@ export const getTopSalesFromApi = async (category: string): Promise<Product[]> =
 };
 
 export const generateTelegramMessageFromApi = async (topic: string): Promise<string> => {
-    const prompt = `
+  const prompt = `
         Crie uma mensagem de marketing curta e persuasiva para um canal do Telegram sobre o seguinte tópico: "${topic}".
         A mensagem deve:
         - Ser cativante e gerar curiosidade.
@@ -208,27 +215,27 @@ export const generateTelegramMessageFromApi = async (topic: string): Promise<str
         - A resposta DEVE conter apenas o texto da mensagem, sem explicações ou markdown.
     `;
 
-    try {
-        const ai = getAiClient();
-        const settings = getSettings();
-        const model = settings.aiTextModel || 'gemini-2.5-flash';
-        const temperature = settings.aiTemperature ?? 0.8;
+  try {
+    const ai = getAiClient();
+    const settings = getSettings();
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
+    const temperature = settings.aiTemperature ?? 0.8;
 
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: prompt,
-            config: {
-                temperature: temperature,
-                topP: 1,
-                topK: 40,
-            }
-        });
-        return response.text.trim();
-    } catch (error) {
-        console.error("Error calling Gemini API for Telegram message:", error);
-        const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido na API.";
-        throw new Error(`Falha ao gerar mensagem para Telegram: ${errorMessage}`);
-    }
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: prompt,
+      config: {
+        temperature: temperature,
+        topP: 1,
+        topK: 40,
+      }
+    });
+    return response.text.trim();
+  } catch (error) {
+    console.error("Error calling Gemini API for Telegram message:", error);
+    const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido na API.";
+    throw new Error(`Falha ao gerar mensagem para Telegram: ${errorMessage}`);
+  }
 };
 
 export const getShopeeProductDetailsFromUrl = async (productUrl: string): Promise<Product> => {
@@ -251,7 +258,7 @@ export const getShopeeProductDetailsFromUrl = async (productUrl: string): Promis
   try {
     const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-2.5-flash';
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
 
     const response = await ai.models.generateContent({
       model: model,
@@ -262,7 +269,7 @@ export const getShopeeProductDetailsFromUrl = async (productUrl: string): Promis
     });
 
     return parseJsonFromGeminiResponse<Product>(response.text);
-    
+
   } catch (error) {
     console.error("Error calling Gemini API for product details:", error);
     const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido na API.";
@@ -291,7 +298,7 @@ export const generateShopeeOfferMessageFromApi = async (product: Product): Promi
   try {
     const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-2.5-flash';
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
     const temperature = settings.aiTemperature ?? 0.8;
 
     const response = await ai.models.generateContent({
@@ -322,7 +329,7 @@ export const generateInstagramCaptionFromProduct = async (product: Product, tone
   try {
     const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-2.5-flash';
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
     const temperature = settings.aiTemperature ?? 0.8;
 
     const response = await ai.models.generateContent({
@@ -368,7 +375,7 @@ export const generateInstagramCaptionFromDetails = async (details: InstagramCapt
   try {
     const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-2.5-flash';
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
     const temperature = settings.aiTemperature ?? 0.8;
 
     const response = await ai.models.generateContent({
@@ -405,7 +412,7 @@ export const suggestInstagramHashtags = async (productName: string, productDescr
   try {
     const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-2.5-flash';
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
     const temperature = settings.aiTemperature ?? 0.5;
 
     const response = await ai.models.generateContent({
@@ -452,7 +459,7 @@ export const suggestEmojisForCaption = async (productName: string, productDescri
   try {
     const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-2.5-flash';
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
     const temperature = settings.aiTemperature ?? 0.5;
 
     const response = await ai.models.generateContent({
@@ -480,18 +487,18 @@ export const suggestEmojisForCaption = async (productName: string, productDescri
 
 
 export interface InstagramProfileAnalysis {
-    profile_image_url: string;
-    profile_name: string;
-    username: string;
-    bio: string;
-    posts: string;
-    followers: string;
-    following: string;
-    niche: string;
-    content_analysis: string;
-    suggestions: string;
-    content_ideas: { title: string; description: string; format: 'Reels' | 'Post' | 'Stories' }[];
-    error?: string;
+  profile_image_url: string;
+  profile_name: string;
+  username: string;
+  bio: string;
+  posts: string;
+  followers: string;
+  following: string;
+  niche: string;
+  content_analysis: string;
+  suggestions: string;
+  content_ideas: { title: string; description: string; format: 'Reels' | 'Post' | 'Stories' }[];
+  error?: string;
 }
 
 export const analyzeInstagramProfileFromApi = async (username: string): Promise<InstagramProfileAnalysis> => {
@@ -548,14 +555,14 @@ export const analyzeInstagramProfileFromApi = async (username: string): Promise<
   try {
     const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-2.5-flash';
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
     const temperature = settings.aiTemperature ?? 0.3;
 
     const response = await ai.models.generateContent({
       model: model,
       contents: prompt,
       config: {
-        tools: [{googleSearch: {}}],
+        tools: [{ googleSearch: {} }],
         temperature: temperature,
       }
     });
@@ -576,11 +583,11 @@ export const generateImageFromApi = async (prompt: string): Promise<string> => {
     const model = settings.aiImageModel || 'imagen-4.0-generate-001';
 
     const response = await ai.models.generateImages({
-        model: model,
-        prompt: prompt,
-        config: { numberOfImages: 1, outputMimeType: 'image/jpeg' },
+      model: model,
+      prompt: prompt,
+      config: { numberOfImages: 1, outputMimeType: 'image/jpeg' },
     });
-    
+
     const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
     return `data:image/jpeg;base64,${base64ImageBytes}`;
 
@@ -594,7 +601,7 @@ export const generateImageFromApi = async (prompt: string): Promise<string> => {
 export const createChat = (): Chat => {
   const ai = getAiClient();
   const settings = getSettings();
-  const model = settings.aiTextModel || 'gemini-2.5-flash';
+  const model = settings.aiTextModel || 'gemini-1.5-flash';
   const temperature = settings.aiTemperature ?? 0.7;
 
   const chat = ai.chats.create({
@@ -641,9 +648,9 @@ export const generateBlogPostWithCssFromData = async (productData: { [key: strin
   try {
     const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-2.5-flash';
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
     const temperature = settings.aiTemperature ?? 0.5;
-    
+
     const response = await ai.models.generateContent({
       model: model,
       contents: prompt,
@@ -652,13 +659,13 @@ export const generateBlogPostWithCssFromData = async (productData: { [key: strin
         temperature: temperature,
       }
     });
-    
+
     const parsedData = parseJsonFromGeminiResponse<{ html: string; css: string }>(response.text);
 
     if (typeof parsedData.html !== 'string' || typeof parsedData.css !== 'string') {
-        throw new Error("A resposta da API não contém os campos 'html' ou 'css'.");
+      throw new Error("A resposta da API não contém os campos 'html' ou 'css'.");
     }
-    
+
     return parsedData;
 
   } catch (error) {
@@ -669,20 +676,20 @@ export const generateBlogPostWithCssFromData = async (productData: { [key: strin
 };
 
 export interface FullBlogPost {
-    title: string;
-    content: string; // Markdown content
-    hashtags: string[];
-    emojis: string[];
+  title: string;
+  content: string; // Markdown content
+  hashtags: string[];
+  emojis: string[];
 }
 
 export const generateFullBlogPostFromDetails = async (
-    productName: string,
-    productDescription: string,
-    toneOfVoice: string,
-    targetAudience: string,
-    postObjective: string
+  productName: string,
+  productDescription: string,
+  toneOfVoice: string,
+  targetAudience: string,
+  postObjective: string
 ): Promise<FullBlogPost> => {
-    const prompt = `
+  const prompt = `
         Você é um copywriter especialista em SEO e marketing de afiliados. Sua tarefa é criar um post de blog completo e otimizado sobre um produto.
 
         Dados do Produto:
@@ -711,34 +718,34 @@ export const generateFullBlogPostFromDetails = async (
         }
     `;
 
-    try {
-        const ai = getAiClient();
-        const settings = getSettings();
-        const model = settings.aiTextModel || 'gemini-2.5-flash';
-        const temperature = settings.aiTemperature ?? 0.7;
-        
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                temperature: temperature,
-            }
-        });
-        
-        const parsedData = parseJsonFromGeminiResponse<FullBlogPost>(response.text);
+  try {
+    const ai = getAiClient();
+    const settings = getSettings();
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
+    const temperature = settings.aiTemperature ?? 0.7;
 
-        if (!parsedData.title || !parsedData.content || !Array.isArray(parsedData.hashtags) || !Array.isArray(parsedData.emojis)) {
-            throw new Error("A resposta da API está incompleta ou mal formatada.");
-        }
-        
-        return parsedData;
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        temperature: temperature,
+      }
+    });
 
-    } catch (error) {
-        console.error("Error calling Gemini API for full blog post generation:", error);
-        const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido na API.";
-        throw new Error(`Falha ao gerar post de blog completo: ${errorMessage}`);
+    const parsedData = parseJsonFromGeminiResponse<FullBlogPost>(response.text);
+
+    if (!parsedData.title || !parsedData.content || !Array.isArray(parsedData.hashtags) || !Array.isArray(parsedData.emojis)) {
+      throw new Error("A resposta da API está incompleta ou mal formatada.");
     }
+
+    return parsedData;
+
+  } catch (error) {
+    console.error("Error calling Gemini API for full blog post generation:", error);
+    const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido na API.";
+    throw new Error(`Falha ao gerar post de blog completo: ${errorMessage}`);
+  }
 };
 
 // --- NEW ---
@@ -769,14 +776,14 @@ const genericTopSalesPrompt = (platform: string, category: string) => `
 `;
 
 const genericLinkGeneratorPrompt = (platform: string, productUrl: string, affiliateId: string) => {
-    let instructions = '';
-    if (platform === 'Amazon') {
-        instructions = `Construa o link de afiliado da Amazon. Adicione o ID do Afiliado (tag) ao link com o parâmetro \`tag\`. Exemplo: se o ID for 'seutag-20', o parâmetro deve ser 'tag=seutag-20'.`;
-    } else if (platform === 'Mercado Livre') {
-        instructions = `Construa o link de afiliado do Mercado Livre. Adicione o ID do Afiliado ao link. Muitas vezes, isso é feito com parâmetros como \`af_id\` ou através de uma URL de redirecionamento. Use o método mais comum e eficaz.`;
-    }
+  let instructions = '';
+  if (platform === 'Amazon') {
+    instructions = `Construa o link de afiliado da Amazon. Adicione o ID do Afiliado (tag) ao link com o parâmetro \`tag\`. Exemplo: se o ID for 'seutag-20', o parâmetro deve ser 'tag=seutag-20'.`;
+  } else if (platform === 'Mercado Livre') {
+    instructions = `Construa o link de afiliado do Mercado Livre. Adicione o ID do Afiliado ao link. Muitas vezes, isso é feito com parâmetros como \`af_id\` ou através de uma URL de redirecionamento. Use o método mais comum e eficaz.`;
+  }
 
-    return `
+  return `
     Gere um link de afiliado da ${platform} com base nas informações abaixo.
 
     URL do Produto: "${productUrl}"
@@ -790,40 +797,40 @@ const genericLinkGeneratorPrompt = (platform: string, productUrl: string, affili
 };
 
 async function fetchProductList(prompt: string): Promise<Product[]> {
-    try {
-        const ai = getAiClient();
-        const settings = getSettings();
-        const model = settings.aiTextModel || 'gemini-2.5-flash';
+  try {
+    const ai = getAiClient();
+    const settings = getSettings();
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
 
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: prompt,
-            config: { responseMimeType: "application/json" }
-        });
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: prompt,
+      config: { responseMimeType: "application/json" }
+    });
 
-        const parsedData = parseJsonFromGeminiResponse<Product[]>(response.text);
-        if (!Array.isArray(parsedData)) {
-            throw new Error("API did not return a valid product array.");
-        }
-        return parsedData;
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown API error.";
-        throw new Error(`Failed to fetch products: ${errorMessage}`);
+    const parsedData = parseJsonFromGeminiResponse<Product[]>(response.text);
+    if (!Array.isArray(parsedData)) {
+      throw new Error("API did not return a valid product array.");
     }
+    return parsedData;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown API error.";
+    throw new Error(`Failed to fetch products: ${errorMessage}`);
+  }
 }
 
 async function generateAffiliateLink(prompt: string): Promise<string> {
-    try {
-        const ai = getAiClient();
-        const settings = getSettings();
-        const model = settings.aiTextModel || 'gemini-2.5-flash';
+  try {
+    const ai = getAiClient();
+    const settings = getSettings();
+    const model = settings.aiTextModel || 'gemini-1.5-flash';
 
-        const response = await ai.models.generateContent({ model, contents: prompt });
-        return response.text.trim();
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown API error.";
-        throw new Error(`Failed to generate link: ${errorMessage}`);
-    }
+    const response = await ai.models.generateContent({ model, contents: prompt });
+    return response.text.trim();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown API error.";
+    throw new Error(`Failed to generate link: ${errorMessage}`);
+  }
 }
 
 export const searchAmazonProductsFromApi = (keyword: string) => fetchProductList(genericProductSearchPrompt('Amazon Brasil', keyword));

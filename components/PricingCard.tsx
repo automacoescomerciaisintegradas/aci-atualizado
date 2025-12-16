@@ -11,13 +11,13 @@ interface PricingCardProps {
 }
 
 export const PricingCard: React.FC<PricingCardProps> = ({ planName, price, features, ctaText, onCtaClick, isActive = false }) => {
-    const cardClasses = isActive 
-        ? 'bg-brand-primary/10 border-brand-primary' 
+    const cardClasses = isActive
+        ? 'bg-brand-primary/10 border-brand-primary'
         : 'bg-slate-800/50 border-dark-border';
-    
+
     const buttonClasses = isActive
-        ? 'bg-slate-700 text-dark-text-secondary cursor-default'
-        : 'bg-brand-primary hover:bg-brand-primary/90 text-white shadow-lg shadow-indigo-500/30';
+        ? 'bg-brand-primary hover:bg-brand-primary/90 text-white shadow-lg shadow-indigo-500/30'
+        : 'bg-slate-700 hover:bg-slate-600 text-dark-text-primary';
 
     return (
         <div className={`rounded-xl border p-6 flex flex-col ${cardClasses}`}>
@@ -33,8 +33,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({ planName, price, featu
             </ul>
             <button
                 onClick={onCtaClick}
-                disabled={isActive}
-                className={`w-full font-bold py-2.5 px-5 rounded-lg transition-colors ${buttonClasses}`}
+                className={`w-full font-bold py-2.5 px-5 rounded-lg transition-all duration-300 transform hover:scale-105 ${buttonClasses}`}
             >
                 {ctaText}
             </button>

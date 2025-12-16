@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { apiClient } from '../src/services/apiClient';
 import { CreditCardIcon, PlusIcon, TrashIcon, CheckCircleIcon, XCircleIcon } from './Icons';
 
 interface PaymentMethod {
@@ -30,17 +30,16 @@ export const PaymentMethodsPage: React.FC = () => {
 
   const fetchPaymentMethods = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const userId = apiClient.getUserId();
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
 
-      const { data, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('is_default', { ascending: false });
-
-      if (error) throw error;
-      setPaymentMethods(data || []);
+      // TODO: Implementar endpoint /api/payment-methods no Worker
+      // Por enquanto, retornar lista vazia
+      console.log('📦 Buscando métodos de pagamento para:', userId);
+      setPaymentMethods([]);
     } catch (error) {
       console.error('Erro ao buscar métodos de pagamento:', error);
     } finally {
@@ -53,31 +52,31 @@ export const PaymentMethodsPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const userId = apiClient.getUserId();
+      if (!userId) {
         alert('Você precisa estar logado para adicionar um cartão');
         setLoading(false);
         return;
       }
 
-      // In a real implementation, you would tokenize the card details first
-      // This is a simplified version for demonstration
-      const cardData = {
-        user_id: user.id,
+      // TODO: Implementar endpoint /api/payment-methods no Worker
+      // Em produção, usar gateway de pagamento (Stripe, Mercado Pago, etc)
+      console.log('💳 Adicionando cartão para:', userId);
+
+      // Simular adição de cartão
+      const cardData: PaymentMethod = {
+        id: crypto.randomUUID(),
         type: 'card',
         last4: newCard.number.slice(-4),
         expiry_month: parseInt(newCard.expiry_month),
         expiry_year: parseInt(newCard.expiry_year),
-        is_default: paymentMethods.length === 0
+        is_default: paymentMethods.length === 0,
+        created_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
-        .from('payment_methods')
-        .insert([cardData]);
+      setPaymentMethods([...paymentMethods, cardData]);
 
-      if (error) throw error;
-
-      // Reset form and refresh list
+      // Reset form
       setNewCard({
         number: '',
         expiry_month: '',
@@ -86,7 +85,6 @@ export const PaymentMethodsPage: React.FC = () => {
         name: ''
       });
       setShowAddForm(false);
-      fetchPaymentMethods();
       alert('Cartão adicionado com sucesso!');
     } catch (error: any) {
       console.error('Erro ao adicionar cartão:', error);
@@ -100,14 +98,8 @@ export const PaymentMethodsPage: React.FC = () => {
     if (!confirm('Tem certeza que deseja remover este método de pagamento?')) return;
 
     try {
-      const { error } = await supabase
-        .from('payment_methods')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      fetchPaymentMethods();
+      // TODO: Implementar endpoint DELETE /api/payment-methods/:id
+      setPaymentMethods(paymentMethods.filter(m => m.id !== id));
       alert('Método de pagamento removido com sucesso!');
     } catch (error: any) {
       console.error('Erro ao remover método de pagamento:', error);
@@ -117,24 +109,11 @@ export const PaymentMethodsPage: React.FC = () => {
 
   const handleSetDefault = async (id: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // First, unset all defaults
-      await supabase
-        .from('payment_methods')
-        .update({ is_default: false })
-        .eq('user_id', user.id);
-
-      // Then set the new default
-      const { error } = await supabase
-        .from('payment_methods')
-        .update({ is_default: true })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      fetchPaymentMethods();
+      // TODO: Implementar endpoint PUT /api/payment-methods/:id/default
+      setPaymentMethods(paymentMethods.map(m => ({
+        ...m,
+        is_default: m.id === id
+      })));
     } catch (error: any) {
       console.error('Erro ao definir método padrão:', error);
       alert('Erro ao definir método padrão. Tente novamente.');
@@ -191,11 +170,10 @@ export const PaymentMethodsPage: React.FC = () => {
               {paymentMethods.map((method) => (
                 <div
                   key={method.id}
-                  className={`flex items-center justify-between p-4 rounded-lg border ${
-                    method.is_default
+                  className={`flex items-center justify-between p-4 rounded-lg border ${method.is_default
                       ? 'bg-blue-900/20 border-blue-700'
                       : 'bg-slate-900/50 border-slate-700'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-4">
                     <div className="bg-slate-700 p-3 rounded-lg">

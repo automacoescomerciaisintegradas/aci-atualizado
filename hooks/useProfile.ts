@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { apiClient } from '../src/services/apiClient';
 import {
     UserProfile,
     ProfileRow,
@@ -87,43 +87,15 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
 
     const loadProfile = useCallback(async (userId: string) => {
         try {
-            const { data, error: fetchError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', userId)
-                .single();
+            const response = await apiClient.getUser(userId);
 
-            if (fetchError) {
-                // Se não encontrou, pode ser que o trigger ainda não rodou
-                if (fetchError.code === 'PGRST116') {
-                    // Tentar criar o perfil manualmente
-                    const { data: userData } = await supabase.auth.getUser();
-                    if (userData.user) {
-                        const { data: newProfile, error: createError } = await supabase
-                            .from('profiles')
-                            .insert({
-                                id: userId,
-                                email: userData.user.email,
-                                full_name: userData.user.user_metadata?.full_name || userData.user.user_metadata?.name,
-                                display_name: userData.user.user_metadata?.display_name || userData.user.user_metadata?.name,
-                                avatar_url: userData.user.user_metadata?.avatar_url,
-                            })
-                            .select()
-                            .single();
-
-                        if (!createError && newProfile) {
-                            const parsed = parseProfileRow(newProfile as ProfileRow);
-                            setProfile(parsed);
-                            onProfileUpdateRef.current?.(parsed);
-                            return;
-                        }
-                    }
-                }
-                throw fetchError;
+            if (!response.success) {
+                throw new Error(response.error || 'Erro ao carregar perfil');
             }
 
-            if (data) {
-                const parsed = parseProfileRow(data as ProfileRow);
+            if (response.user) {
+                // Parsear para o formato UserProfile
+                const parsed = parseProfileRow(response.user as any as ProfileRow);
                 setProfile(parsed);
                 onProfileUpdateRef.current?.(parsed);
             }
@@ -139,14 +111,12 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
     // ==========================================
 
     const refreshProfile = useCallback(async () => {
-        if (!profile?.id) {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                await loadProfile(user.id);
-            }
+        const userId = apiClient.getUserId();
+        if (!userId && !profile?.id) {
+            console.warn('No user ID available for refresh');
             return;
         }
-        await loadProfile(profile.id);
+        await loadProfile(userId || profile!.id);
     }, [profile?.id, loadProfile]);
 
     // ==========================================
@@ -162,15 +132,11 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
         try {
             setError(null);
 
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update({
-                    ...data,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', profile.id);
+            const response = await apiClient.updateProfile(data);
 
-            if (updateError) throw updateError;
+            if (!response.success) {
+                throw new Error(response.error || 'Erro ao atualizar perfil');
+            }
 
             // Atualizar estado local
             await refreshProfile();
@@ -196,33 +162,24 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
         try {
             setError(null);
 
-            // Gerar nome único para o arquivo
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${profile.id}/avatar.${fileExt}`;
+            // Upload para R2 via API
+            const response = await apiClient.uploadAvatar(file);
 
-            // Upload para o Storage
-            const { error: uploadError } = await supabase.storage
-                .from('avatars')
-                .upload(fileName, file, { upsert: true });
+            if (!response.success) {
+                throw new Error(response.error || 'Erro ao fazer upload');
+            }
 
-            if (uploadError) throw uploadError;
+            // Atualizar estado local
+            await refreshProfile();
 
-            // Obter URL pública
-            const { data: { publicUrl } } = supabase.storage
-                .from('avatars')
-                .getPublicUrl(fileName);
-
-            // Atualizar perfil com nova URL
-            await updateProfile({ avatar_url: publicUrl });
-
-            return publicUrl;
+            return response.avatarUrl;
         } catch (err: any) {
             console.error('Erro ao fazer upload do avatar:', err);
             setError(err.message || 'Erro ao fazer upload do avatar');
             onErrorRef.current?.(err);
             return null;
         }
-    }, [profile?.id, updateProfile]);
+    }, [profile?.id, refreshProfile]);
 
     // ==========================================
     // LOAD SESSIONS
@@ -232,17 +189,10 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
         if (!profile?.id) return;
 
         try {
-            const { data, error: fetchError } = await supabase
-                .from('user_sessions')
-                .select('*')
-                .eq('user_id', profile.id)
-                .order('started_at', { ascending: false })
-                .limit(10);
+            const response = await apiClient.getSessions(profile.id);
 
-            if (fetchError) throw fetchError;
-
-            if (data) {
-                const parsed: UserSession[] = data.map(s => ({
+            if (response.success && response.sessions) {
+                const parsed: UserSession[] = response.sessions.map((s: any) => ({
                     id: s.id,
                     user_id: s.user_id,
                     ip_address: s.ip_address,
@@ -305,11 +255,11 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
                 setIsLoading(true);
                 setError(null);
 
-                const { data: { user } } = await supabase.auth.getUser();
+                const userId = apiClient.getUserId();
 
-                if (user) {
+                if (userId) {
                     setIsAuthenticated(true);
-                    await loadProfile(user.id);
+                    await loadProfile(userId);
                 } else {
                     setIsAuthenticated(false);
                 }
@@ -328,23 +278,8 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
 
         initialize();
 
-        // Listener para mudanças de autenticação
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (!mounted) return;
-
-            if (event === 'SIGNED_IN' && session?.user) {
-                setIsAuthenticated(true);
-                await loadProfile(session.user.id);
-            } else if (event === 'SIGNED_OUT') {
-                setIsAuthenticated(false);
-                setProfile(null);
-                setSessions([]);
-            }
-        });
-
         return () => {
             mounted = false;
-            subscription.unsubscribe();
         };
     }, [loadProfile]);
 

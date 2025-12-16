@@ -20,9 +20,9 @@ export const Header: React.FC<HeaderProps> = ({ onAuthClick }) => (
                 <span className="hidden sm:inline">ACI</span>
             </a>
             <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-dark-text-secondary">
-                <a href="#about" onClick={(e) => { e.preventDefault(); document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-dark-text-primary transition-colors cursor-pointer">Sobre</a>
-                <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-dark-text-primary transition-colors cursor-pointer">Funcionalidades</a>
-                <a href="#pricing" onClick={(e) => { e.preventDefault(); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-dark-text-primary transition-colors cursor-pointer">Planos</a>
+                <a href="#sobre" onClick={(e) => { e.preventDefault(); document.getElementById('sobre')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-dark-text-primary transition-colors cursor-pointer">Sobre</a>
+                <a href="#recursos" onClick={(e) => { e.preventDefault(); document.getElementById('recursos')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-dark-text-primary transition-colors cursor-pointer">Funcionalidades</a>
+                <a href="#precos" onClick={(e) => { e.preventDefault(); document.getElementById('precos')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-dark-text-primary transition-colors cursor-pointer">Planos</a>
                 <a href="#faq" onClick={(e) => { e.preventDefault(); document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-dark-text-primary transition-colors cursor-pointer">FAQ</a>
             </div>
             <button

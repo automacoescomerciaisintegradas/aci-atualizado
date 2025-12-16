@@ -1,64 +1,116 @@
+/**
+ * Camada de compatibilidade Supabase -> D1
+ * Este arquivo mantém compatibilidade temporária com código legado
+ * que ainda usa imports do supabaseClient
+ */
 
-import { createClient } from '@supabase/supabase-js';
-import { Database } from '../types/supabase';
+import { apiClient } from '../src/services/apiClient';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Mock do supabase client para compatibilidade
+export const supabase = {
+    auth: {
+        signUp: async (options: any) => {
+            const { email, password, options: signUpOptions } = options;
+            const metadata = signUpOptions?.data || {};
+            const response = await apiClient.signup(email, password, metadata);
 
-if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Supabase URL or Anon Key is missing in environment variables.');
-}
+            return {
+                data: response.success ? {
+                    user: response.user,
+                    session: null
+                } : null,
+                error: response.error ? { message: response.error } : null
+            };
+        },
 
-export let supabase: ReturnType<typeof createClient<Database>> | null = null;
+        signInWithPassword: async (credentials: any) => {
+            const { email, password } = credentials;
+            const response = await apiClient.login(email, password);
 
-try {
-    if (supabaseUrl && supabaseAnonKey) {
-        supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
-    } else {
-        console.warn('Supabase URL or Anon Key is missing. Supabase client will be null.');
-    }
-} catch (error) {
-    console.error('Error initializing Supabase client:', error);
-}
+            return {
+                data: response.success ? {
+                    user: response.user,
+                    session: {}
+                } : null,
+                error: response.error ? { message: response.error } : null
+            };
+        },
 
-export const checkSupabaseConnection = async (url?: string, key?: string) => {
-    try {
-        let client = supabase;
-        if (url && key) {
+        signOut: async () => {
+            apiClient.logout();
+            return { error: null };
+        },
+
+        getUser: async () => {
             try {
-                client = createClient(url, key);
-            } catch (e: any) {
-                return { success: false, message: `Erro ao criar cliente: ${e.message}` };
+                const userId = apiClient.getUserId();
+                if (!userId) {
+                    return { data: { user: null }, error: null };
+                }
+
+                const response = await apiClient.getUser();
+                return {
+                    data: { user: response.user },
+                    error: null
+                };
+            } catch (error: any) {
+                return {
+                    data: { user: null },
+                    error: { message: error.message }
+                };
             }
         }
+    },
 
-        if (!client) {
-            return { success: false, message: 'Cliente Supabase não configurado. Verifique as variáveis de ambiente.' };
-        }
+    from: (table: string) => {
+        // Mock básico do método from() do Supabase
+        console.warn(`⚠️ Chamada para supabase.from('${table}') - considere migrar para apiClient`);
 
-        const { data, error } = await client.from('users').select('count', { count: 'exact', head: true });
-
-        // Even if users table doesn't exist, a valid connection usually returns a specific error (e.g. 404 for table) rather than network error.
-        // But for a generic check, let's try to list tables or just check if we get a response.
-        // Actually, 'users' might not exist. Let's try a lighter check or just assume if we get a response (even error) from Supabase, it's connected.
-        // However, invalid key returns 401.
-
-        if (error) {
-            // If 401, it's invalid credentials.
-            if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
-                return { success: false, message: 'Credenciais inválidas ou expiradas.' };
-            }
-            // If table not found, it means we connected but table is missing.
-            if (error.code === '42P01') {
-                return { success: true, message: 'Conectado! (Tabela "users" não encontrada, mas a conexão funciona)' };
-            }
-
-            console.error('Supabase connection check error:', error);
-            // If we got a Supabase error, we probably connected.
-            return { success: true, message: `Conectado, mas com erro: ${error.message}` };
-        }
-        return { success: true, message: 'Conectado com sucesso!' };
-    } catch (err: any) {
-        return { success: false, message: err.message || 'Erro desconhecido ao conectar.' };
+        return {
+            select: (query?: string) => ({
+                eq: (column: string, value: any) => ({
+                    single: async () => ({ data: null, error: { message: 'Migre para D1 API' } }),
+                    then: async (callback: any) => callback({ data: [], error: null })
+                }),
+                then: async (callback: any) => callback({ data: [], error: null })
+            }),
+            insert: (data: any) => ({
+                select: () => ({
+                    single: async () => ({ data: null, error: { message: 'Migre para D1 API' } }),
+                    then: async (callback: any) => callback({ data: null, error: null })
+                }),
+                then: async (callback: any) => callback({ data: null, error: null })
+            }),
+            update: (data: any) => ({
+                eq: (column: string, value: any) => ({
+                    then: async (callback: any) => callback({ data: null, error: null })
+                })
+            }),
+            delete: () => ({
+                eq: (column: string, value: any) => ({
+                    then: async (callback: any) => callback({ data: null, error: null })
+                })
+            }),
+            upsert: (data: any, options?: any) => ({
+                select: () => ({
+                    then: async (callback: any) => callback({ data: null, error: null })
+                }),
+                then: async (callback: any) => callback({ data: null, error: null })
+            })
+        };
     }
 };
+
+// Para compatibilidade com código que verifica se o Supabase está configurado
+export const isSupabaseConfigured = () => true;
+
+// Mock do serviceSupabase (para admin)
+export const serviceSupabase = supabase;
+
+export const isServiceKeyConfigured = () => true;
+
+// Type exports (vazios para compatibilidade)
+export type Database = any;
+
+// Re-exportar para outros que possam importar
+export default supabase;

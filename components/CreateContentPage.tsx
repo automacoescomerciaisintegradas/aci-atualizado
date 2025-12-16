@@ -78,6 +78,7 @@ export const CreateContentPage = () => {
     const [blogs, setBlogs] = useState<Blog[]>([])
     const [selectedBlog, setSelectedBlog] = useState("")
     const [postStatus, setPostStatus] = useState<"draft" | "publish">("draft")
+    const [scheduledDate, setScheduledDate] = useState("")
     const [showPublishModal, setShowPublishModal] = useState(false)
 
     useEffect(() => {
@@ -86,10 +87,17 @@ export const CreateContentPage = () => {
 
     const fetchBlogs = async () => {
         try {
-            const res = await fetch("/api/blogs")
+            const userId = localStorage.getItem('userId') || 'default-user-id';
+            const res = await fetch("/api/blogs", {
+                headers: {
+                    'X-User-Id': userId
+                }
+            })
             const data = await res.json()
             if (res.ok) {
                 setBlogs(data.blogs.filter((b: Blog) => b.status === "connected" || b.status === "pending")) // Show pending too for dev
+            } else {
+                console.error("Erro na resposta:", data);
             }
         } catch (error) {
             console.error("Erro ao buscar blogs:", error)
@@ -136,6 +144,12 @@ export const CreateContentPage = () => {
         setPublishing(true)
 
         try {
+            // Se houver data agendada, converte para ISO
+            let isoDate = undefined;
+            if (scheduledDate) {
+                isoDate = new Date(scheduledDate).toISOString();
+            }
+
             const res = await fetch(`/api/blogs/${selectedBlog}/publish`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -143,6 +157,7 @@ export const CreateContentPage = () => {
                     title: generatedContent.title || topic,
                     content: generatedContent.content,
                     status: postStatus,
+                    scheduledDate: isoDate,
                     contentId: generatedContent.id,
                 }),
             })
@@ -153,8 +168,9 @@ export const CreateContentPage = () => {
                 throw new Error(data.error)
             }
 
-            alert(`✅ Post ${postStatus === 'draft' ? 'salvo como rascunho' : 'publicado'} com sucesso!\n\nURL: ${data.postUrl}`)
+            alert(`✅ Post ${scheduledDate ? 'agendado' : (postStatus === 'draft' ? 'salvo como rascunho' : 'publicado')} com sucesso!\n\nURL: ${data.postUrl}`)
             setShowPublishModal(false)
+            setScheduledDate("") // Limpar data após sucesso
         } catch (err: any) {
             alert(`❌ Erro: ${err.message}`)
         } finally {
@@ -395,6 +411,23 @@ export const CreateContentPage = () => {
                                         <option value="draft">Rascunho</option>
                                         <option value="publish">Publicado</option>
                                     </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        Agendar para (Opcional)
+                                    </label>
+                                    <Input
+                                        type="datetime-local"
+                                        value={scheduledDate}
+                                        onChange={(e: any) => setScheduledDate(e.target.value)}
+                                        min={new Date().toISOString().slice(0, 16)}
+                                    />
+                                    {scheduledDate && (
+                                        <p className="text-xs text-blue-600 mt-1">
+                                            ⚠️ O post será agendado automaticamente no WordPress
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="bg-blue-50 border border-blue-200 p-3 rounded text-sm">

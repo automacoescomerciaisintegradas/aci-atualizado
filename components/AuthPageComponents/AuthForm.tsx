@@ -1,5 +1,5 @@
 import React from 'react';
-import { MailIcon, LockIcon, UserIcon, EyeIcon, EyeOffIcon, GoogleIcon, PhoneIcon, CheckCircleIcon } from '../Icons.js';
+import { MailIcon, LockIcon, UserIcon, EyeIcon, EyeOffIcon, PhoneIcon, CheckCircleIcon } from '../Icons.js';
 
 interface AuthFormProps {
   view: 'login' | 'signup' | 'pending-confirmation' | 'forgot-password';
@@ -18,7 +18,6 @@ interface AuthFormProps {
   handleEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handlePhoneChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleFormSubmit: (e: React.FormEvent) => void;
-  handleGoogleLogin: () => void;
   error: string;
 }
 
@@ -48,7 +47,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   handleEmailChange,
   handlePhoneChange,
   handleFormSubmit,
-  handleGoogleLogin,
   error
 }) => {
   const [acceptTerms, setAcceptTerms] = React.useState(false);
@@ -103,6 +101,68 @@ export const AuthForm: React.FC<AuthFormProps> = ({
     );
   }
 
+  // View: Esqueci a senha
+  if (view === 'forgot-password') {
+    return (
+      <div className="relative bg-neutrals-background_secondary border border-white/10 p-10 shadow-2xl backdrop-blur-sm rounded-2xl text-center">
+        <div className="w-20 h-20 mx-auto mb-6 bg-brand-primary/20 rounded-full flex items-center justify-center">
+          <LockIcon className="w-10 h-10 text-brand-primary" />
+        </div>
+        <h2 className="text-2xl font-display font-bold text-white mb-4">
+          Esqueceu sua senha?
+        </h2>
+        <p className="text-gray-400 mb-6">
+          Digite seu e-mail e enviaremos um link para redefinir sua senha.
+        </p>
+
+        <form onSubmit={handleFormSubmit} className="space-y-4">
+          <div className="relative">
+            <MailIcon className="absolute left-4 top-3.5 h-5 w-5 text-gray-600" />
+            <input
+              id="reset-email"
+              type="email"
+              value={email}
+              onChange={handleEmailChange}
+              required
+              disabled={isLoading}
+              className="w-full pl-12 pr-4 py-3 bg-black border border-white/10 text-white placeholder-gray-600 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all text-sm outline-none rounded-lg disabled:opacity-50"
+              placeholder="seu@email.com"
+            />
+          </div>
+
+          {error && (
+            <div className="text-red-400 text-xs bg-red-900/20 p-3 border border-red-900/30 rounded-lg flex items-center gap-2">
+              <span className="text-lg">❌</span>
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-4 px-4 bg-gradient-to-r from-brand-primary to-brand-secondary text-black font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all shadow-[0_0_30px_rgba(204,255,0,0.3)] rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                Enviando...
+              </>
+            ) : (
+              '📧 Enviar Link de Recuperação'
+            )}
+          </button>
+        </form>
+
+        <button
+          onClick={() => setView?.('login')}
+          className="mt-6 text-brand-primary hover:underline text-sm"
+        >
+          ← Voltar para o login
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="relative bg-neutrals-background_secondary border border-white/10 p-10 shadow-2xl backdrop-blur-sm rounded-2xl">
       {/* Badge de Status */}
@@ -136,27 +196,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           </ul>
         </div>
       )}
-
-      {/* OAuth Button - Google */}
-      <button
-        onClick={handleGoogleLogin}
-        disabled={isLoading}
-        className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-white text-black font-bold uppercase tracking-wider hover:bg-gray-100 transition-all mb-4 text-sm rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-      >
-        {isLoading ? (
-          <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-        ) : (
-          <GoogleIcon className="h-5 w-5" />
-        )}
-        {view === 'login' ? 'Entrar com Google' : 'Cadastrar com Google'}
-      </button>
-
-      {/* Divisor */}
-      <div className="relative flex py-2 items-center mb-6">
-        <div className="flex-grow border-t border-white/10"></div>
-        <span className="flex-shrink mx-4 text-[10px] font-bold text-gray-600 uppercase tracking-widest">Ou com Email</span>
-        <div className="flex-grow border-t border-white/10"></div>
-      </div>
 
       <form className="space-y-5" onSubmit={handleFormSubmit}>
         {/* Nome Completo - apenas no signup */}
@@ -294,8 +333,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         {error && (
           <div className="text-red-400 text-xs bg-red-900/20 p-3 border border-red-900/30 rounded-lg flex items-center gap-2">
             <span className="text-lg">❌</span>
-            {error.includes('Database error') 
-              ? 'Erro ao salvar seus dados. Aguarde alguns instantes e tente novamente. Se o problema persistir, contate o suporte.' 
+            {error.includes('Database error')
+              ? 'Erro ao salvar seus dados. Aguarde alguns instantes e tente novamente. Se o problema persistir, contate o suporte.'
               : error}
           </div>
         )}

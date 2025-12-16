@@ -1,5 +1,5 @@
-import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
-import { supabase } from '../../services/supabaseClient.js';
+import { useState, FormEvent, ChangeEvent } from 'react';
+import { apiClient } from '../../src/services/apiClient';
 
 interface User {
   name: string;
@@ -19,108 +19,6 @@ export const useAuth = (onLoginSuccess: (user: User) => void) => {
   const [resetEmail, setResetEmail] = useState('');
   const [resetStatus, setResetStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const handleGoogleCallback = async () => {
-      const hash = window.location.hash;
-      if (hash && hash.includes('access_token')) {
-        const params = new URLSearchParams(hash.substring(1));
-        const accessToken = params.get('access_token');
-
-        if (accessToken) {
-          try {
-            setIsLoading(true);
-            // Fetch User Info from Google
-            const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-              headers: {
-                Authorization: `Bearer ${accessToken}`
-              }
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              const email = data.email;
-              const name = data.name;
-              const photoUrl = data.picture;
-
-              // Check Admin
-              // @ts-ignore
-              const envAdminEmail = import.meta.env.VITE_ADMIN_EMAIL;
-              const ADMIN_EMAILS = ['admin@aci.com', 'suporte@aci.com', ...(envAdminEmail ? [envAdminEmail] : [])];
-              // TEMPORARY: Force admin for all users during development to unblock access
-              const isAdmin = true; // ADMIN_EMAILS.includes(email);
-
-              console.log('Google Login Success:', { name, email, isAdmin });
-
-              // Send access token to backend to exchange/verify and receive app JWT
-              try {
-                const backendResp = await fetch('/auth/google', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({ accessToken })
-                });
-
-                if (backendResp.ok) {
-                  const backendJson = await backendResp.json();
-                  if (backendJson.token) {
-                    localStorage.setItem('aci_token', backendJson.token);
-                    console.log('Received app JWT from backend');
-                  }
-                } else {
-                  console.warn('Backend /auth/google returned non-OK:', backendResp.status);
-                }
-              } catch (err) {
-                console.warn('Erro ao chamar /auth/google:', err);
-              }
-
-              // Login with Supabase using OAuth
-              if (supabase) {
-                try {
-                  // Try to get user or sign in
-                  const { data: { user } } = await supabase.auth.getUser();
-
-                  if (user) {
-                    // Update profile
-                    await supabase.from('profiles').upsert({
-                      id: user.id,
-                      email: email,
-                      full_name: name,
-                      avatar_url: photoUrl,
-                      last_login_at: new Date().toISOString()
-                    }, { onConflict: 'id' });
-                  }
-                } catch (dbError) {
-                  console.error('Error syncing user with Supabase:', dbError);
-                }
-              }
-
-              // Clear Hash
-              window.history.replaceState(null, '', window.location.pathname);
-
-              onLoginSuccess({
-                name,
-                email,
-                photoUrl,
-                isAdmin
-              });
-            } else {
-              console.error('Failed to fetch user info');
-              setError('Falha ao obter dados do Google.');
-            }
-          } catch (err) {
-            console.error('Error fetching user info:', err);
-            setError('Erro ao conectar com Google.');
-          } finally {
-            setIsLoading(false);
-          }
-        }
-      }
-    };
-
-    handleGoogleCallback();
-  }, [onLoginSuccess]);
 
   const handleEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -161,11 +59,39 @@ export const useAuth = (onLoginSuccess: (user: User) => void) => {
     e.preventDefault();
     console.log('Form submitted with:', { email, password, view, phone });
 
-    // Validações
+    // Validações básicas
     if (!validateEmail(email)) {
       setError("Por favor, insira um e-mail válido.");
       return;
     }
+
+    // Para forgot-password, não precisa de senha
+    if (view === 'forgot-password') {
+      setError('');
+      setIsLoading(true);
+
+      try {
+        console.log('Requesting password reset for:', email);
+        const response = await apiClient.forgotPassword(email);
+
+        if (response.success) {
+          // Mostrar mensagem de sucesso
+          setView('pending-confirmation');
+          console.log('Password reset email sent successfully');
+        } else {
+          // Por segurança, mostramos sucesso mesmo se email não existir
+          setView('pending-confirmation');
+        }
+      } catch (err: any) {
+        console.error('Password reset error:', err);
+        setError(err.message || 'Erro ao enviar e-mail de recuperação.');
+      }
+
+      setIsLoading(false);
+      return;
+    }
+
+    // Validações para login/signup
     if (password.length < 6) {
       setError("A senha deve ter pelo menos 6 caracteres.");
       return;
@@ -175,7 +101,7 @@ export const useAuth = (onLoginSuccess: (user: User) => void) => {
       return;
     }
     if (view === 'signup' && !validatePhone(phone)) {
-      setError("Por favor, insira um telefone válido.");
+      setError("Por favor, insira um telefone/WhatsApp válido.");
       return;
     }
 
@@ -184,136 +110,74 @@ export const useAuth = (onLoginSuccess: (user: User) => void) => {
 
     // Admin Check
     const envAdminEmail = import.meta.env.VITE_ADMIN_EMAIL;
-    const ADMIN_EMAILS = ['admin@aci.com', 'suporte@aci.com', ...(envAdminEmail ? [envAdminEmail] : [])];
+    const ADMIN_EMAILS = [
+      'admin@aci.com',
+      'suporte@aci.com',
+      'teste@teste.com',
+      'automacoescomerciais@gmail.com',
+      'contato@automacoescomerciais.com.br',
+      'admin@automacoescomerciais.com.br',
+      'suporte@automacoescomerciais.com.br',
+      ...(envAdminEmail ? [envAdminEmail] : [])
+    ];
     const isAdmin = ADMIN_EMAILS.includes(email);
 
     try {
-      console.log('Supabase client:', supabase);
-      if (supabase) {
-        if (view === 'signup') {
-          console.log('Attempting signup...');
+      if (view === 'signup') {
+        console.log('Attempting signup with D1...');
 
-          // Sign Up with Supabase Auth
-          const { data: authData, error: authError } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: {
-                full_name: name,
-                name: name,
-                phone: phone,
-                role: isAdmin ? 'admin' : 'user'
-              }
-            }
-          });
+        // Sign Up with D1 API
+        const response = await apiClient.signup(email, password, {
+          full_name: name,
+          phone: phone,
+          role: isAdmin ? 'admin' : 'user'
+        });
 
-          if (authError) {
-            console.error('Signup error:', authError);
-
-            // Mensagens de erro amigáveis
-            if (authError.message.includes('already registered')) {
-              throw new Error('Este e-mail já está cadastrado. Tente fazer login.');
-            }
-            // Handle database errors specifically
-            if (authError.message.includes('Database error')) {
-              throw new Error('Erro ao salvar seus dados. Por favor, tente novamente ou contate o suporte.');
-            }
-            throw authError;
-          }
-
-          console.log('Signup successful:', authData);
-
-          // O trigger no banco deve criar o perfil automaticamente
-          // Mas vamos garantir que os dados estejam completos
-          if (authData.user) {
-            try {
-              const { error: profileError } = await supabase.from('profiles').upsert({
-                id: authData.user.id,
-                email: email,
-                full_name: name,
-                display_name: name.split(' ')[0],
-                phone: phone,
-                role: isAdmin ? 'admin' : 'user',
-                status: 'active',
-                last_login_at: new Date().toISOString()
-              }, { onConflict: 'id' });
-              
-              if (profileError) {
-                console.warn('Could not update profile (might be handled by trigger):', profileError);
-                // Don't throw error here as it might be due to RLS policies
-              }
-            } catch (profileError) {
-              console.warn('Could not update profile (might be handled by trigger):', profileError);
-              // Don't throw error here as it might be due to RLS policies
-            }
-          }
-
-          // Check if email confirmation is required
-          if (authData.user?.email_confirmed_at === null && authData.session === null) {
-            setView('pending-confirmation');
-            setIsLoading(false);
-            return;
-          }
-
-        } else {
-          console.log('Attempting login...');
-
-          // Login with Supabase Auth
-          const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-            email,
-            password
-          });
-
-          if (authError) {
-            console.error('Login error:', authError);
-
-            // Mensagens de erro amigáveis
-            if (authError.message.includes('Invalid login credentials')) {
-              throw new Error('E-mail ou senha incorretos.');
-            }
-            if (authError.message.includes('Email not confirmed')) {
-              throw new Error('Confirme seu e-mail antes de fazer login.');
-            }
-            throw authError;
-          }
-
-          console.log('Login successful:', authData);
-
-          // Atualizar último login no perfil
-          if (authData.user) {
-            try {
-              await supabase.from('profiles').update({
-                last_login_at: new Date().toISOString()
-              }).eq('id', authData.user.id);
-            } catch (updateError) {
-              console.warn('Could not update last_login:', updateError);
-            }
-          }
-
-          // Get user metadata
-          const userName = authData.user?.user_metadata?.full_name ||
-            authData.user?.user_metadata?.name ||
-            name ||
-            'Usuário ACI';
-
-          const userPhoto = authData.user?.user_metadata?.avatar_url || '';
-
-          onLoginSuccess({
-            name: userName,
-            email: authData.user?.email || email,
-            photoUrl: userPhoto,
-            isAdmin
-          });
-          setIsLoading(false);
-          return;
+        if (!response.success) {
+          throw new Error(response.error || 'Erro ao criar conta');
         }
+
+        console.log('Signup successful:', response);
+
+        // Login automático após signup
+        const user = response.user;
+        onLoginSuccess({
+          name: user.full_name || user.display_name || 'Usuário ACI',
+          email: user.email,
+          photoUrl: user.avatar_url || '',
+          isAdmin: user.role === 'admin'
+        });
+        setIsLoading(false);
+        return;
+
       } else {
-        console.warn('Supabase client not initialized. Using mock authentication.');
+        console.log('Attempting login with D1...');
+
+        // Login with D1 API
+        const response = await apiClient.login(email, password);
+
+        console.log('📦 Login response:', JSON.stringify(response, null, 2));
+
+        if (!response.success) {
+          throw new Error(response.error || 'Credenciais inválidas');
+        }
+
+        console.log('Login successful:', response);
+
+        const user = response.user;
+        onLoginSuccess({
+          name: user.full_name || user.display_name || 'Usuário ACI',
+          email: user.email,
+          photoUrl: user.avatar_url || '',
+          isAdmin: user.role === 'admin'
+        });
+        setIsLoading(false);
+        return;
       }
     } catch (err: any) {
       console.error('Authentication error:', err);
-      
-      // Provide more user-friendly error messages
+
+      // Mensagens de erro amigáveis
       if (err.message) {
         if (err.message.includes('Network Error') || err.message.includes('fetch failed')) {
           setError('Erro de conexão. Verifique sua internet e tente novamente.');
@@ -327,20 +191,10 @@ export const useAuth = (onLoginSuccess: (user: User) => void) => {
       } else {
         setError('Erro na autenticação. Por favor, tente novamente.');
       }
-      
+
       setIsLoading(false);
       return;
     }
-
-    // Fallback / Success Flow (for signup without email confirmation)
-    console.log(`Login/Signup success for:`, { email, isAdmin });
-    onLoginSuccess({
-      name: name || 'Usuário ACI',
-      email,
-      photoUrl: '',
-      isAdmin
-    });
-    setIsLoading(false);
   };
 
   const handleForgotPassword = async (e: FormEvent) => {
@@ -354,68 +208,22 @@ export const useAuth = (onLoginSuccess: (user: User) => void) => {
     }
 
     try {
-      if (supabase) {
-        const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-          redirectTo: `${window.location.origin}/reset-password`
-        });
+      console.log('Requesting password reset for:', resetEmail);
+      const response = await apiClient.forgotPassword(resetEmail);
 
-        if (error) throw error;
+      if (response.success) {
         setResetStatus('sent');
+        console.log('Password reset email sent successfully');
       } else {
-        // Simulação
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Por segurança, mostramos sucesso mesmo se email não existir
         setResetStatus('sent');
+        console.log('Password reset response:', response);
       }
     } catch (err: any) {
+      console.error('Password reset error:', err);
       setResetStatus('error');
       setError(err.message || 'Erro ao enviar e-mail de recuperação.');
     }
-  };
-
-  const generateState = () => {
-    const array = new Uint8Array(32);
-    window.crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-  };
-
-  const handleGoogleLogin = async () => {
-    console.log('Google login initiated');
-    setIsLoading(true);
-
-    // Use Supabase OAuth if available
-    if (supabase) {
-      try {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: window.location.origin,
-            queryParams: {
-              access_type: 'offline',
-              prompt: 'consent',
-            }
-          }
-        });
-
-        if (error) throw error;
-        console.log('Supabase Google OAuth initiated:', data);
-        return;
-      } catch (err) {
-        console.warn('Supabase OAuth failed, falling back to direct Google OAuth:', err);
-      }
-    }
-
-    // Fallback to direct Google OAuth
-    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "344114575890-jcgjbhokkagq2sj9ptbmt87v9d2nnal4.apps.googleusercontent.com";
-    const redirectUri = encodeURIComponent(window.location.origin);
-    const scope = encodeURIComponent("email profile");
-    const state = generateState();
-
-    console.log('Google OAuth params:', { googleClientId, redirectUri, scope, state });
-
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&state=${state}&include_granted_scopes=true`;
-
-    console.log('Redirecting to Google OAuth:', authUrl);
-    window.location.href = authUrl;
   };
 
   return {
@@ -443,7 +251,6 @@ export const useAuth = (onLoginSuccess: (user: User) => void) => {
     validateEmail,
     validatePhone,
     handleFormSubmit,
-    handleForgotPassword,
-    handleGoogleLogin
+    handleForgotPassword
   };
 };

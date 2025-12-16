@@ -13,11 +13,17 @@ interface IntegrationsTabProps {
   tokenValidation: { status: 'idle' | 'loading' | 'valid' | 'invalid'; message: string };
   chatValidation: { status: 'idle' | 'loading' | 'valid' | 'invalid'; message: string };
   wpValidation: { status: 'idle' | 'loading' | 'valid' | 'invalid'; message: string };
+  shopeeValidation: { status: 'idle' | 'loading' | 'valid' | 'invalid'; message: string };
+  amazonValidation: { status: 'idle' | 'loading' | 'valid' | 'invalid'; message: string };
+  mlValidation: { status: 'idle' | 'loading' | 'valid' | 'invalid'; message: string };
   clientIdValidation: { status: 'idle' | 'valid' | 'invalid'; message: string };
   redirectUriValidation: { status: 'idle' | 'valid' | 'invalid'; message: string };
   validateTelegramToken: () => void;
   validateTelegramChatId: () => void;
   validateWordPressConnection: () => void;
+  validateShopeeId: () => void;
+  validateAmazonId: () => void;
+  validateMercadoLivreId: () => void;
   onNavigate: (page: Page, context?: { from: Page }) => void;
 }
 
@@ -29,11 +35,17 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
   tokenValidation,
   chatValidation,
   wpValidation,
+  shopeeValidation,
+  amazonValidation,
+  mlValidation,
   clientIdValidation,
   redirectUriValidation,
   validateTelegramToken,
   validateTelegramChatId,
   validateWordPressConnection,
+  validateShopeeId,
+  validateAmazonId,
+  validateMercadoLivreId,
   onNavigate
 }) => {
   const [showTelegramToken, setShowTelegramToken] = useState(false);
@@ -41,11 +53,11 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
 
   useEffect(() => {
     const isLoggedIn = localConfig.instagramUser !== null;
-    
+
     if (isLoggedIn && !hasShownWelcome) {
       const lastWelcomeTime = localStorage.getItem('lastWelcomeTime');
       const currentTime = Date.now();
-      
+
       if (!lastWelcomeTime || (currentTime - parseInt(lastWelcomeTime)) > 3600000) {
         alert('Prezado(a) desenvolvedor(a):\nBem-vindo(a) à Plataforma Aberta de ACI - Automações Comerciais Integradas!');
         localStorage.setItem('lastWelcomeTime', currentTime.toString());
@@ -55,13 +67,8 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
   }, [localConfig.instagramUser, hasShownWelcome]);
 
   const handleReturnToPlatform = () => {
-    const isLoggedIn = localConfig.instagramUser !== null;
-    
-    if (isLoggedIn) {
-      onNavigate('home', { from: 'admin' });
-    } else {
-      alert('Você precisa conectar sua conta do Instagram primeiro para acessar a plataforma.');
-    }
+    // Redireciona para a plataforma principal conforme solicitado pelo usuário
+    window.location.href = 'https://aci.automacoescomerciais.com.br';
   };
 
   return (
@@ -99,16 +106,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
             </div>
             <button
               type="button"
-              onClick={() => {
-                if (!localConfig.telegramBotToken) {
-                  setTokenValidation({ 
-                    status: 'invalid', 
-                    message: 'Por favor, insira um token do Telegram antes de verificar.' 
-                  });
-                  return;
-                }
-                validateTelegramToken();
-              }}
+              onClick={validateTelegramToken}
               disabled={!localConfig.telegramBotToken || tokenValidation.status === 'loading'}
               className="flex-shrink-0 bg-slate-700 hover:bg-slate-600 text-dark-text-secondary font-semibold py-3 px-4 rounded-full transition-colors disabled:opacity-50 disabled:cursor-wait"
             >
@@ -140,23 +138,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
             />
             <button
               type="button"
-              onClick={() => {
-                if (!localConfig.telegramBotToken) {
-                  setChatValidation({ 
-                    status: 'invalid', 
-                    message: 'Por favor, insira um token do Telegram antes de verificar o chat.' 
-                  });
-                  return;
-                }
-                if (!localConfig.telegramChatId) {
-                  setChatValidation({ 
-                    status: 'invalid', 
-                    message: 'Por favor, insira um ID de chat/canal do Telegram antes de verificar.' 
-                  });
-                  return;
-                }
-                validateTelegramChatId();
-              }}
+              onClick={validateTelegramChatId}
               disabled={!localConfig.telegramChatId || !localConfig.telegramBotToken || chatValidation.status === 'loading'}
               className="flex-shrink-0 bg-slate-700 hover:bg-slate-600 text-dark-text-secondary font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-wait"
             >
@@ -218,21 +200,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  if (!localConfig.wordpressUrl) {
-                    alert('Por favor, insira a URL do WordPress antes de verificar a conexão.');
-                    return;
-                  }
-                  if (!localConfig.wordpressUsername) {
-                    alert('Por favor, insira o nome de usuário do WordPress antes de verificar a conexão.');
-                    return;
-                  }
-                  if (!localConfig.wordpressAppPassword) {
-                    alert('Por favor, insira a senha de aplicativo do WordPress antes de verificar a conexão.');
-                    return;
-                  }
-                  validateWordPressConnection();
-                }}
+                onClick={validateWordPressConnection}
                 disabled={!localConfig.wordpressUrl || !localConfig.wordpressUsername || !localConfig.wordpressAppPassword || wpValidation.status === 'loading'}
                 className="flex-shrink-0 bg-slate-700 hover:bg-slate-600 text-dark-text-secondary font-semibold py-2 px-4 rounded-full transition-colors disabled:opacity-50 disabled:cursor-wait"
               >
@@ -263,28 +231,103 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
       {/* Affiliate IDs Section */}
       <div className="mt-6 space-y-6 p-6 bg-slate-800/50 rounded-lg border border-dark-border">
         <h4 className="text-lg font-semibold text-dark-text-primary">IDs de Afiliado</h4>
-        <FormField
-          label="ID de Afiliado Shopee"
-          id="shopeeAffiliateId"
-          placeholder="Seu ID de afiliado da Shopee"
-          value={localConfig.shopeeAffiliateId}
-          onChange={handleInputChange}
-        />
-        <FormField
-          label="ID de Associado Amazon (tag)"
-          id="amazonAffiliateId"
-          placeholder="ex: seutag-20"
-          value={localConfig.amazonAffiliateId}
-          onChange={handleInputChange}
-          description="Seu Tracking ID do programa de associados Amazon."
-        />
-        <FormField
-          label="ID de Afiliado Mercado Livre"
-          id="mercadoLivreAffiliateId"
-          placeholder="Seu ID de afiliado do Mercado Livre"
-          value={localConfig.mercadoLivreAffiliateId}
-          onChange={handleInputChange}
-        />
+
+        {/* Shopee */}
+        <div>
+          <label htmlFor="shopeeAffiliateId" className="block text-sm font-medium text-dark-text-secondary mb-2">
+            ID de Afiliado Shopee
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              id="shopeeAffiliateId"
+              name="shopeeAffiliateId" // Importante: name deve bater com a chave no localConfig
+              value={localConfig.shopeeAffiliateId}
+              onChange={handleInputChange}
+              className="flex-grow w-full bg-slate-800 border border-dark-border rounded-lg p-3 text-dark-text-primary placeholder-gray-500 focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition duration-200"
+              placeholder="Ex: 18372150411"
+            />
+            <button
+              type="button"
+              onClick={validateShopeeId}
+              disabled={!localConfig.shopeeAffiliateId || shopeeValidation.status === 'loading'}
+              className="flex-shrink-0 bg-slate-700 hover:bg-slate-600 text-dark-text-secondary font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-wait"
+            >
+              Verificar
+            </button>
+            <ValidationStatusIndicator status={shopeeValidation.status} />
+          </div>
+          {shopeeValidation.message && (
+            <p className={`text-xs mt-2 ${shopeeValidation.status === 'valid' ? 'text-green-400' : 'text-red-400'}`}>
+              {shopeeValidation.message}
+            </p>
+          )}
+        </div>
+
+        {/* Amazon */}
+        <div>
+          <label htmlFor="amazonAffiliateId" className="block text-sm font-medium text-dark-text-secondary mb-2">
+            ID de Associado Amazon (tag)
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              id="amazonAffiliateId"
+              name="amazonAffiliateId"
+              value={localConfig.amazonAffiliateId}
+              onChange={handleInputChange}
+              className="flex-grow w-full bg-slate-800 border border-dark-border rounded-lg p-3 text-dark-text-primary placeholder-gray-500 focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition duration-200"
+              placeholder="ex: seutag-20"
+            />
+            <button
+              type="button"
+              onClick={validateAmazonId}
+              disabled={!localConfig.amazonAffiliateId || amazonValidation.status === 'loading'}
+              className="flex-shrink-0 bg-slate-700 hover:bg-slate-600 text-dark-text-secondary font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-wait"
+            >
+              Verificar
+            </button>
+            <ValidationStatusIndicator status={amazonValidation.status} />
+          </div>
+          {amazonValidation.message && (
+            <p className={`text-xs mt-2 ${amazonValidation.status === 'valid' ? 'text-green-400' : 'text-red-400'}`}>
+              {amazonValidation.message}
+            </p>
+          )}
+          <p className="text-xs text-dark-text-secondary mt-1">Seu Tracking ID do programa de associados Amazon (normalmente termina em -20).</p>
+        </div>
+
+        {/* Mercado Livre */}
+        <div>
+          <label htmlFor="mercadoLivreAffiliateId" className="block text-sm font-medium text-dark-text-secondary mb-2">
+            ID de Afiliado Mercado Livre (App ID)
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              id="mercadoLivreAffiliateId"
+              name="mercadoLivreAffiliateId"
+              value={localConfig.mercadoLivreAffiliateId}
+              onChange={handleInputChange}
+              className="flex-grow w-full bg-slate-800 border border-dark-border rounded-lg p-3 text-dark-text-primary placeholder-gray-500 focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition duration-200"
+              placeholder="Ex: 3064531609380417"
+            />
+            <button
+              type="button"
+              onClick={validateMercadoLivreId}
+              disabled={!localConfig.mercadoLivreAffiliateId || mlValidation.status === 'loading'}
+              className="flex-shrink-0 bg-slate-700 hover:bg-slate-600 text-dark-text-secondary font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-wait"
+            >
+              Verificar
+            </button>
+            <ValidationStatusIndicator status={mlValidation.status} />
+          </div>
+          {mlValidation.message && (
+            <p className={`text-xs mt-2 ${mlValidation.status === 'valid' ? 'text-green-400' : 'text-red-400'}`}>
+              {mlValidation.message}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Instagram Section */}

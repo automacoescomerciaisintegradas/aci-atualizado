@@ -22,7 +22,7 @@ import { MultiChannelPublisher } from './components/MultiChannelPublisher';
 import { ShopeeLotePage } from './components/ShopeeLotePage';
 import { InstagramCaptionGenerator } from './components/InstagramCaptionGenerator';
 import { WhatsAppFloat } from './components/WhatsAppFloat';
-import { DashboardFooter } from './components/DashboardFooter';
+import { CreditDashboard } from './components/CreditDashboard';
 import { BlogCreator } from './components/BlogCreator';
 import { ChatPage } from './components/ChatPage';
 import { ImageGenerator } from './components/ImageGenerator';
@@ -34,9 +34,12 @@ import { CreateContentPage } from './components/CreateContentPage';
 import { OAuthConsentPage } from './components/OAuthConsentPage';
 import { PaymentMethodsPage } from './components/PaymentMethodsPage';
 import { AnalyticsPage } from './components/AnalyticsPage';
+import { ResetPasswordPage } from './components/ResetPasswordPage';
+import { DashboardFooter } from './components/DashboardFooter';
+import { SuperAdminPage } from './components/SuperAdminPage';
 
 
-export type Page = 'home' | 'product-search' | 'generate' | 'top-sales' | 'telegram' | 'admin' | 'aci-posts' | 'instagram-connect' | 'blog' | 'profile' | 'telegram-shopee' | 'faq' | 'precos' | 'multi-channel-publisher' | 'shopee-lote' | 'instagram-caption' | 'blog-creator' | 'chat' | 'image-generator' | 'instagram-profile' | 'telegram-id-catcher' | 'wordpress-blogs' | 'wordpress-create' | 'payment-methods' | 'analytics';
+export type Page = 'home' | 'product-search' | 'generate' | 'top-sales' | 'telegram' | 'admin' | 'aci-posts' | 'instagram-connect' | 'blog' | 'profile' | 'telegram-shopee' | 'faq' | 'precos' | 'multi-channel-publisher' | 'shopee-lote' | 'instagram-caption' | 'blog-creator' | 'chat' | 'image-generator' | 'instagram-profile' | 'telegram-id-catcher' | 'wordpress-blogs' | 'wordpress-create' | 'payment-methods' | 'analytics' | 'user-settings';
 
 const transactions = [
   { id: 1, date: '15/07/2024', type: 'Compra', description: 'Compra de 50.000 créditos', amount: '+ R$ 50,00', credits: '+50000' },
@@ -51,6 +54,18 @@ const invoices = [
 ];
 
 const App: React.FC = () => {
+  // Check for Reset Password URL
+  if (window.location.pathname === '/reset-password' || window.location.search.includes('token=')) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    if (token) {
+      return <ResetPasswordPage onBackToLogin={() => {
+        window.location.href = '/';
+      }} />;
+    }
+  }
+
   // Check for OAuth Consent URL
   if (window.location.pathname === '/oauth/consent') {
     return <OAuthConsentPage />;
@@ -62,6 +77,27 @@ const App: React.FC = () => {
   const { settings, saveSettings, isLoading: isLoadingSettings } = useSettings();
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
   const [navigationContext, setNavigationContext] = useState<{ from?: Page } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error' | 'warning', message: string } | null>(null);
+
+  // Check for Instagram callback parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const instagramStatus = urlParams.get('instagram_status');
+    const message = urlParams.get('message');
+
+    if (instagramStatus && message) {
+      setToastMessage({
+        type: instagramStatus as 'success' | 'error' | 'warning',
+        message: decodeURIComponent(message)
+      });
+
+      // Clean URL
+      window.history.replaceState({}, document.title, '/');
+
+      // Auto hide after 5 seconds
+      setTimeout(() => setToastMessage(null), 5000);
+    }
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -221,11 +257,7 @@ const App: React.FC = () => {
       case 'home':
         return <HomePage onNavigate={setActivePage} />;
       case 'admin':
-        if (!user?.isAdmin) {
-          // Redirect non-admins to home or show error
-          setTimeout(() => setActivePage('home'), 0);
-          return <div className="p-8 text-center text-red-500">Acesso Negado. Apenas administradores podem acessar esta página.</div>;
-        }
+        // Todos os usuários têm acesso ao painel admin
         return <AdminPage onBack={onBack} onNavigate={handleNavigate} />;
       case 'blog':
         return <BlogShopeePage onNavigate={setActivePage} />;
@@ -271,6 +303,8 @@ const App: React.FC = () => {
         return <PaymentMethodsPage />;
       case 'analytics':
         return <AnalyticsPage />;
+      case 'user-settings':
+        return <SuperAdminPage onBack={onBack} onNavigate={handleNavigate} />;
     }
   };
 
@@ -301,6 +335,48 @@ const App: React.FC = () => {
           </div>
         </main>
       </div>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-4 right-4 z-50 animate-fade-in">
+          <div className={`rounded-lg shadow-2xl p-4 min-w-[300px] max-w-md ${toastMessage.type === 'success' ? 'bg-green-500/90' :
+              toastMessage.type === 'error' ? 'bg-red-500/90' :
+                'bg-yellow-500/90'
+            } text-white backdrop-blur-sm`}>
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                {toastMessage.type === 'success' && (
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                {toastMessage.type === 'error' && (
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+                {toastMessage.type === 'warning' && (
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-sm">{toastMessage.message}</p>
+              </div>
+              <button
+                onClick={() => setToastMessage(null)}
+                className="flex-shrink-0 text-white/80 hover:text-white"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <WhatsAppFloat />
     </div>
   );

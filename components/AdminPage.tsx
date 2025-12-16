@@ -18,23 +18,99 @@ export const AdminPage: React.FC<{ onBack?: () => void; onNavigate: (page: Page,
   const [activeTab, setActiveTab] = useState<AdminTab>('apiKeys');
   const { settings, saveSettings, isLoading } = useSettings();
   const [localConfig, setLocalConfig] = useState<Settings>(settings);
-  
+
   const {
     tokenValidation,
     setTokenValidation,
     chatValidation,
     setChatValidation,
+    wpValidation,
+    setWpValidation,
+    shopeeValidation,
+    setShopeeValidation,
+    amazonValidation,
+    setAmazonValidation,
+    mlValidation,
+    setMlValidation,
     clientIdValidation,
     setClientIdValidation,
     redirectUriValidation,
     setRedirectUriValidation
   } = useAdminValidations(localConfig);
-  
+
   const { saveStatus, handleSave: handleSaveConfig } = useAdminSave(settings, saveSettings);
-  const { validateTelegramToken, validateTelegramChatId, validateWordPressConnection } = useExternalValidations();
+  const {
+    validateTelegramToken,
+    validateTelegramChatId,
+    validateWordPressConnection,
+    validateShopeeId,
+    validateAmazonId,
+    validateMercadoLivreId
+  } = useExternalValidations();
+
+  // Validation Wrappers
+  const handleValidateTelegramToken = async () => {
+    if (!localConfig.telegramBotToken) {
+      setTokenValidation({ status: 'invalid', message: 'Por favor, insira um token do Telegram.' });
+      return;
+    }
+    setTokenValidation({ status: 'loading', message: 'Verificando...' });
+    const result = await validateTelegramToken(localConfig.telegramBotToken);
+    setTokenValidation(result);
+  };
+
+  const handleValidateTelegramChatId = async () => {
+    if (!localConfig.telegramBotToken) {
+      setChatValidation({ status: 'invalid', message: 'Token do bot é necessário para verificar o chat.' });
+      return;
+    }
+    if (!localConfig.telegramChatId) {
+      setChatValidation({ status: 'invalid', message: 'Por favor, insira um ID de chat.' });
+      return;
+    }
+    setChatValidation({ status: 'loading', message: 'Verificando...' });
+    const result = await validateTelegramChatId(localConfig.telegramBotToken, localConfig.telegramChatId);
+    setChatValidation(result);
+  };
+
+  const handleValidateWordPress = async () => {
+    if (!localConfig.wordpressUrl || !localConfig.wordpressUsername || !localConfig.wordpressAppPassword) {
+      setWpValidation({ status: 'invalid', message: 'Preencha todos os campos do WordPress.' });
+      return;
+    }
+    setWpValidation({ status: 'loading', message: 'Verificando...' });
+    const result = await validateWordPressConnection(localConfig.wordpressUrl, localConfig.wordpressUsername, localConfig.wordpressAppPassword);
+    setWpValidation(result);
+  };
+
+  const handleValidateShopee = () => {
+    setShopeeValidation({ status: 'loading', message: 'Verificando...' });
+    setTimeout(() => { // Simulando delay para feedback visual
+      const result = validateShopeeId(localConfig.shopeeAffiliateId);
+      setShopeeValidation(result);
+    }, 500);
+  };
+
+  const handleValidateAmazon = () => {
+    setAmazonValidation({ status: 'loading', message: 'Verificando...' });
+    setTimeout(() => {
+      const result = validateAmazonId(localConfig.amazonAffiliateId);
+      setAmazonValidation(result);
+    }, 500);
+  };
+
+  const handleValidateML = () => {
+    setMlValidation({ status: 'loading', message: 'Verificando...' });
+    setTimeout(() => {
+      const result = validateMercadoLivreId(localConfig.mercadoLivreAffiliateId);
+      setMlValidation(result);
+    }, 500);
+  };
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { id, value, type } = e.target;
+    // ... restante da função handleInputChange existente ...
     const target = e.target as HTMLInputElement;
 
     setLocalConfig(prev => ({
@@ -55,6 +131,7 @@ export const AdminPage: React.FC<{ onBack?: () => void; onNavigate: (page: Page,
 
   return (
     <div className="animate-fade-in">
+      {/* ... (mantendo o JSX anterior até o IntegrationsTab) ... */}
       <div className="flex items-center gap-4 mb-8">
         {onBack && (
           <Button variant="icon-only" onClick={onBack}>
@@ -88,43 +165,49 @@ export const AdminPage: React.FC<{ onBack?: () => void; onNavigate: (page: Page,
         <div className="lg:col-span-3">
           <Card className="p-6">
             {activeTab === 'apiKeys' && (
-              <ApiKeysTab 
-                localConfig={localConfig} 
-                handleInputChange={handleInputChange} 
-                handleSave={handleSave} 
-                saveStatus={saveStatus} 
+              <ApiKeysTab
+                localConfig={localConfig}
+                handleInputChange={handleInputChange}
+                handleSave={handleSave}
+                saveStatus={saveStatus}
               />
             )}
 
             {activeTab === 'integrations' && (
-              <IntegrationsTab 
-                localConfig={localConfig} 
-                handleInputChange={handleInputChange} 
-                handleSave={handleSave} 
-                saveStatus={saveStatus} 
-                tokenValidation={tokenValidation} 
-                chatValidation={chatValidation} 
-                wpValidation={{ status: 'idle', message: '' }} 
-                clientIdValidation={clientIdValidation} 
-                redirectUriValidation={redirectUriValidation} 
-                validateTelegramToken={validateTelegramToken} 
-                validateTelegramChatId={validateTelegramChatId} 
-                validateWordPressConnection={validateWordPressConnection} 
-                onNavigate={onNavigate} 
+              <IntegrationsTab
+                localConfig={localConfig}
+                handleInputChange={handleInputChange}
+                handleSave={handleSave}
+                saveStatus={saveStatus}
+                tokenValidation={tokenValidation}
+                chatValidation={chatValidation}
+                wpValidation={wpValidation}
+                shopeeValidation={shopeeValidation}
+                amazonValidation={amazonValidation}
+                mlValidation={mlValidation}
+                clientIdValidation={clientIdValidation}
+                redirectUriValidation={redirectUriValidation}
+                validateTelegramToken={handleValidateTelegramToken}
+                validateTelegramChatId={handleValidateTelegramChatId}
+                validateWordPressConnection={handleValidateWordPress}
+                validateShopeeId={handleValidateShopee}
+                validateAmazonId={handleValidateAmazon}
+                validateMercadoLivreId={handleValidateML}
+                onNavigate={onNavigate}
               />
             )}
 
             {activeTab === 'ai' && (
-              <AiTab 
-                localConfig={localConfig} 
-                handleInputChange={handleInputChange} 
+              <AiTab
+                localConfig={localConfig}
+                handleInputChange={handleInputChange}
               />
             )}
 
             {activeTab === 'cron' && (
-              <CronTab 
-                localConfig={localConfig} 
-                handleInputChange={handleInputChange} 
+              <CronTab
+                localConfig={localConfig}
+                handleInputChange={handleInputChange}
               />
             )}
           </Card>

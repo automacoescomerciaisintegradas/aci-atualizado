@@ -36,8 +36,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBackToLand
     isLoading,
     handleEmailChange,
     handlePhoneChange,
-    handleFormSubmit,
-    handleGoogleLogin
+    handleFormSubmit
   } = useAuth(onLoginSuccess);
 
   // Mock Offer Cards for Marquee - Updated with Diverse Categories
@@ -206,7 +205,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBackToLand
                 handleEmailChange={handleEmailChange}
                 handlePhoneChange={handlePhoneChange}
                 handleFormSubmit={handleFormSubmit}
-                handleGoogleLogin={handleGoogleLogin}
                 error={error}
               />
             </div>
@@ -647,10 +645,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBackToLand
                   {/* Feedback Message */}
                   {newsletterMessage && (
                     <div className={`px-4 py-2 rounded-lg text-sm font-medium ${newsletterMessage.type === 'success'
-                        ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                        : newsletterMessage.type === 'error'
-                          ? 'bg-red-500/10 text-red-400 border border-red-500/20'
-                          : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                      ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                      : newsletterMessage.type === 'error'
+                        ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                        : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                       }`}>
                       {newsletterMessage.text}
                     </div>

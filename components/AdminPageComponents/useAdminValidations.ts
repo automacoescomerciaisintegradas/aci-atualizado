@@ -9,6 +9,10 @@ interface ValidationState {
 export const useAdminValidations = (localConfig: Settings) => {
   const [tokenValidation, setTokenValidation] = useState<ValidationState>({ status: 'idle', message: '' });
   const [chatValidation, setChatValidation] = useState<ValidationState>({ status: 'idle', message: '' });
+  const [wpValidation, setWpValidation] = useState<ValidationState>({ status: 'idle', message: '' });
+  const [shopeeValidation, setShopeeValidation] = useState<ValidationState>({ status: 'idle', message: '' });
+  const [amazonValidation, setAmazonValidation] = useState<ValidationState>({ status: 'idle', message: '' });
+  const [mlValidation, setMlValidation] = useState<ValidationState>({ status: 'idle', message: '' });
   const [clientIdValidation, setClientIdValidation] = useState<{ status: 'idle' | 'valid' | 'invalid'; message: string }>({ status: 'idle', message: '' });
   const [redirectUriValidation, setRedirectUriValidation] = useState<{ status: 'idle' | 'valid' | 'invalid'; message: string }>({ status: 'idle', message: '' });
 
@@ -58,6 +62,14 @@ export const useAdminValidations = (localConfig: Settings) => {
     setTokenValidation,
     chatValidation,
     setChatValidation,
+    wpValidation,
+    setWpValidation,
+    shopeeValidation,
+    setShopeeValidation,
+    amazonValidation,
+    setAmazonValidation,
+    mlValidation,
+    setMlValidation,
     clientIdValidation,
     setClientIdValidation,
     redirectUriValidation,

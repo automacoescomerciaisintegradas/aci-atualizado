@@ -1,7 +1,7 @@
 // auth.ts – stub implementation for JWT based authentication
 // This is an in‑memory placeholder (no DB) used for early prototyping.
 
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 // Secret key – in a real project this would come from .env
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-key";
@@ -15,8 +15,8 @@ export interface UserPayload {
 /**
  * Generate a signed JWT for a given user payload.
  */
-export function generateToken(payload: UserPayload, expiresIn = "1h"): string {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn });
+export function generateToken(payload: UserPayload, expiresIn: string | number = "1h"): string {
+    return jwt.sign(payload, JWT_SECRET, { expiresIn } as jwt.SignOptions);
 }
 
 /**

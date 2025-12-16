@@ -182,8 +182,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, search
                     </div>
                 </div>
                 <nav className="space-y-1 border-t border-dark-border pt-4">
-                    {isAdmin && <NavLink icon={<SettingsIcon />} text="Admin" active={activePage === 'admin'} onClick={() => onNavigate('admin')} />}
+                    <NavLink icon={<SettingsIcon />} text="Admin" active={activePage === 'admin'} onClick={() => onNavigate('admin')} />
                     <NavLink icon={<UserIcon />} text="Minha Conta" active={activePage === 'profile'} onClick={() => onNavigate('profile')} />
+                    {isAdmin && <NavLink icon={<SettingsIcon />} text="Super Admin" active={activePage === 'user-settings'} onClick={() => onNavigate('user-settings')} />}
                 </nav>
             </div>
         </aside>

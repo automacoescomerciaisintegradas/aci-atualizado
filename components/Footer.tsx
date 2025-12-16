@@ -19,7 +19,7 @@ export const Footer: React.FC<{ onAuthClick: () => void }> = ({ onAuthClick }) =
                             CNPJ: 59.216.642/0001-75
                         </p>
                         <div className="flex justify-center md:justify-start gap-4">
-                            <a href="#" className="text-neutrals-text_secondary hover:text-neutrals-text_primary transition-colors" aria-label="Instagram"><InstagramIcon /></a>
+                            <a href="https://www.instagram.com/automacoescomerciais integradas" target="_blank" rel="noopener noreferrer" className="text-neutrals-text_secondary hover:text-neutrals-text_primary transition-colors" aria-label="Instagram"><InstagramIcon /></a>
                             <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" className="text-neutrals-text_secondary hover:text-neutrals-text_primary transition-colors" aria-label="Telegram"><TelegramIcon /></a>
                             <a href={whatsappGroupUrl} target="_blank" rel="noopener noreferrer" className="text-neutrals-text_secondary hover:text-neutrals-text_primary transition-colors" aria-label="WhatsApp Group"><WhatsAppIcon /></a>
                         </div>

@@ -9,7 +9,7 @@ const FACEBOOK_API_VERSION = process.env.META_API_VERSION || 'v19.0';
 const APP_ID = process.env.META_APP_ID;
 const APP_SECRET = process.env.META_APP_SECRET;
 const REDIRECT_URI = process.env.META_REDIRECT_URI;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3001';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // 1. Iniciar Login - Retorna a URL para o frontend redirecionar
 router.get('/auth', authMiddleware, (req: any, res) => {
@@ -44,11 +44,11 @@ router.get('/callback', async (req: any, res) => {
 
     if (error) {
         console.error('Erro retornado pelo Facebook:', error, error_reason, error_description);
-        return res.redirect(`${FRONTEND_URL}/dashboard/integrations?status=error&message=${encodeURIComponent(error_description as string)}`);
+        return res.redirect(`${FRONTEND_URL}?instagram_status=error&message=${encodeURIComponent(error_description as string || 'Erro ao conectar Instagram')}`);
     }
 
     if (!code || !state) {
-        return res.redirect(`${FRONTEND_URL}/dashboard/integrations?status=error&message=Codigo_ou_estado_ausente`);
+        return res.redirect(`${FRONTEND_URL}?instagram_status=error&message=${encodeURIComponent('Código ou estado ausente')}`);
     }
 
     try {
@@ -164,15 +164,207 @@ router.get('/callback', async (req: any, res) => {
         }
 
         if (connectedCount === 0) {
-            return res.redirect(`${FRONTEND_URL}/dashboard/integrations?status=warning&message=Nenhuma_conta_Instagram_Business_encontrada`);
+            return res.redirect(`${FRONTEND_URL}?instagram_status=warning&message=${encodeURIComponent('Nenhuma conta Instagram Business encontrada')}`);
         }
 
-        // Sucesso
-        res.redirect(`${FRONTEND_URL}/dashboard/integrations?status=success&count=${connectedCount}`);
+        // Sucesso - Redirecionar para home com mensagem de sucesso
+        res.redirect(`${FRONTEND_URL}?instagram_status=success&message=${encodeURIComponent(`${connectedCount} conta(s) Instagram conectada(s) com sucesso!`)}`);
 
     } catch (error: any) {
         console.error('Erro no callback do Instagram:', error.response?.data || error.message);
-        res.redirect(`${FRONTEND_URL}/dashboard/integrations?status=error&message=Erro_interno_no_servidor`);
+        res.redirect(`${FRONTEND_URL}?instagram_status=error&message=${encodeURIComponent('Erro ao conectar Instagram. Tente novamente.')}`);
+    }
+});
+
+// 3. Publicar Post no Instagram
+router.post('/post', authMiddleware, async (req: any, res) => {
+    try {
+        const { integrationId, imageUrl, caption } = req.body;
+        const userId = req.user.id;
+
+        if (!integrationId || !imageUrl || !caption) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: integrationId, imageUrl, caption'
+            });
+        }
+
+        // Buscar integração do usuário
+        const integration = await prisma.integration.findFirst({
+            where: {
+                id: integrationId,
+                userId,
+                provider: 'INSTAGRAM',
+                status: 'ACTIVE'
+            }
+        });
+
+        if (!integration) {
+            return res.status(404).json({
+                success: false,
+                error: 'Integração Instagram não encontrada ou inativa'
+            });
+        }
+
+        const credentials = integration.credentials as any;
+        const { InstagramAPI } = await import('../../lib/instagram');
+
+        const instagram = new InstagramAPI({
+            accessToken: credentials.accessToken,
+            instagramBusinessAccountId: credentials.instagramId
+        });
+
+        // Publicar post
+        const result = await instagram.publishPost({ imageUrl, caption });
+
+        // Deduzir créditos (R$ 0,27 por publicação)
+        const COST_PER_POST = 0.27;
+        console.log(`Post publicado! Custo: R$ ${COST_PER_POST}`);
+
+        return res.json({
+            success: true,
+            message: 'Post publicado com sucesso!',
+            data: {
+                id: result.id,
+                permalink: result.permalink,
+                cost: COST_PER_POST
+            }
+        });
+    } catch (error: any) {
+        console.error('Error publishing Instagram post:', error);
+        return res.status(500).json({
+            success: false,
+            error: error.message || 'Erro ao publicar post'
+        });
+    }
+});
+
+// 4. Resposta Automática a Comentário
+router.post('/comment/auto-reply', authMiddleware, async (req: any, res) => {
+    try {
+        const {
+            integrationId,
+            commentId,
+            commentText,
+            username,
+            productName,
+            productLink
+        } = req.body;
+        const userId = req.user.id;
+
+        // Buscar integração
+        const integration = await prisma.integration.findFirst({
+            where: {
+                id: integrationId,
+                userId,
+                provider: 'INSTAGRAM',
+                status: 'ACTIVE'
+            }
+        });
+
+        if (!integration) {
+            return res.status(404).json({
+                success: false,
+                error: 'Integração não encontrada'
+            });
+        }
+
+        const credentials = integration.credentials as any;
+        const { InstagramAPI, detectKeywordInComment, generateAutoReply } = await import('../../lib/instagram');
+
+        // Verificar palavra-chave
+        const hasKeyword = detectKeywordInComment({ text: commentText } as any, 'EU QUERO');
+
+        if (!hasKeyword) {
+            return res.json({
+                success: true,
+                message: 'Comentário não contém palavra-chave',
+                data: { replied: false }
+            });
+        }
+
+        const instagram = new InstagramAPI({
+            accessToken: credentials.accessToken,
+            instagramBusinessAccountId: credentials.instagramId
+        });
+
+        // Responder publicamente
+        const replyMessage = generateAutoReply(username, productName);
+        await instagram.replyToComment(commentId, replyMessage);
+
+        // Deduzir créditos
+        const COST_REPLY = 0.09;
+        console.log(`Resposta automática enviada! Custo: R$ ${COST_REPLY}`);
+
+        return res.json({
+            success: true,
+            message: 'Resposta automática enviada!',
+            data: {
+                replied: true,
+                replyMessage,
+                cost: COST_REPLY
+            }
+        });
+    } catch (error: any) {
+        console.error('Error auto-replying:', error);
+        return res.status(500).json({
+            success: false,
+            error: error.message || 'Erro ao responder comentário'
+        });
+    }
+});
+
+// 5. Obter Informações da Conta
+router.get('/account/:integrationId', authMiddleware, async (req: any, res) => {
+    try {
+        const { integrationId } = req.params;
+        const userId = req.user.id;
+
+        const integration = await prisma.integration.findFirst({
+            where: {
+                id: integrationId,
+                userId,
+                provider: 'INSTAGRAM',
+                status: 'ACTIVE'
+            }
+        });
+
+        if (!integration) {
+            return res.status(404).json({
+                success: false,
+                error: 'Integração não encontrada'
+            });
+        }
+
+        const credentials = integration.credentials as any;
+        const { InstagramAPI } = await import('../../lib/instagram');
+
+        const instagram = new InstagramAPI({
+            accessToken: credentials.accessToken,
+            instagramBusinessAccountId: credentials.instagramId
+        });
+
+        const accountInfo = await instagram.getAccountInfo();
+        const recentMedia = await instagram.getRecentMedia(6);
+
+        return res.json({
+            success: true,
+            data: {
+                account: accountInfo,
+                recentPosts: recentMedia,
+                integration: {
+                    id: integration.id,
+                    name: integration.name,
+                    connectedAt: integration.createdAt
+                }
+            }
+        });
+    } catch (error: any) {
+        console.error('Error fetching account info:', error);
+        return res.status(500).json({
+            success: false,
+            error: error.message || 'Erro ao buscar informações'
+        });
     }
 });
 

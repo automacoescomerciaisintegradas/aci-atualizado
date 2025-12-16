@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { apiClient } from '../src/services/apiClient';
 import { GoogleIcon } from './Icons';
 
 interface AuthFlowProps {
@@ -25,52 +25,33 @@ export const AuthFlow: React.FC<AuthFlowProps> = ({ onAuthSuccess }) => {
 
         try {
             if (mode === 'register') {
-                const { data, error } = await supabase.auth.signUp({
-                    email,
-                    password,
-                    options: {
-                        data: { name },
-                        emailRedirectTo: `${window.location.origin}/auth/callback`
-                    }
+                const response = await apiClient.signup(email, password, {
+                    full_name: name
                 });
 
-                if (error) throw error;
-
-                if (data.user && !data.session) {
-                    setEmailSent(true);
-                    setMessage({
-                        type: 'info',
-                        text: 'Verifique seu email! Enviamos um link de confirmação para ativar sua conta.'
-                    });
-                } else if (data.session) {
-                    setMessage({ type: 'success', text: 'Registro realizado com sucesso!' });
-                    setTimeout(onAuthSuccess, 1000);
+                if (!response.success) {
+                    throw new Error(response.error || 'Erro ao criar conta');
                 }
+
+                setMessage({ type: 'success', text: 'Registro realizado com sucesso!' });
+                setTimeout(onAuthSuccess, 1000);
+
             } else if (mode === 'login') {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password
-                });
+                const response = await apiClient.login(email, password);
 
-                if (error) throw error;
-
-                // Check if email is confirmed
-                if (data.user && !data.user.email_confirmed_at) {
-                    setMessage({
-                        type: 'error',
-                        text: 'Por favor, confirme seu email antes de fazer login. Verifique sua caixa de entrada.'
-                    });
-                    return;
+                if (!response.success) {
+                    throw new Error(response.error || 'Credenciais inválidas');
                 }
 
                 setMessage({ type: 'success', text: 'Login realizado com sucesso!' });
                 setTimeout(onAuthSuccess, 1000);
-            } else if (mode === 'forgot-password') {
-                const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: `${window.location.origin}/auth/reset-password`
-                });
 
-                if (error) throw error;
+            } else if (mode === 'forgot-password') {
+                const response = await apiClient.forgotPassword(email);
+
+                if (!response.success) {
+                    throw new Error(response.error || 'Erro ao enviar email');
+                }
 
                 setMessage({
                     type: 'success',
@@ -93,19 +74,17 @@ export const AuthFlow: React.FC<AuthFlowProps> = ({ onAuthSuccess }) => {
         setMessage(null);
 
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`
-                }
+            // TODO: Implementar Google OAuth via Cloudflare Worker
+            setMessage({
+                type: 'info',
+                text: 'Login com Google será implementado em breve.'
             });
-
-            if (error) throw error;
         } catch (error: any) {
             setMessage({
                 type: 'error',
                 text: error.message || 'Erro ao autenticar com Google'
             });
+        } finally {
             setLoading(false);
         }
     };
@@ -172,10 +151,10 @@ export const AuthFlow: React.FC<AuthFlowProps> = ({ onAuthSuccess }) => {
                     {message && (
                         <div
                             className={`mb-6 p-4 rounded-lg border ${message.type === 'success'
-                                    ? 'bg-green-50 border-green-200 text-green-800'
-                                    : message.type === 'error'
-                                        ? 'bg-red-50 border-red-200 text-red-800'
-                                        : 'bg-blue-50 border-blue-200 text-blue-800'
+                                ? 'bg-green-50 border-green-200 text-green-800'
+                                : message.type === 'error'
+                                    ? 'bg-red-50 border-red-200 text-red-800'
+                                    : 'bg-blue-50 border-blue-200 text-blue-800'
                                 }`}
                         >
                             <p className="text-sm font-medium">{message.text}</p>
