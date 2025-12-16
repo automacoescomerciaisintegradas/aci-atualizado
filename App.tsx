@@ -166,9 +166,14 @@ const App: React.FC = () => {
   };
 
   const handleNavigate = useCallback((page: Page, context?: { from: Page }) => {
-    setActivePage(page);
-    setGlobalSearchTerm(''); // Clear search on navigation
-    setNavigationContext(context || null); // Store navigation context
+    try {
+      console.log('🔹 Navigating to:', page);
+      setActivePage(page);
+      setGlobalSearchTerm(''); // Clear search on navigation
+      setNavigationContext(context || null); // Store navigation context
+    } catch (error) {
+      console.error('❌ Navigation error:', error);
+    }
   }, []);
 
   // Global Keyboard Shortcuts
@@ -340,8 +345,8 @@ const App: React.FC = () => {
       {toastMessage && (
         <div className="fixed top-4 right-4 z-50 animate-fade-in">
           <div className={`rounded-lg shadow-2xl p-4 min-w-[300px] max-w-md ${toastMessage.type === 'success' ? 'bg-green-500/90' :
-              toastMessage.type === 'error' ? 'bg-red-500/90' :
-                'bg-yellow-500/90'
+            toastMessage.type === 'error' ? 'bg-red-500/90' :
+              'bg-yellow-500/90'
             } text-white backdrop-blur-sm`}>
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0">

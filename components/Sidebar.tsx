@@ -115,9 +115,40 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, search
         <aside className="hidden md:flex w-64 flex-shrink-0 bg-dark-card p-4 flex-col h-full border-r border-dark-border">
             {/* Header */}
             <div>
-                <div className="px-3 mb-6 mt-2">
+                <div className="px-3 mb-6 mt-2 flex items-center gap-3">
+                    <svg
+                        width="40"
+                        height="40"
+                        viewBox="0 0 40 40"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="flex-shrink-0"
+                        style={{ color: '#00f5ff' }}
+                    >
+                        {/* Círculo externo */}
+                        <circle
+                            cx="20"
+                            cy="20"
+                            r="18"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                        />
+
+                        {/* Texto central */}
+                        <text
+                            x="20"
+                            y="23"
+                            textAnchor="middle"
+                            fontSize="10"
+                            fontWeight="700"
+                            fontFamily="Arial, Helvetica, sans-serif"
+                            fill="currentColor"
+                        >
+                            ACI
+                        </text>
+                    </svg>
                     <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">
-                        ACI
+                        Automações
                     </span>
                 </div>
             </div>

@@ -3,6 +3,7 @@ import { UserIcon, LockIcon, CreditIcon, ShieldCheckIcon, CameraIcon, FileTextIc
 import { useSettings } from '../hooks/useSettings';
 import { PricingCard } from './PricingCard';
 import { PixPaymentModal } from './PixPaymentModal';
+import { apiClient } from '../src/services/apiClient';
 
 interface Transaction {
     id: number;
@@ -48,17 +49,83 @@ const ProfileTabContent: React.FC<{ user?: { name: string; email: string; photoU
     const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.photoUrl || null);
     const avatarInputRef = useRef<HTMLInputElement>(null);
 
-    const [name, setName] = useState(user?.name || 'Usuário ACI');
-    const [email, setEmail] = useState(user?.email || 'usuario@exemplo.com');
-    const [phone, setPhone] = useState('(88) 99422-7586');
-    const [document, setDocument] = useState('560.779.713-91');
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [document, setDocument] = useState('');
     const [saveStatus, setSaveStatus] = useState('');
     const [emailError, setEmailError] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
 
-    const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
+    // Carregar dados do usuário ao montar o componente
+    React.useEffect(() => {
+        const loadUserData = async () => {
+            try {
+                setIsLoading(true);
+
+                // Buscar dados do localStorage primeiro (cache)
+                const cachedEmail = localStorage.getItem('userEmail');
+                const cachedName = localStorage.getItem('userName');
+
+                if (cachedEmail) setEmail(cachedEmail);
+                if (cachedName) setName(cachedName);
+
+                // Buscar dados completos da API
+                if (apiClient) {
+                    const response = await apiClient.getUser();
+                    if (response.success && response.user) {
+                        const userData = response.user;
+                        setName(userData.full_name || userData.display_name || '');
+                        setEmail(userData.email || '');
+                        setPhone(userData.phone || '');
+                        setDocument(userData.document || '');
+
+                        if (userData.avatar_url) {
+                            setAvatarPreview(userData.avatar_url);
+                        }
+
+                        // Atualizar cache
+                        localStorage.setItem('userEmail', userData.email);
+                        localStorage.setItem('userName', userData.full_name || userData.display_name || '');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dados do usuário:', error);
+                // Usar dados do prop user como fallback
+                if (user) {
+                    setName(user.name);
+                    setEmail(user.email);
+                    setAvatarPreview(user.photoUrl);
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadUserData();
+    }, [user]);
+
+    const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Preview local
             setAvatarPreview(URL.createObjectURL(file));
+
+            // Upload para servidor
+            if (apiClient) {
+                try {
+                    setSaveStatus('Enviando foto...');
+                    const response = await apiClient.uploadAvatar(file);
+                    if (response.success) {
+                        setSaveStatus('Foto atualizada com sucesso!');
+                        setTimeout(() => setSaveStatus(''), 3000);
+                    }
+                } catch (error: any) {
+                    console.error('Erro ao fazer upload:', error);
+                    setSaveStatus('');
+                    setEmailError('Erro ao enviar foto. Tente novamente.');
+                }
+            }
         }
     };
 
@@ -67,18 +134,58 @@ const ProfileTabContent: React.FC<{ user?: { name: string; email: string; photoU
         return regex.test(emailToValidate);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         setSaveStatus("");
         setEmailError("");
+
         if (!validateEmail(email)) {
             setEmailError("Por favor, insira um e-mail válido.");
             return;
         }
 
-        console.log("Saving profile:", { name, email, phone, document });
-        setSaveStatus("Alterações salvas com sucesso!");
-        setTimeout(() => setSaveStatus(''), 3000);
+        if (apiClient) {
+            try {
+                setSaveStatus("Salvando...");
+
+                const response = await apiClient.updateProfile({
+                    full_name: name,
+                    phone: phone,
+                    // email não pode ser atualizado aqui por segurança
+                });
+
+                if (response.success) {
+                    setSaveStatus("Alterações salvas com sucesso!");
+
+                    // Atualizar cache
+                    localStorage.setItem('userName', name);
+
+                    setTimeout(() => setSaveStatus(''), 3000);
+                } else {
+                    throw new Error(response.error || 'Erro ao salvar');
+                }
+            } catch (error: any) {
+                console.error('Erro ao salvar:', error);
+                setEmailError(error.message || "Erro ao salvar alterações");
+                setSaveStatus("");
+            }
+        } else {
+            // Fallback local (desenvolvimento)
+            console.log("Saving profile:", { name, email, phone, document });
+            setSaveStatus("Alterações salvas com sucesso!");
+            setTimeout(() => setSaveStatus(''), 3000);
+        }
     };
+
+    if (isLoading) {
+        return (
+            <div className="bg-dark-card rounded-xl shadow-2xl shadow-black/20 border border-dark-border p-6 md:p-8">
+                <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
+                    <span className="ml-3 text-dark-text-secondary">Carregando...</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-dark-card rounded-xl shadow-2xl shadow-black/20 border border-dark-border p-6 md:p-8">
@@ -86,11 +193,46 @@ const ProfileTabContent: React.FC<{ user?: { name: string; email: string; photoU
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
                 <div className="flex flex-col items-center gap-4">
                     <div className="relative h-32 w-32">
-                        <img
-                            src={avatarPreview || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=4f46e5&color=fff&size=128`}
-                            alt="Avatar"
-                            className="h-full w-full rounded-full object-cover bg-slate-700"
-                        />
+                        {avatarPreview ? (
+                            <img
+                                src={avatarPreview}
+                                alt="Avatar"
+                                className="h-full w-full rounded-full object-cover bg-slate-700"
+                            />
+                        ) : (
+                            <div className="h-full w-full rounded-full bg-slate-800 flex items-center justify-center border-2 border-slate-700">
+                                <svg
+                                    width="80"
+                                    height="80"
+                                    viewBox="0 0 40 40"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    style={{ color: '#00f5ff' }}
+                                >
+                                    {/* Círculo externo */}
+                                    <circle
+                                        cx="20"
+                                        cy="20"
+                                        r="18"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    />
+
+                                    {/* Texto central */}
+                                    <text
+                                        x="20"
+                                        y="23"
+                                        textAnchor="middle"
+                                        fontSize="10"
+                                        fontWeight="700"
+                                        fontFamily="Arial, Helvetica, sans-serif"
+                                        fill="currentColor"
+                                    >
+                                        ACI
+                                    </text>
+                                </svg>
+                            </div>
+                        )}
                         <button
                             onClick={() => avatarInputRef.current?.click()}
                             className="absolute bottom-0 right-0 h-9 w-9 bg-slate-700 rounded-full flex items-center justify-center border-2 border-dark-card hover:bg-slate-600 transition-colors"
@@ -117,12 +259,10 @@ const ProfileTabContent: React.FC<{ user?: { name: string; email: string; photoU
                                 id="email"
                                 type="email"
                                 value={email}
-                                onChange={(e) => {
-                                    setEmail(e.target.value);
-                                    if (emailError) setEmailError('');
-                                }}
-                                className="w-full bg-slate-800 border border-dark-border rounded-lg p-3 pl-12" />
+                                disabled
+                                className="w-full bg-slate-800 border border-dark-border rounded-lg p-3 pl-12 opacity-60 cursor-not-allowed" />
                         </div>
+                        <p className="text-xs text-dark-text-secondary mt-1">O email não pode ser alterado</p>
                         {emailError && <p className="text-red-400 text-xs mt-1 ml-1">{emailError}</p>}
                     </div>
                     <div>

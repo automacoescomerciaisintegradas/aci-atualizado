@@ -21,16 +21,44 @@ export const FeaturedProductSection: React.FC<FeaturedProductSectionProps> = ({ 
       <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-start">
         {/* Video Column */}
         <div className="animate-fade-in sticky top-24">
-          <div className="aspect-w-9 aspect-h-16 bg-dark-bg rounded-xl overflow-hidden shadow-2xl shadow-black/30 border border-dark-border h-[600px]">
-            <iframe 
-              src="https://www.youtube.com/embed/3fBXcYGg_3A" 
-              title="YouTube video player" 
-              frameBorder="0" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-              referrerPolicy="strict-origin-when-cross-origin" 
+          <div className="aspect-w-9 aspect-h-16 bg-dark-bg rounded-xl overflow-hidden shadow-2xl shadow-black/30 border border-dark-border h-[600px] relative">
+            {/* Tentativa 1: YouTube Embed com nocookie */}
+            <iframe
+              src="https://www.youtube-nocookie.com/embed/F5vMVttmjN4?enablejsapi=1&origin=https://replit.dev&widget_referrer=https://replit.dev"
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
               className="w-full h-full"
+              onError={(e) => {
+                // Fallback: mostrar link
+                const iframe = e.currentTarget;
+                iframe.style.display = 'none';
+                const fallback = iframe.nextElementSibling;
+                if (fallback) (fallback as HTMLElement).style.display = 'flex';
+              }}
             ></iframe>
+
+            {/* Fallback: Link direto para o YouTube */}
+            <div className="hidden absolute inset-0 bg-gradient-to-br from-gray-900 to-gray-800 flex-col items-center justify-center p-8 text-center">
+              <svg className="w-24 h-24 text-red-500 mb-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+              </svg>
+              <h3 className="text-2xl font-bold text-white mb-4">Vídeo com Restrições de Incorporação</h3>
+              <p className="text-gray-300 mb-6">Este vídeo não pode ser reproduzido aqui, mas você pode assistir diretamente no YouTube.</p>
+              <a
+                href="https://www.youtube.com/watch?v=F5vMVttmjN4"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-lg transition-colors duration-300 shadow-lg"
+              >
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+                </svg>
+                Assistir no YouTube
+              </a>
+            </div>
           </div>
         </div>
 
@@ -66,9 +94,9 @@ export const FeaturedProductSection: React.FC<FeaturedProductSectionProps> = ({ 
           </div>
 
           {/* CTA */}
-          <a 
-            href={affiliateLink} 
-            target="_blank" 
+          <a
+            href={affiliateLink}
+            target="_blank"
             rel="noopener noreferrer"
             className="block w-full text-center bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-4 px-6 rounded-lg hover:opacity-90 transition-opacity duration-300 shadow-lg shadow-orange-500/30 text-lg"
           >
