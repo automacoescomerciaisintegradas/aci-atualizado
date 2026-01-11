@@ -2,11 +2,12 @@ version: '3.8'
 
 services:
   aci-app:
+    image: aci-automacoes:latest
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: aci-app
-    restart: unless-stopped
+    # container_name: aci-app
+    # restart: unless-stopped
     env_file: .env
     # Removemos os ports expostos para o mundo, o Traefik cuidará disso via HTTPS (Porta 443)
     # Mantemos apenas se você quiser acessar via IP direto ainda
@@ -19,15 +20,27 @@ services:
     networks:
       - easypanel # Rede do Traefik/EasyPanel
       - aci-network
+    deploy:
+      restart_policy:
+        condition: any
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=easypanel"
+        - "traefik.http.routers.aci-frontend.rule=Host(`aci.automacoescomerciais.com.br`)"
+        - "traefik.http.routers.aci-frontend.entrypoints=websecure"
+        - "traefik.http.routers.aci-frontend.tls.certresolver=letsencrypt"
+        - "traefik.http.services.aci-frontend.loadbalancer.server.port=4001"
+        - "traefik.http.routers.aci-api.rule=Host(`aci.automacoescomerciais.com.br`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.aci-api.entrypoints=websecure"
+        - "traefik.http.routers.aci-api.tls.certresolver=letsencrypt"
+        - "traefik.http.services.aci-api.loadbalancer.server.port=4001"
     labels:
       - "traefik.enable=true"
-      # --- Roteamento para o Frontend ---
+      - "traefik.docker.network=easypanel"
       - "traefik.http.routers.aci-frontend.rule=Host(`aci.automacoescomerciais.com.br`)"
       - "traefik.http.routers.aci-frontend.entrypoints=websecure"
-      - "traefik.http.routers.aci-frontend.tls.certresolver=letsencrypt" # Ou o nome do seu resolver no Traefik (geralmente leresolver ou letsencrypt)
+      - "traefik.http.routers.aci-frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.aci-frontend.loadbalancer.server.port=4001"
-      
-      # --- Roteamento para a API (Backend) ---
       - "traefik.http.routers.aci-api.rule=Host(`aci.automacoescomerciais.com.br`) && PathPrefix(`/api`)"
       - "traefik.http.routers.aci-api.entrypoints=websecure"
       - "traefik.http.routers.aci-api.tls.certresolver=letsencrypt"
@@ -41,4 +54,4 @@ networks:
   aci-network:
     driver: bridge
   easypanel:
-    external: true # Indica que a rede já existe (criada pelo EasyPanel)
+    external: true

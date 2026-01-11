@@ -62,7 +62,7 @@ set /p DEPLOY_VPS="Fazer deploy na VPS (%VPS_USER%@%VPS_HOST%)? (s/n): "
 if /i "%DEPLOY_VPS%"=="s" (
     echo [INFO] Conectando a VPS...
     
-    ssh %VPS_USER%@%VPS_HOST% "cd /opt/projects/aci-automacoes && git pull && docker-compose down && docker-compose build --no-cache && docker-compose up -d && docker ps | grep aci"
+    ssh %VPS_USER%@%VPS_HOST% "mkdir -p /opt/projects/aci-automacoes && cd /opt/projects/aci-automacoes && git pull && docker build -t aci-automacoes:latest . && docker-compose down 2>/dev/null || true && docker rm -f aci-app 2>/dev/null || true && docker stack deploy -c docker-compose.yml aci-automacoes --resolve-image=never"
     
     echo [OK] Deploy na VPS concluido!
 )

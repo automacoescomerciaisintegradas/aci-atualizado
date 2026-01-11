@@ -101,32 +101,29 @@ if [ "$DEPLOY_VPS" == "s" ]; then
         echo "=== Atualizando código na VPS ==="
         
         # Navegar para o diretório do projeto
-        cd /opt/easypanel/projects/aci-automacoes 2>/dev/null || {
-            echo "Criando diretório do projeto..."
-            mkdir -p /opt/easypanel/projects/aci-automacoes
-            cd /opt/easypanel/projects/aci-automacoes
-            git clone https://github.com/automacoescomerciais/aci-automacoes.git . || echo "Clone falhou, continuando..."
-        }
+        mkdir -p /opt/projects/aci-automacoes
+        cd /opt/projects/aci-automacoes
         
-        # Pull das atualizações
-        git pull origin main 2>/dev/null || git pull origin master 2>/dev/null || echo "Pull falhou, continuando..."
+        # Tentar pull (pode falhar se sem credenciais, mas arquivo local foi enviado via scp se usar deploy local)
+        git pull origin main 2>/dev/null || true
         
-        echo "=== Reconstruindo container ==="
+        echo "=== Reconstruindo imagem ==="
+        docker build -t aci-automacoes:latest .
         
-        # Se EasyPanel estiver instalado, usar CLI do EasyPanel
-        if command -v easypanel &> /dev/null; then
-            easypanel deploy aci-automacoes
-            echo "Deploy via EasyPanel CLI concluído!"
-        else
-            # Fallback para docker-compose
-            docker-compose down 2>/dev/null || true
-            docker-compose build --no-cache
-            docker-compose up -d
-            echo "Deploy via docker-compose concluído!"
-        fi
+        echo "=== Deploy no Swarm ==="
+        
+        # Parar container legado se existir
+        docker-compose down 2>/dev/null || true
+        docker rm -f aci-app 2>/dev/null || true
+        
+        # Deploy via Docker Stack (suporte a Traefik Swarm Mode)
+        docker stack deploy -c docker-compose.yml aci-automacoes --resolve-image=never
         
         # Verificar status
-        docker ps | grep aci || echo "Container não está rodando"
+        echo "Aguardando serviço iniciar..."
+        sleep 5
+        docker service ls | grep aci-automacoes
+        docker service ps aci-automacoes_aci-app --no-trunc
         
         echo "=== Deploy finalizado! ==="
 ENDSSH
