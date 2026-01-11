@@ -52,6 +52,6 @@ volumes:
 
 networks:
   aci-network:
-    driver: bridge
+    driver: overlay
   easypanel:
     external: true
