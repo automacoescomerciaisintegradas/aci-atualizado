@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { EyeIcon, EyeOffIcon } from '../Icons';
 
 // Button component based on the design system
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -56,8 +57,12 @@ export const Input: React.FC<InputProps> = ({
   isSecret = false, 
   id, 
   className = '', 
+  type = 'text',
   ...props 
 }) => {
+  const [showSecret, setShowSecret] = useState(false);
+  const inputType = isSecret ? (showSecret ? 'text' : 'password') : type;
+
   return (
     <div className="mb-4">
       {label && (
@@ -68,16 +73,18 @@ export const Input: React.FC<InputProps> = ({
       <div className="relative">
         <input
           id={id}
+          type={inputType}
           className={`w-full bg-[#2f3245] border border-[#3b4253] rounded-md px-3.5 py-2.5 text-[#d0d2d6] placeholder-[#676d7d] focus:ring-2 focus:ring-[#6d6bfb] focus:border-transparent transition duration-200 ${className}`}
           {...props}
         />
         {isSecret && (
           <button
             type="button"
+            onClick={() => setShowSecret(!showSecret)}
             className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#b4b7bd] hover:text-[#d0d2d6]"
-            aria-label="Toggle secret visibility"
+            aria-label={showSecret ? "Hide password" : "Show password"}
           >
-            <EyeIcon className="h-5 w-5" />
+            {showSecret ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
           </button>
         )}
       </div>
@@ -125,11 +132,3 @@ export const Alert: React.FC<AlertProps> = ({
     </div>
   );
 };
-
-// Ícones para o input de senha
-const EyeIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-  </svg>
-);

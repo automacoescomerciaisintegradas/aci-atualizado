@@ -9,7 +9,7 @@ import {
     TelegramIcon, LinkIcon, TrendingUpIcon, SearchIcon as SearchPageIcon,
     ShoppingCartSendIcon, BookIcon, FileTextIcon, MagicWandIcon, ImageIcon,
     ChatIcon, UserSearchIcon, SparklesIcon, DollarSignIcon, CreditCardIcon,
-    UsersIcon, ZapIcon
+    UsersIcon, ZapIcon, DownloadIcon, CopyIcon
 } from './Icons';
 
 interface TopNavbarProps {
@@ -97,6 +97,17 @@ const menuCategories: MenuCategory[] = [
         ]
     },
     {
+        id: 'diversos',
+        label: 'Diversos',
+        icon: <CopyIcon className="h-4 w-4" />,
+        items: [
+            { page: 'support' as Page, label: 'Suporte', icon: <HelpCircleIcon className="h-4 w-4" /> },
+            { page: 'guides' as Page, label: 'Guias e Tutoriais', icon: <BookIcon className="h-4 w-4" /> },
+            { page: 'community' as Page, label: 'Participe Da Comunidade', icon: <UsersIcon className="h-4 w-4" /> },
+            { page: 'download-plugin' as Page, label: 'Download Plugin', icon: <DownloadIcon className="h-4 w-4" /> },
+        ]
+    },
+    {
         id: 'conta',
         label: 'Minha Conta',
         icon: <UserIcon className="h-4 w-4" />,
@@ -156,6 +167,16 @@ const CategoryDropdown: React.FC<{
                             <button
                                 key={item.page}
                                 onClick={() => {
+                                    if (item.page === ('download-plugin' as Page)) {
+                                        const link = document.createElement('a');
+                                        link.href = '/plugin-postagens-inteligentes.zip';
+                                        link.download = 'plugin-postagens-inteligentes.zip';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        onToggle();
+                                        return;
+                                    }
                                     onNavigate(item.page);
                                     onToggle();
                                 }}
