@@ -3,11 +3,15 @@
  * Substitui o Supabase Client no frontend
  */
 
-// URL da API - usa variável de ambiente ou fallback para porta 3002
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4001';
+// URL da API - detecta automaticamente se está em produção ou desenvolvimento
+const isProduction = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
+
+// Em produção, usa a mesma origem (URL relativa vazia) - o backend está no mesmo servidor
+// Em desenvolvimento, usa localhost:4001
+const API_BASE_URL = import.meta.env.VITE_API_URL || (isProduction ? '' : 'http://localhost:4001');
 
 // Debug: mostrar qual URL está sendo usada
-console.log('🔧 API URL:', API_BASE_URL);
+console.log('🔧 API URL:', API_BASE_URL || '(mesma origem)');
 
 interface ApiResponse<T = any> {
     success: boolean;
