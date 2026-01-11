@@ -293,7 +293,7 @@ const ProfileTabContent: React.FC<{ user?: { name: string; email: string; photoU
 
 const SecurityTabContent: React.FC = () => {
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 xl:gap-8 items-start">
             <div className="bg-dark-card rounded-xl shadow-2xl shadow-black/20 border border-dark-border p-6 md:p-8">
                 <h3 className="text-xl font-semibold text-dark-text-primary mb-6">Alterar Senha</h3>
                 <form className="space-y-4">

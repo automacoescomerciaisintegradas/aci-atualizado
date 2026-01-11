@@ -22,12 +22,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+    <div className="animate-fade-in space-y-6 md:space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6 xl:gap-8">
+        <div className="md:col-span-2 xl:col-span-2 2xl:col-span-3">
           <FeaturesSection onNavigate={onNavigate} />
         </div>
-        <div>
+        <div className="md:col-span-2 xl:col-span-1">
           <SecuritySection onNavigate={onNavigate} />
         </div>
       </div>

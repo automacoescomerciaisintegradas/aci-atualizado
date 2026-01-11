@@ -12,33 +12,33 @@ type Platform = 'wordpress' | 'blogger' | 'medium';
 
 export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate }) => {
     const { settings } = useSettings();
-    
+
     // Check if each platform is configured
     const isWordPressConfigured = !!(settings.wordpressUrl && settings.wordpressUsername && settings.wordpressAppPassword);
     const isBloggerConfigured = !!(settings.bloggerApiKey && settings.bloggerBlogId);
     const isMediumConfigured = !!(settings.mediumToken);
-    
+
     // Form states
     const [productName, setProductName] = useState('');
     const [productDescription, setProductDescription] = useState('');
     const [toneOfVoice, setToneOfVoice] = useState('persuasivo e amigável');
     const [targetAudience, setTargetAudience] = useState('consumidores em busca de boas ofertas');
     const [postObjective, setPostObjective] = useState('gerar cliques no link de afiliado e realizar vendas');
-    
+
     // Generation states
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedPost, setGeneratedPost] = useState<FullBlogPost | null>(null);
     const [error, setError] = useState<string | null>(null);
-    
+
     // Post-generation states
     const contentRef = useRef<HTMLTextAreaElement>(null);
     const [isCopied, setIsCopied] = useState(false);
-    const [publishState, setPublishState] = useState<{ 
-        status: 'idle' | 'loading' | 'success' | 'error', 
-        message?: string, 
-        link?: string 
+    const [publishState, setPublishState] = useState<{
+        status: 'idle' | 'loading' | 'success' | 'error',
+        message?: string,
+        link?: string
     }>({ status: 'idle' });
-    
+
     // Platform-specific states
     const [selectedPlatform, setSelectedPlatform] = useState<Platform>('wordpress');
     const [categories, setCategories] = useState<any[]>([]);
@@ -47,7 +47,7 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
     const [selectedTags, setSelectedTags] = useState<number[]>([]);
     const [newCategory, setNewCategory] = useState<string>('');
     const [newTag, setNewTag] = useState<string>('');
-    
+
     // Load categories and tags when platform changes to WordPress
     React.useEffect(() => {
         if (selectedPlatform === 'wordpress' && isWordPressConfigured) {
@@ -57,21 +57,21 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
                 if (categoriesResult.success && categoriesResult.categories) {
                     setCategories(categoriesResult.categories);
                 }
-                
+
                 // Load tags
                 const tagsResult = await getWordPressTags(settings);
                 if (tagsResult.success && tagsResult.tags) {
                     setTags(tagsResult.tags);
                 }
             };
-            
+
             loadCategoriesAndTags();
         }
     }, [selectedPlatform, isWordPressConfigured, settings]);
-    
+
     const handleCreateCategory = async () => {
         if (!newCategory.trim() || selectedPlatform !== 'wordpress' || !isWordPressConfigured) return;
-        
+
         const result = await createWordPressCategory(settings, newCategory.trim());
         if (result.success && result.categoryId) {
             // Reload categories
@@ -86,10 +86,10 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
             alert(result.message || 'Erro ao criar categoria');
         }
     };
-    
+
     const handleCreateTag = async () => {
         if (!newTag.trim() || selectedPlatform !== 'wordpress' || !isWordPressConfigured) return;
-        
+
         const result = await createWordPressTag(settings, newTag.trim());
         if (result.success && result.tagId) {
             // Reload tags
@@ -104,7 +104,7 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
             alert(result.message || 'Erro ao criar tag');
         }
     };
-    
+
     const handleGeneratePost = useCallback(async (e: FormEvent) => {
         e.preventDefault();
         if (!productName || !productDescription) {
@@ -117,10 +117,10 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
         setPublishState({ status: 'idle' });
         try {
             const post = await generateFullBlogPostFromDetails(
-                productName, 
-                productDescription, 
-                toneOfVoice, 
-                targetAudience, 
+                productName,
+                productDescription,
+                toneOfVoice,
+                targetAudience,
                 postObjective
             );
             setGeneratedPost(post);
@@ -130,19 +130,19 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
             setIsGenerating(false);
         }
     }, [productName, productDescription, toneOfVoice, targetAudience, postObjective]);
-    
+
     const handleInsert = (textToInsert: string) => {
         const textarea = contentRef.current;
         if (!textarea || !generatedPost) return;
-        
+
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
         const currentText = generatedPost.content;
         const newText = `${currentText.substring(0, start)} ${textToInsert} ${currentText.substring(end)}`;
-        
+
         setGeneratedPost({ ...generatedPost, content: newText });
     };
-    
+
     const handleCopyAll = () => {
         if (!generatedPost) return;
         const fullContent = `# ${generatedPost.title}\n\n${generatedPost.content}\n\n${generatedPost.hashtags.join(' ')}`;
@@ -150,30 +150,30 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
     };
-    
+
     const handlePublish = async () => {
         if (!generatedPost) return;
         setPublishState({ status: 'loading' });
-        
+
         try {
             let result: { success: boolean; message: string; postLink?: string };
-            
+
             switch (selectedPlatform) {
                 case 'wordpress':
                     if (!isWordPressConfigured) {
                         throw new Error('WordPress não está configurado');
                     }
                     result = await publishToWordPress(
-                        settings, 
-                        generatedPost.title, 
-                        generatedPost.content, 
+                        settings,
+                        generatedPost.title,
+                        generatedPost.content,
                         '', // CSS is empty for now
                         'publish',
                         selectedCategories.length > 0 ? selectedCategories : undefined,
                         selectedTags.length > 0 ? selectedTags : undefined
                     );
                     break;
-                    
+
                 case 'blogger':
                     if (!isBloggerConfigured) {
                         throw new Error('Blogger não está configurado');
@@ -184,7 +184,7 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
                         generatedPost.content
                     );
                     break;
-                    
+
                 case 'medium':
                     if (!isMediumConfigured) {
                         throw new Error('Medium não está configurado');
@@ -195,28 +195,28 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
                         generatedPost.content
                     );
                     break;
-                    
+
                 default:
                     throw new Error('Plataforma não suportada');
             }
-            
+
             if (result.success) {
-                setPublishState({ 
-                    status: 'success', 
-                    message: `Post publicado no ${selectedPlatform === 'wordpress' ? 'WordPress' : selectedPlatform === 'blogger' ? 'Blogger' : 'Medium'}!`, 
-                    link: result.postLink 
+                setPublishState({
+                    status: 'success',
+                    message: `Post publicado no ${selectedPlatform === 'wordpress' ? 'WordPress' : selectedPlatform === 'blogger' ? 'Blogger' : 'Medium'}!`,
+                    link: result.postLink
                 });
             } else {
                 setPublishState({ status: 'error', message: result.message });
             }
         } catch (e) {
-            setPublishState({ 
-                status: 'error', 
-                message: e instanceof Error ? e.message : 'Erro ao publicar o post' 
+            setPublishState({
+                status: 'error',
+                message: e instanceof Error ? e.message : 'Erro ao publicar o post'
             });
         }
     };
-    
+
     const handlePreview = () => {
         if (!generatedPost) return;
         // Create a preview window with the formatted content
@@ -242,97 +242,97 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
             previewWindow.document.close();
         }
     };
-    
+
     return (
         <div className="animate-fade-in">
             <div className="mb-8">
                 <h1 className="text-2xl font-bold">Simples Criador de Posts</h1>
                 <p className="text-dark-text-secondary">Gere e publique posts de blog individualmente em múltiplas plataformas</p>
             </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 xl:gap-8">
                 {/* Form Column */}
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-dark-card rounded-xl border border-dark-border p-6">
-                        <h3 className="text-lg font-semibold mb-4">1. Dados do Produto</h3>
-                        <div className="space-y-4">
+                <div className="lg:col-span-1 space-y-4 md:space-y-6">
+                    <div className="bg-dark-card rounded-xl border border-dark-border p-4 md:p-6">
+                        <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">1. Dados do Produto</h3>
+                        <div className="space-y-3 md:space-y-4">
                             <div>
                                 <label htmlFor="productName" className="text-sm font-medium text-dark-text-secondary block mb-1">Nome do Produto *</label>
-                                <input 
-                                    type="text" 
-                                    id="productName" 
-                                    value={productName} 
-                                    onChange={e => setProductName(e.target.value)} 
-                                    className="w-full bg-slate-800 border border-dark-border rounded p-2 text-sm" 
+                                <input
+                                    type="text"
+                                    id="productName"
+                                    value={productName}
+                                    onChange={e => setProductName(e.target.value)}
+                                    className="w-full bg-slate-800 border border-dark-border rounded p-2 text-sm"
                                 />
                             </div>
                             <div>
                                 <label htmlFor="productDescription" className="text-sm font-medium text-dark-text-secondary block mb-1">Descrição do Produto *</label>
-                                <textarea 
-                                    id="productDescription" 
-                                    value={productDescription} 
-                                    onChange={e => setProductDescription(e.target.value)} 
-                                    rows={4} 
-                                    className="w-full bg-slate-800 border border-dark-border rounded p-2 text-sm" 
+                                <textarea
+                                    id="productDescription"
+                                    value={productDescription}
+                                    onChange={e => setProductDescription(e.target.value)}
+                                    rows={4}
+                                    className="w-full bg-slate-800 border border-dark-border rounded p-2 text-sm"
                                 />
                             </div>
                         </div>
                     </div>
-                    
-                    <div className="bg-dark-card rounded-xl border border-dark-border p-6">
-                        <h3 className="text-lg font-semibold mb-4">2. Configurações da IA</h3>
-                        <div className="space-y-4">
+
+                    <div className="bg-dark-card rounded-xl border border-dark-border p-4 md:p-6">
+                        <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">2. Configurações da IA</h3>
+                        <div className="space-y-3 md:space-y-4">
                             <div>
                                 <label htmlFor="toneOfVoice" className="text-sm font-medium text-dark-text-secondary block mb-1">Tom de Voz</label>
-                                <input 
-                                    type="text" 
-                                    id="toneOfVoice" 
-                                    value={toneOfVoice} 
-                                    onChange={e => setToneOfVoice(e.target.value)} 
-                                    className="w-full bg-slate-800 border border-dark-border rounded p-2 text-sm" 
+                                <input
+                                    type="text"
+                                    id="toneOfVoice"
+                                    value={toneOfVoice}
+                                    onChange={e => setToneOfVoice(e.target.value)}
+                                    className="w-full bg-slate-800 border border-dark-border rounded p-2 text-sm"
                                 />
                             </div>
                             <div>
                                 <label htmlFor="targetAudience" className="text-sm font-medium text-dark-text-secondary block mb-1">Público Alvo</label>
-                                <input 
-                                    type="text" 
-                                    id="targetAudience" 
-                                    value={targetAudience} 
-                                    onChange={e => setTargetAudience(e.target.value)} 
-                                    className="w-full bg-slate-800 border border-dark-border rounded p-2 text-sm" 
+                                <input
+                                    type="text"
+                                    id="targetAudience"
+                                    value={targetAudience}
+                                    onChange={e => setTargetAudience(e.target.value)}
+                                    className="w-full bg-slate-800 border border-dark-border rounded p-2 text-sm"
                                 />
                             </div>
                             <div>
                                 <label htmlFor="postObjective" className="text-sm font-medium text-dark-text-secondary block mb-1">Objetivo do Post</label>
-                                <input 
-                                    type="text" 
-                                    id="postObjective" 
-                                    value={postObjective} 
-                                    onChange={e => setPostObjective(e.target.value)} 
-                                    className="w-full bg-slate-800 border border-dark-border rounded p-2 text-sm" 
+                                <input
+                                    type="text"
+                                    id="postObjective"
+                                    value={postObjective}
+                                    onChange={e => setPostObjective(e.target.value)}
+                                    className="w-full bg-slate-800 border border-dark-border rounded p-2 text-sm"
                                 />
                             </div>
                         </div>
                     </div>
-                    
-                    <button 
-                        onClick={handleGeneratePost} 
+
+                    <button
+                        onClick={handleGeneratePost}
                         disabled={isGenerating || !productName || !productDescription}
                         className="w-full flex items-center justify-center gap-2 bg-brand-primary text-white font-bold py-3 px-4 rounded-lg hover:bg-brand-primary/90 disabled:opacity-50"
                     >
                         {isGenerating ? <SpinnerIcon /> : <MagicWandIcon />}
                         {isGenerating ? 'Gerando Post...' : 'Gerar Post com IA'}
                     </button>
-                    
+
                     {error && (
                         <div className="bg-red-900/50 border border-red-700 text-red-300 p-3 rounded-lg text-sm flex items-center gap-2">
                             <AlertTriangleIcon className="h-5 w-5" /> {error}
                         </div>
                     )}
                 </div>
-                
+
                 {/* Result Column */}
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 xl:col-span-3">
                     {isGenerating && (
                         <div className="bg-dark-card rounded-xl border border-dark-border p-6 animate-pulse-fast space-y-6">
                             <div className="h-8 bg-slate-700 rounded w-3/4"></div>
@@ -344,38 +344,38 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
                             <div className="h-40 bg-slate-700 rounded"></div>
                         </div>
                     )}
-                    
+
                     {generatedPost && (
                         <div className="bg-dark-card rounded-xl border border-dark-border p-6 space-y-6 animate-fade-in">
                             <div>
                                 <label className="text-sm font-medium text-dark-text-secondary block mb-1">Título do Post</label>
-                                <input 
-                                    type="text" 
-                                    value={generatedPost.title} 
-                                    onChange={e => setGeneratedPost({ ...generatedPost, title: e.target.value })} 
-                                    className="w-full bg-slate-800 border border-dark-border rounded p-3 text-lg font-bold" 
+                                <input
+                                    type="text"
+                                    value={generatedPost.title}
+                                    onChange={e => setGeneratedPost({ ...generatedPost, title: e.target.value })}
+                                    className="w-full bg-slate-800 border border-dark-border rounded p-3 text-lg font-bold"
                                 />
                             </div>
-                            
+
                             <div>
                                 <label className="text-sm font-medium text-dark-text-secondary block mb-1">Conteúdo (Markdown)</label>
-                                <textarea 
+                                <textarea
                                     ref={contentRef}
-                                    value={generatedPost.content} 
-                                    onChange={e => setGeneratedPost({ ...generatedPost, content: e.target.value })} 
-                                    rows={15} 
-                                    className="w-full bg-slate-800 border border-dark-border rounded p-3 text-sm font-mono" 
+                                    value={generatedPost.content}
+                                    onChange={e => setGeneratedPost({ ...generatedPost, content: e.target.value })}
+                                    rows={15}
+                                    className="w-full bg-slate-800 border border-dark-border rounded p-3 text-sm font-mono"
                                 />
                             </div>
-                            
+
                             <div className="space-y-4">
                                 <div>
                                     <h4 className="text-sm font-medium text-dark-text-secondary mb-2">Emojis Sugeridos (clique para inserir)</h4>
                                     <div className="flex flex-wrap gap-2">
                                         {generatedPost.emojis.map(emoji => (
-                                            <button 
-                                                key={emoji} 
-                                                onClick={() => handleInsert(emoji)} 
+                                            <button
+                                                key={emoji}
+                                                onClick={() => handleInsert(emoji)}
                                                 className="bg-slate-700 p-2 rounded-md hover:bg-slate-600"
                                             >
                                                 {emoji}
@@ -383,14 +383,14 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
                                         ))}
                                     </div>
                                 </div>
-                                
+
                                 <div>
                                     <h4 className="text-sm font-medium text-dark-text-secondary mb-2">Hashtags Sugeridas (clique para inserir)</h4>
                                     <div className="flex flex-wrap gap-2">
                                         {generatedPost.hashtags.map(tag => (
-                                            <button 
-                                                key={tag} 
-                                                onClick={() => handleInsert(tag)} 
+                                            <button
+                                                key={tag}
+                                                onClick={() => handleInsert(tag)}
                                                 className="text-xs bg-slate-700 px-3 py-1 rounded-full hover:bg-slate-600"
                                             >
                                                 {tag}
@@ -399,80 +399,77 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="flex flex-wrap gap-4 items-center pt-6 border-t border-dark-border">
-                                <button 
-                                    onClick={handlePreview} 
+                                <button
+                                    onClick={handlePreview}
                                     className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-dark-text-primary font-semibold py-2 px-4 rounded-lg"
                                 >
                                     <span>Preview</span>
                                 </button>
-                                
-                                <button 
-                                    onClick={handleCopyAll} 
+
+                                <button
+                                    onClick={handleCopyAll}
                                     className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-dark-text-primary font-semibold py-2 px-4 rounded-lg"
                                 >
                                     {isCopied ? <CheckIcon className="h-5 w-5 text-green-400" /> : <BookIcon className="h-5 w-5" />}
                                     {isCopied ? 'Copiado!' : 'Copiar Tudo'}
                                 </button>
-                                
+
                                 {/* Platform Selection */}
                                 <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700 w-full">
                                     <h4 className="text-md font-semibold mb-3">Selecionar Plataforma</h4>
-                                    
+
                                     <div className="flex flex-wrap gap-3 mb-4">
                                         <button
                                             onClick={() => setSelectedPlatform('wordpress')}
                                             disabled={!isWordPressConfigured}
-                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                                                selectedPlatform === 'wordpress' 
-                                                    ? 'bg-blue-600 text-white' 
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${selectedPlatform === 'wordpress'
+                                                    ? 'bg-blue-600 text-white'
                                                     : 'bg-slate-700 hover:bg-slate-600 text-dark-text-primary'
-                                            } ${!isWordPressConfigured ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                } ${!isWordPressConfigured ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
                                             <WordPressIcon className="h-5 w-5" />
                                             WordPress
                                         </button>
-                                        
+
                                         <button
                                             onClick={() => setSelectedPlatform('blogger')}
                                             disabled={!isBloggerConfigured}
-                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                                                selectedPlatform === 'blogger' 
-                                                    ? 'bg-orange-600 text-white' 
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${selectedPlatform === 'blogger'
+                                                    ? 'bg-orange-600 text-white'
                                                     : 'bg-slate-700 hover:bg-slate-600 text-dark-text-primary'
-                                            } ${!isBloggerConfigured ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                } ${!isBloggerConfigured ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
                                             <BloggerIcon className="h-5 w-5" />
                                             Blogger
                                         </button>
-                                        
+
                                         <button
                                             onClick={() => setSelectedPlatform('medium')}
                                             disabled={!isMediumConfigured}
-                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                                                selectedPlatform === 'medium' 
-                                                    ? 'bg-black text-white' 
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${selectedPlatform === 'medium'
+                                                    ? 'bg-black text-white'
                                                     : 'bg-slate-700 hover:bg-slate-600 text-dark-text-primary'
-                                            } ${!isMediumConfigured ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                } ${!isMediumConfigured ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
                                             <MediumIcon className="h-5 w-5" />
                                             Medium
                                         </button>
                                     </div>
-                                    
+
                                     {!isWordPressConfigured && !isBloggerConfigured && !isMediumConfigured && (
                                         <div className="text-sm text-yellow-400">
                                             Nenhuma plataforma configurada.{' '}
-                                            <button 
-                                                onClick={() => onNavigate('admin')} 
+                                            <button
+                                                onClick={() => onNavigate('admin')}
                                                 className="text-brand-secondary hover:underline"
                                             >
                                                 Configure uma plataforma
                                             </button>
                                         </div>
                                     )}
-                                    
+
                                     {/* WordPress-specific options */}
                                     {selectedPlatform === 'wordpress' && isWordPressConfigured && (
                                         <>
@@ -481,8 +478,8 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
                                                 <label className="block text-sm font-medium mb-2">Categorias</label>
                                                 <div className="flex flex-wrap gap-2 mb-2">
                                                     {categories.map(category => (
-                                                        <label 
-                                                            key={category.id} 
+                                                        <label
+                                                            key={category.id}
                                                             className="flex items-center gap-1 bg-slate-700 px-3 py-1 rounded-full text-sm cursor-pointer"
                                                         >
                                                             <input
@@ -501,7 +498,7 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
                                                         </label>
                                                     ))}
                                                 </div>
-                                                
+
                                                 {/* Add new category */}
                                                 <div className="flex gap-2 mt-2">
                                                     <input
@@ -525,14 +522,14 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
                                                     </button>
                                                 </div>
                                             </div>
-                                            
+
                                             {/* Tags */}
                                             <div>
                                                 <label className="block text-sm font-medium mb-2">Tags</label>
                                                 <div className="flex flex-wrap gap-2 mb-2">
                                                     {tags.map(tag => (
-                                                        <label 
-                                                            key={tag.id} 
+                                                        <label
+                                                            key={tag.id}
                                                             className="flex items-center gap-1 bg-slate-700 px-3 py-1 rounded-full text-sm cursor-pointer"
                                                         >
                                                             <input
@@ -551,7 +548,7 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
                                                         </label>
                                                     ))}
                                                 </div>
-                                                
+
                                                 {/* Add new tag */}
                                                 <div className="flex gap-2 mt-2">
                                                     <input
@@ -578,9 +575,9 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
                                         </>
                                     )}
                                 </div>
-                                
-                                <button 
-                                    onClick={handlePublish} 
+
+                                <button
+                                    onClick={handlePublish}
                                     disabled={
                                         !isWordPressConfigured && selectedPlatform === 'wordpress' ||
                                         !isBloggerConfigured && selectedPlatform === 'blogger' ||
@@ -592,16 +589,16 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
                                     {publishState.status === 'loading' ? <SpinnerIcon /> : null}
                                     {publishState.status === 'loading' ? 'Publicando...' : `Publicar no ${selectedPlatform === 'wordpress' ? 'WordPress' : selectedPlatform === 'blogger' ? 'Blogger' : 'Medium'}`}
                                 </button>
-                                
+
                                 {publishState.status === 'success' && (
                                     <div className="text-sm text-green-400 flex items-center gap-2">
-                                        <CheckIcon /> 
-                                        {publishState.message} 
+                                        <CheckIcon />
+                                        {publishState.message}
                                         {publishState.link && (
-                                            <a 
-                                                href={publishState.link} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
+                                            <a
+                                                href={publishState.link}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                                 className="underline"
                                             >
                                                 Ver Post
@@ -609,10 +606,10 @@ export const SimpleBlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> 
                                         )}
                                     </div>
                                 )}
-                                
+
                                 {publishState.status === 'error' && (
                                     <div className="text-sm text-red-400 flex items-center gap-2">
-                                        <AlertTriangleIcon className="h-5 w-5" /> 
+                                        <AlertTriangleIcon className="h-5 w-5" />
                                         {publishState.message}
                                     </div>
                                 )}

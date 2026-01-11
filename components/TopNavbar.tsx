@@ -224,15 +224,19 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     return (
         <header className="glass border-b border-white/5 sticky top-0 z-40">
             {/* Main Navigation Bar */}
-            <div className="max-w-[1920px] mx-auto px-4 sm:px-6">
-                <div className="flex items-center justify-between h-16">
+            <div className="max-w-[2048px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+                <div className="flex items-center justify-between h-14 md:h-16 lg:h-18">
                     {/* Logo */}
                     <div className="flex items-center gap-8">
                         <button
                             onClick={() => onNavigate('home')}
-                            className="text-2xl font-bold text-gradient hover-scale"
+                            className="flex items-center hover-scale"
                         >
-                            ACI
+                            <img
+                                src="/logo-aci.png"
+                                alt="ACI - Automações Comerciais Integradas"
+                                className="h-12 w-auto object-contain rounded-lg"
+                            />
                         </button>
 
                         {/* Navigation Menu */}

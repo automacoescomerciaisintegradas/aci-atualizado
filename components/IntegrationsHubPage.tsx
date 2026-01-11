@@ -318,11 +318,11 @@ export const IntegrationsHubPage: React.FC<IntegrationsHubPageProps> = ({ onNavi
             </div>
 
             {/* Grid de Integrações */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
                 {integrations.map((integration) => (
                     <div
                         key={integration.id}
-                        className={`card-premium p-0 overflow-hidden transition-all duration-300 ${expandedCard === integration.id ? 'md:col-span-2 lg:col-span-3' : ''
+                        className={`card-premium p-0 overflow-hidden transition-all duration-300 ${expandedCard === integration.id ? 'sm:col-span-2 lg:col-span-3 xl:col-span-4 2xl:col-span-5' : ''
                             }`}
                     >
                         <div

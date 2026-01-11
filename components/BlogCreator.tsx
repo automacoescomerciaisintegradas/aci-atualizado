@@ -366,12 +366,12 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
             </div>
 
             {activeTab === 'single' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 xl:gap-8">
                     {/* Form Column */}
-                    <div className="lg:col-span-1 space-y-6">
-                        <div className="bg-dark-card rounded-xl border border-dark-border p-6">
-                            <h3 className="text-lg font-semibold mb-4">1. Dados do Produto</h3>
-                            <div className="space-y-4">
+                    <div className="lg:col-span-1 space-y-4 md:space-y-6">
+                        <div className="bg-dark-card rounded-xl border border-dark-border p-4 md:p-6">
+                            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">1. Dados do Produto</h3>
+                            <div className="space-y-3 md:space-y-4">
                                 <div className="p-3 bg-slate-800/50 rounded-lg border border-dark-border">
                                     <label htmlFor="shopeeUrl" className="text-sm font-medium text-dark-text-secondary block mb-2">Buscar da Shopee (Opcional)</label>
                                     <div className="flex gap-2">
@@ -391,9 +391,9 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-dark-card rounded-xl border border-dark-border p-6">
-                            <h3 className="text-lg font-semibold mb-4">2. Configurações da IA</h3>
-                            <div className="space-y-4">
+                        <div className="bg-dark-card rounded-xl border border-dark-border p-4 md:p-6">
+                            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">2. Configurações da IA</h3>
+                            <div className="space-y-3 md:space-y-4">
                                 <div>
                                     <label htmlFor="toneOfVoice" className="text-sm font-medium text-dark-text-secondary block mb-1">Tom de Voz</label>
                                     <input type="text" id="toneOfVoice" value={toneOfVoice} onChange={e => setToneOfVoice(e.target.value)} className="w-full bg-slate-800 border border-dark-border rounded p-2 text-sm" />
@@ -416,7 +416,7 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                     </div>
 
                     {/* Result Column */}
-                    <div className="lg:col-span-2">
+                    <div className="lg:col-span-2 xl:col-span-3">
                         {isGenerating && (
                             <div className="bg-dark-card rounded-xl border border-dark-border p-6 animate-pulse-fast space-y-6">
                                 <div className="h-8 bg-slate-700 rounded w-3/4"></div>

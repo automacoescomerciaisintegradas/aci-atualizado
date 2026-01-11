@@ -379,7 +379,7 @@ const App: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto w-full scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-        <div className="w-full max-w-[1920px] mx-auto p-4 sm:p-6 lg:p-8 flex flex-col min-h-full gap-6">
+        <div className="w-full max-w-[2048px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 py-4 sm:py-6 lg:py-8 flex flex-col min-h-full gap-4 md:gap-6">
           {renderPage()}
           <DashboardFooter onNavigate={handleNavigate} />
         </div>
