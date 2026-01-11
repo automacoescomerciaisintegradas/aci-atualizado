@@ -62,7 +62,7 @@ set /p DEPLOY_VPS="Fazer deploy na VPS (%VPS_USER%@%VPS_HOST%)? (s/n): "
 if /i "%DEPLOY_VPS%"=="s" (
     echo [INFO] Conectando a VPS...
     
-    ssh %VPS_USER%@%VPS_HOST% "cd /opt/easypanel/projects/aci-automacoes && git pull && docker-compose down && docker-compose build --no-cache && docker-compose up -d && docker ps | grep aci"
+    ssh %VPS_USER%@%VPS_HOST% "cd /opt/projects/aci-automacoes && git pull && docker-compose down && docker-compose build --no-cache && docker-compose up -d && docker ps | grep aci"
     
     echo [OK] Deploy na VPS concluido!
 )
