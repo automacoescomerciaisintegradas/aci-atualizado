@@ -1,27 +1,17 @@
 {
     "compilerOptions": {
-        "target": "ES2022",
-        "module": "CommonJS",
-        "lib": [
-            "ES2022"
-        ],
-        "moduleResolution": "node",
+        "target": "ESNext",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "outDir": "./dist-server",
+        "rootDir": "./src",
+        "strict": true,
         "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "strict": false,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "resolveJsonModule": true,
-        "outDir": "./dist",
-        "rootDir": "./src",
-        "types": [
-            "node"
-        ],
-        "allowJs": true
-    },
-    "ts-node": {
-        "transpileOnly": true,
-        "files": true
+        "declaration": true,
+        "allowJs": true,
+        "resolveJsonModule": true
     },
     "include": [
         "src/backend/**/*"

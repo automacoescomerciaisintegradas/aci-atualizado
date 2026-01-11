@@ -4,7 +4,7 @@
 # =========================================
 
 # Stage 1: Build do Frontend
-FROM node:20-alpine AS frontend-builder
+FROM node:20-bookworm-slim AS frontend-builder
 
 WORKDIR /app
 
@@ -20,47 +20,37 @@ COPY . .
 # Build do frontend (Vite)
 RUN npm run build
 
+# O backend será executado via tsx diretamente dos fontes em src
+# para evitar problemas de compatibilidade de módulos ESM
+
 # =========================================
-# Stage 2: Build do Backend
-FROM node:20-alpine AS backend-builder
-
+# Stage 2: Build do Backend & Instalação
+FROM node:20-bookworm-slim AS backend-builder
 WORKDIR /app
-
 COPY package*.json ./
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 RUN npm ci --legacy-peer-deps
-
 COPY . .
-
-# Gerar Prisma Client
 RUN npx prisma generate
-
-# Build do backend (TypeScript)
-RUN npm run build:server 2>/dev/null || echo "Backend build skipped"
 
 # =========================================
 # Stage 3: Imagem Final de Produção
-FROM node:20-alpine AS production
-
+FROM node:20-bookworm-slim AS production
 WORKDIR /app
+RUN apt-get update && apt-get install -y curl openssl && rm -rf /var/lib/apt/lists/*
 
-# Instalar apenas dependências necessárias para o sistema
-RUN apk add --no-cache curl
-
-# Copiar package files e instalar apenas produção
+# Copiar tudo (incluindo devDependencies para o tsx funcionar se necessário, 
+# ou instalar tsx globalmente. Melhor: instalar todas as dependências)
 COPY package*.json ./
-RUN npm ci --only=production --legacy-peer-deps
+RUN npm ci --legacy-peer-deps
 
 # Copiar build do frontend
 COPY --from=frontend-builder /app/dist ./dist
 
-# Copiar arquivos do backend
-COPY --from=backend-builder /app/src ./src
-COPY --from=backend-builder /app/node_modules/.prisma ./node_modules/.prisma
-
-# Copiar prisma schema
+# Copiar código fonte e prisma
+COPY src ./src
 COPY prisma ./prisma
-
-# Copiar outros arquivos necessários
+COPY --from=backend-builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY tsconfig.json ./
 
 # Expor portas
@@ -74,7 +64,7 @@ ENV FRONTEND_URL=http://localhost:3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:4001/api/health || exit 1
+  CMD curl -f http://localhost:4001/health || exit 1
 
 # Comando para iniciar
 CMD ["npm", "run", "start:prod"]

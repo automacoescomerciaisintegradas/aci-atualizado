@@ -51,5 +51,4 @@ __tests__
 # Dev files
 .eslintrc*
 .prettierrc*
-tsconfig.*.json
 jest.config.*

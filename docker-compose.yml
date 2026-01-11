@@ -1,87 +1,44 @@
-# =========================================
-# ACI - Docker Compose para Desenvolvimento e Produção
-# =========================================
-
 version: '3.8'
 
 services:
-  # =========================================
-  # App Principal (Frontend + Backend)
-  # =========================================
   aci-app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: aci-app
     restart: unless-stopped
+    env_file: .env
+    # Removemos os ports expostos para o mundo, o Traefik cuidará disso via HTTPS (Porta 443)
+    # Mantemos apenas se você quiser acessar via IP direto ainda
     ports:
       - "4001:4001"
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - PORT=4001
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
-      - API_URL=${API_URL:-http://localhost:4001}
-      - DATABASE_URL=${DATABASE_URL:-file:./data/dev.db}
-      # Meta/Instagram
-      - META_APP_ID=${META_APP_ID}
-      - META_APP_SECRET=${META_APP_SECRET}
-      - META_REDIRECT_URI=${META_REDIRECT_URI}
-      - META_API_VERSION=${META_API_VERSION:-v19.0}
-      # Mercado Pago
-      - MERCADOPAGO_ACCESS_TOKEN=${MERCADOPAGO_ACCESS_TOKEN}
-      - MERCADOPAGO_PUBLIC_KEY=${MERCADOPAGO_PUBLIC_KEY}
-      # SMTP
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_USERNAME=${SMTP_USERNAME}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      # JWT
-      - JWT_SECRET=${JWT_SECRET:-super-secret-key-change-in-production}
+      - "4050:4001"
     volumes:
       - aci-data:/app/data
       - aci-uploads:/app/uploads
     networks:
+      - easypanel # Rede do Traefik/EasyPanel
       - aci-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4001/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      # --- Roteamento para o Frontend ---
+      - "traefik.http.routers.aci-frontend.rule=Host(`aci.automacoescomerciais.com.br`)"
+      - "traefik.http.routers.aci-frontend.entrypoints=websecure"
+      - "traefik.http.routers.aci-frontend.tls.certresolver=letsencrypt" # Ou o nome do seu resolver no Traefik (geralmente leresolver ou letsencrypt)
+      - "traefik.http.services.aci-frontend.loadbalancer.server.port=4001"
+      
+      # --- Roteamento para a API (Backend) ---
+      - "traefik.http.routers.aci-api.rule=Host(`aci.automacoescomerciais.com.br`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.aci-api.entrypoints=websecure"
+      - "traefik.http.routers.aci-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.aci-api.loadbalancer.server.port=4001"
 
-  # =========================================
-  # Nginx Reverse Proxy (Opcional)
-  # =========================================
-  nginx:
-    image: nginx:alpine
-    container_name: aci-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - aci-app
-    networks:
-      - aci-network
-    profiles:
-      - with-nginx
-
-# =========================================
-# Volumes Persistentes
-# =========================================
 volumes:
   aci-data:
-    driver: local
   aci-uploads:
-    driver: local
 
-# =========================================
-# Networks
-# =========================================
 networks:
   aci-network:
     driver: bridge
+  easypanel:
+    external: true # Indica que a rede já existe (criada pelo EasyPanel)

@@ -1,4 +1,6 @@
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import cors from "cors";
 import axios from "axios";
 import { generateToken } from "./auth";
@@ -12,6 +14,12 @@ import paymentsRoutes from "./routes/payments";
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Servir arquivos estáticos do Frontend (Pasta dist)
+app.use(express.static(path.join(__dirname, "../../dist")));
 
 // Rotas de Pagamentos (Mercado Pago)
 app.use("/api/payments", paymentsRoutes);
@@ -34,9 +42,7 @@ app.post("/api/auth/login", (req, res) => {
 
     // Admin emails list
     const ADMIN_EMAILS = [
-        'admin@aci.com',
-        'suporte@aci.com',
-        'teste@teste.com',
+
         'automacoescomerciais@gmail.com',
         'contato@automacoescomerciais.com.br',
         'admin@automacoescomerciais.com.br',
@@ -203,6 +209,17 @@ app.post('/api/auth/reset-password', (req, res) => {
     });
 });
 
+// Redirecionar rotas do Frontend para o index.html (SPA) - DEVE VIR ANTES DO AUTH MIDDLEWARE
+app.get("*", (req, res, next) => {
+    // Se a rota começar com /api ou /health, deixa passar para as rotas abaixo
+    if (req.path.startsWith("/api") || req.path === "/health") {
+        return next();
+    }
+    // Caso contrário, serve o index.html do frontend
+    res.sendFile(path.join(__dirname, "../../dist/index.html"));
+});
+
+// Middleware de Autenticação - Apenas para o que vem abaixo (APIs protegidas)
 app.use(authMiddleware);
 
 app.get("/api/credits/balance", (req: any, res) => {
@@ -269,7 +286,12 @@ app.get('/api/facebook/test', async (req: any, res: any) => {
     }
 });
 
-const PORT = process.env.PORT || 3002;
+import { cronService } from './cronService';
+
+const PORT = process.env.PORT || 4001;
 app.listen(PORT, () => {
     console.log(`🚀 Backend rodando em http://localhost:${PORT}`);
+
+    // Inicia o serviço de tarefas agendadas
+    cronService.start();
 });
