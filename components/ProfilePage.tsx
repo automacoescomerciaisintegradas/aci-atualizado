@@ -334,67 +334,89 @@ const SubscriptionTabContent: React.FC<{ onAddCreditsClick: () => void; invoices
     const [showAllPackages, setShowAllPackages] = useState(false);
     const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
 
-    // Dados do sistema de créditos pay-per-use
+    // Dados do sistema de créditos pay-per-use - Pacotes consistentes com PricingPage
     const creditPackages = [
         {
             id: 'starter',
             name: 'Starter',
-            credits: 100,
-            bonus: 0,
-            price: 29.90,
-            pricePerCredit: 0.299,
+            credits: 50000,
+            bonus: 5000, // 10% bonus
+            price: 50,
+            pricePerCredit: 0.001, // R$ 0,001 por crédito
             popular: false,
-            features: ['100 créditos', 'Válido para sempre', 'Suporte por email', 'Todas as ferramentas'],
-            savings: 0,
+            features: ['50.000 créditos', '+5.000 bônus grátis', 'Válido para sempre', 'Todas as ferramentas'],
+            savings: 10,
         },
         {
             id: 'pro',
             name: 'Pro',
-            credits: 500,
-            bonus: 75,
-            price: 99.90,
-            pricePerCredit: 0.174,
+            credits: 100000,
+            bonus: 10000, // 10% bonus
+            price: 99,
+            pricePerCredit: 0.00099, // R$ 0,00099 por crédito
+            popular: false,
+            features: ['100.000 créditos', '+10.000 bônus grátis', 'Válido para sempre', 'Suporte prioritário', 'Todas as ferramentas'],
+            savings: 10,
+        },
+        {
+            id: 'popular',
+            name: 'Mais Popular',
+            credits: 200000,
+            bonus: 20000, // 10% bonus
+            price: 197,
+            pricePerCredit: 0.000985, // R$ 0,000985 por crédito
             popular: true,
-            features: ['500 créditos', '+75 bônus grátis', 'Válido para sempre', 'Suporte prioritário', 'Todas as ferramentas'],
-            savings: 42,
+            features: ['200.000 créditos', '+20.000 bônus grátis', 'Válido para sempre', 'Suporte VIP', 'Todas as ferramentas'],
+            savings: 10,
         },
         {
             id: 'business',
             name: 'Business',
-            credits: 1000,
-            bonus: 200,
-            price: 179.90,
-            pricePerCredit: 0.150,
+            credits: 400000,
+            bonus: 40000, // 10% bonus
+            price: 397,
+            pricePerCredit: 0.000993, // R$ 0,000993 por crédito
             popular: false,
-            features: ['1000 créditos', '+200 bônus grátis', 'Válido para sempre', 'Suporte VIP', 'Acesso antecipado'],
-            savings: 50,
+            features: ['400.000 créditos', '+40.000 bônus grátis', 'Válido para sempre', 'Suporte VIP', 'Acesso antecipado'],
+            savings: 10,
         },
         {
             id: 'enterprise',
             name: 'Enterprise',
-            credits: 2500,
-            bonus: 750,
-            price: 399.90,
-            pricePerCredit: 0.123,
+            credits: 700000,
+            bonus: 70000, // 10% bonus
+            price: 697,
+            pricePerCredit: 0.000997, // R$ 0,000997 por crédito
             popular: false,
-            features: ['2500 créditos', '+750 bônus grátis', 'Válido para sempre', 'Suporte VIP 24/7', 'Consultoria inclusa', 'API dedicada'],
-            savings: 59,
+            features: ['700.000 créditos', '+70.000 bônus grátis', 'Válido para sempre', 'Suporte VIP 24/7', 'Consultoria inclusa', 'API dedicada'],
+            savings: 10,
+        },
+        {
+            id: 'premium',
+            name: 'Premium',
+            credits: 1000000,
+            bonus: 100000, // 10% bonus
+            price: 999,
+            pricePerCredit: 0.000999, // R$ 0,000999 por crédito
+            popular: false,
+            features: ['1.000.000 créditos', '+100.000 bônus grátis', 'Válido para sempre', 'Suporte VIP 24/7', 'API dedicada', 'Recursos exclusivos'],
+            savings: 10,
         },
     ];
 
-    // Estatísticas simuladas
+    // Estatísticas simuladas - Atualizadas para refletir o modelo pay-per-use
     const usageStats = {
-        totalPurchased: 5000,
-        totalUsed: settings.credits > 0 ? 5000 - settings.credits : 0,
-        averageMonthly: 847,
-        estimatedDays: settings.credits > 0 ? Math.round((settings.credits / 847) * 30) : 0,
+        totalPurchased: 500000, // Ajustado para refletir um uso mais realista
+        totalUsed: settings.credits > 0 ? 500000 - settings.credits : 0,
+        averageMonthly: 8470, // Ajustado proporcionalmente
+        estimatedDays: settings.credits > 0 ? Math.round((settings.credits / 8470) * 30) : 0,
     };
 
-    // Determinar nível do usuário
+    // Determinar nível do usuário baseado no modelo pay-per-use
     const getUserLevel = () => {
-        if (usageStats.totalPurchased >= 10000) return { name: 'Diamond', color: 'text-cyan-400', bgColor: 'bg-cyan-900/30', icon: '💎' };
-        if (usageStats.totalPurchased >= 5000) return { name: 'Gold', color: 'text-yellow-400', bgColor: 'bg-yellow-900/30', icon: '🏆' };
-        if (usageStats.totalPurchased >= 1000) return { name: 'Silver', color: 'text-gray-300', bgColor: 'bg-gray-900/30', icon: '🥈' };
+        if (usageStats.totalPurchased >= 1000000) return { name: 'Diamond', color: 'text-cyan-400', bgColor: 'bg-cyan-900/30', icon: '💎' };
+        if (usageStats.totalPurchased >= 500000) return { name: 'Gold', color: 'text-yellow-400', bgColor: 'bg-yellow-900/30', icon: '🏆' };
+        if (usageStats.totalPurchased >= 100000) return { name: 'Silver', color: 'text-gray-300', bgColor: 'bg-gray-900/30', icon: '🥈' };
         return { name: 'Bronze', color: 'text-orange-400', bgColor: 'bg-orange-900/30', icon: '🥉' };
     };
     const userLevel = getUserLevel();
@@ -424,7 +446,7 @@ const SubscriptionTabContent: React.FC<{ onAddCreditsClick: () => void; invoices
                             </span>
                         </div>
                         <p className="text-dark-text-secondary">
-                            Compre créditos quando precisar. Sem mensalidades, sem compromisso. Créditos nunca expiram!
+                            Pague somente pelo que usar. Sem mensalidades, sem planos fixos. Compre créditos conforme sua necessidade. Aceitamos PIX, cartão e boleto via Mercado Pago.
                         </p>
                     </div>
                     <button
@@ -445,7 +467,7 @@ const SubscriptionTabContent: React.FC<{ onAddCreditsClick: () => void; invoices
                         <CreditIcon className="w-5 h-5 text-blue-200" />
                     </div>
                     <div className="text-3xl font-bold text-white">{settings.credits.toLocaleString('pt-BR')}</div>
-                    <p className="text-xs text-blue-200 mt-1">≈ {formatCurrency(settings.credits * 0.174)}</p>
+                    <p className="text-xs text-blue-200 mt-1">≈ {formatCurrency(settings.credits * 0.001)}</p>
                 </div>
 
                 <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
@@ -498,14 +520,14 @@ const SubscriptionTabContent: React.FC<{ onAddCreditsClick: () => void; invoices
                     </div>
                     <div className="flex justify-between text-xs text-dark-text-secondary mt-2">
                         <span>0</span>
-                        <span>{settings.credits.toLocaleString('pt-BR')} / 5.000</span>
+                        <span>{settings.credits.toLocaleString('pt-BR')} / 500.000</span>
                     </div>
                 </div>
                 {usageStats.estimatedDays > 0 && (
                     <div className="bg-blue-900/20 border border-blue-700/30 rounded-lg p-3">
                         <p className="text-sm text-blue-300 flex items-center gap-2">
                             <span>💡</span>
-                            Com seu uso médio de <strong>{usageStats.averageMonthly}</strong> créditos/mês,
+                            Com seu uso médio de <strong>{usageStats.averageMonthly.toLocaleString('pt-BR')}</strong> créditos/mês,
                             seu saldo atual durará aproximadamente <strong>{usageStats.estimatedDays} dias</strong>.
                         </p>
                     </div>
@@ -771,9 +793,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onAddCreditsClick, onD
 
     return (
         <div className="animate-fade-in">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-dark-text-primary mb-2">Minha Conta</h1>
-                <p className="text-md text-dark-text-secondary">Gerencie suas informações de perfil, segurança e assinatura.</p>
+            <div className="mb-8 flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center glow-primary animate-pulse-soft">
+                    <UserIcon className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                    <h1 className="text-2xl font-bold text-white">Minha Conta</h1>
+                    <p className="text-sm text-dark-text-secondary">Gerencie suas informações de perfil, segurança e assinatura.</p>
+                </div>
             </div>
 
             <div className="border-b border-dark-border mb-8">

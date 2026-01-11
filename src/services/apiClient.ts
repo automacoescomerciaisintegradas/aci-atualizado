@@ -3,9 +3,8 @@
  * Substitui o Supabase Client no frontend
  */
 
-// Forçando a porta 4001 (backend real) e ignorando o .env incorreto
-const API_BASE_URL = 'http://localhost:4001';
-// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4001';
+// URL da API - usa variável de ambiente ou fallback para porta 3002
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4001';
 
 // Debug: mostrar qual URL está sendo usada
 console.log('🔧 API URL:', API_BASE_URL);
@@ -305,6 +304,18 @@ class ApiClient {
     // Health check
     async healthCheck() {
         return await this.request('/api/health');
+    }
+
+    // Payment endpoints (Mercado Pago)
+    async createPixPayment(amount: number, packageId?: string, description?: string) {
+        return await this.request('/api/payments/create-pix', {
+            method: 'POST',
+            body: JSON.stringify({ amount, packageId, description }),
+        });
+    }
+
+    async getPaymentStatus(paymentId: string) {
+        return await this.request(`/api/payments/status/${paymentId}`);
     }
 }
 

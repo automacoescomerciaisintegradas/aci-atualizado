@@ -1,0 +1,15 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+# If the backend needs a build step, uncomment the next line
+# RUN npm run build:server 
+
+EXPOSE 3002
+
+CMD ["npm", "run", "server"]

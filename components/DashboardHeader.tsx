@@ -69,7 +69,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ activePage, on
                     return { sectionTitle: section.title, pageTitle: foundPage.text, icon: foundPage.icon };
                 }
             } else if (section.type === 'link' && section.page === activePage) {
-                 return { sectionTitle: '', pageTitle: section.text, icon: section.icon };
+                return { sectionTitle: '', pageTitle: section.text, icon: section.icon };
             }
         }
         return { sectionTitle: '', pageTitle: 'Dashboard', icon: null };
@@ -84,20 +84,20 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ activePage, on
     ];
 
     const userName = 'Usuário ACI';
-    const avatarUrl = `https://ui-avatars.com/api/?name=${userName.split(' ').map(n => n[0]).join('')}&background=4f46e5&color=fff&size=64`;
-    
+    const avatarUrl = `https://ui-avatars.com/api/?name=${userName.split(' ').map(n => n[0]).join('')}&background=6366f1&color=fff&size=64`;
+
     const closeMobileNav = () => setIsMobileNavOpen(false);
 
     return (
-        <header className="bg-dark-bg/80 backdrop-blur-lg border-b border-dark-border px-4 sm:px-6 py-3 flex items-center justify-between gap-4 flex-shrink-0 z-30 sticky top-0 shadow-sm">
+        <header className="glass border-b border-white/5 px-4 sm:px-6 py-3 flex items-center justify-between gap-4 flex-shrink-0 z-30 sticky top-0 shadow-xl">
             <div className="flex items-center gap-4 md:gap-6">
                 {/* Logo (Visible on Mobile) */}
-                <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('home');}} className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400 flex-shrink-0 md:hidden">
-                   ACI
+                <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('home'); }} className="text-2xl font-bold text-gradient flex-shrink-0 md:hidden hover-scale">
+                    ACI
                 </a>
-                
+
                 {/* Breadcrumbs (Desktop Only) */}
-                <div className="hidden md:flex items-center text-sm text-dark-text-secondary bg-slate-800/40 px-4 py-1.5 rounded-full border border-dark-border/50">
+                <div className="hidden md:flex items-center text-sm text-dark-text-secondary glass-light px-4 py-1.5 rounded-full">
                     <button className="hover:text-dark-text-primary cursor-pointer transition-colors flex items-center gap-1" onClick={() => onNavigate('home')}>
                         <HomeIcon className="h-4 w-4" />
                         <span>Home</span>
@@ -115,9 +115,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ activePage, on
                     </span>
                 </div>
             </div>
-            
+
             <div className="flex items-center gap-3 sm:gap-4">
-                 <div className="relative w-full max-w-xs hidden lg:block">
+                <div className="relative w-full max-w-xs hidden lg:block">
                     <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-dark-text-secondary pointer-events-none" />
                     <input
                         ref={searchInputRef}
@@ -135,7 +135,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ activePage, on
                 </div>
 
                 {/* Blog Link Highlight */}
-                <button 
+                <button
                     onClick={() => onNavigate('blog')}
                     className="hidden sm:flex items-center gap-2 text-sm font-bold text-amber-400 hover:text-amber-300 transition-colors bg-amber-400/10 hover:bg-amber-400/20 px-3 py-2 rounded-lg border border-amber-400/20"
                     title="Acessar Blog de Ofertas"
@@ -145,7 +145,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ activePage, on
                 </button>
 
                 <button className="text-dark-text-secondary hover:text-dark-text-primary relative">
-                    <BellIcon className="h-5 w-5"/>
+                    <BellIcon className="h-5 w-5" />
                     <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full border border-dark-bg"></span>
                 </button>
 
@@ -161,14 +161,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ activePage, on
                     {isUserDropdownOpen && (
                         <div className="absolute top-full mt-2 right-0 w-64 bg-dark-card border border-dark-border rounded-lg shadow-2xl p-2 z-20 animate-fade-in">
                             <div className="p-2 border-b border-dark-border mb-2 flex items-center gap-3">
-                                 <img src={avatarUrl} alt={`Avatar de ${userName}`} className="h-10 w-10 rounded-full object-cover" />
-                                 <div>
+                                <img src={avatarUrl} alt={`Avatar de ${userName}`} className="h-10 w-10 rounded-full object-cover" />
+                                <div>
                                     <p className="text-sm font-semibold text-dark-text-primary">{userName}</p>
                                     <p className="text-xs text-dark-text-secondary truncate">usuario@exemplo.com</p>
-                                 </div>
+                                </div>
                             </div>
                             <div className="p-2">
-                                 <div className="bg-slate-800/50 rounded-lg p-2 border border-dark-border">
+                                <div className="bg-slate-800/50 rounded-lg p-2 border border-dark-border">
                                     <div className="flex items-center justify-between text-xs mb-1 text-dark-text-secondary font-medium">
                                         <span>Créditos</span>
                                         <span className="font-bold text-purple-400 flex items-center gap-1">
@@ -176,10 +176,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ activePage, on
                                             {settings.credits.toLocaleString('pt-BR')}
                                         </span>
                                     </div>
-                                     <button onClick={()=>{ onAddCreditsClick(); setIsUserDropdownOpen(false); }} className="w-full flex items-center justify-center gap-1 text-xs bg-green-600/20 text-green-300 font-bold py-1 px-2 rounded hover:bg-green-600/30">
-                                        <DollarSignIcon className="h-3 w-3"/> Adicionar
+                                    <button onClick={() => { onAddCreditsClick(); setIsUserDropdownOpen(false); }} className="w-full flex items-center justify-center gap-1 text-xs bg-green-600/20 text-green-300 font-bold py-1 px-2 rounded hover:bg-green-600/30">
+                                        <DollarSignIcon className="h-3 w-3" /> Adicionar
                                     </button>
-                                 </div>
+                                </div>
                             </div>
                             {userMenuItems.map(item => (
                                 <a key={item.text} href="#" onClick={(e) => { e.preventDefault(); item.action(); setIsUserDropdownOpen(false); }} className="flex items-center w-full px-3 py-2 text-sm rounded-md text-dark-text-secondary hover:bg-slate-700/50 hover:text-dark-text-primary">
@@ -188,7 +188,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ activePage, on
                                 </a>
                             ))}
                             <div className="border-t border-dark-border mt-2 pt-2">
-                                 <a href="#" onClick={(e) => { e.preventDefault(); onLogout(); }} className="flex items-center w-full px-3 py-2 text-sm rounded-md text-red-400 hover:bg-red-500/20 hover:text-red-300">
+                                <a href="#" onClick={(e) => { e.preventDefault(); onLogout(); }} className="flex items-center w-full px-3 py-2 text-sm rounded-md text-red-400 hover:bg-red-500/20 hover:text-red-300">
                                     <LogoutIcon className="h-4 w-4" />
                                     <span className="ml-3">Sair da Conta</span>
                                 </a>
@@ -200,7 +200,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ activePage, on
                 {/* Mobile Nav Button */}
                 <div ref={mobileNavRef} className="lg:hidden">
                     <button onClick={() => setIsMobileNavOpen(!isMobileNavOpen)} className="text-dark-text-secondary hover:text-dark-text-primary p-1">
-                        <MenuIcon className="h-6 w-6"/>
+                        <MenuIcon className="h-6 w-6" />
                     </button>
                     {isMobileNavOpen && (
                         <div className="absolute top-full mt-2 right-0 w-72 bg-dark-card border border-dark-border rounded-lg shadow-2xl p-4 z-20 animate-fade-in mr-4">
@@ -214,7 +214,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ activePage, on
                                 />
                             </div>
                             <div className="mb-4">
-                                <button 
+                                <button
                                     onClick={() => { onNavigate('blog'); closeMobileNav(); }}
                                     className="w-full flex items-center justify-center gap-2 text-sm font-bold text-amber-400 bg-amber-400/10 px-3 py-2 rounded-lg border border-amber-400/20"
                                 >

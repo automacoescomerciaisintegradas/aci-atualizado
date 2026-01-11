@@ -90,7 +90,7 @@ const ChannelSelector: React.FC<{
 
 
 export const MultiChannelPublisher: React.FC<{ onNavigate: (page: Page, context?: { from: Page }) => void; onAddCreditsClick: () => void; }> = ({ onNavigate, onAddCreditsClick }) => {
-    const { settings, saveSettings } = useSettings();
+    const { settings, saveSettings, addCreditTransaction } = useSettings();
     const [step, setStep] = useState<Step>('search');
 
     // Search Step State
@@ -311,7 +311,9 @@ export const MultiChannelPublisher: React.FC<{ onNavigate: (page: Page, context?
 
             await new Promise(res => setTimeout(res, 1500));
 
-            saveSettings({ ...settings, credits: settings.credits - totalCost });
+            if (addCreditTransaction && totalCost > 0) {
+                addCreditTransaction('usage', totalCost, `Agendamento de ${total} posts para publicação`);
+            }
 
             setPublishStatus({
                 message: `Agendamento concluído!`,
@@ -419,7 +421,9 @@ export const MultiChannelPublisher: React.FC<{ onNavigate: (page: Page, context?
         }
 
         const creditsDeducted = successfulPosts * CREDIT_COST_PER_POST;
-        saveSettings({ ...settings, credits: settings.credits - creditsDeducted });
+        if (addCreditTransaction && creditsDeducted > 0) {
+            addCreditTransaction('usage', creditsDeducted, `${successfulPosts} posts publicados nos canais selecionados`);
+        }
 
         setPublishStatus({
             message: `Publicação concluída!`,

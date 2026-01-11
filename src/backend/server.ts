@@ -1,15 +1,20 @@
 import express from "express";
 import cors from "cors";
+import axios from "axios";
 import { generateToken } from "./auth";
 import { authMiddleware } from "./auth";
 import { costGuard } from "./costGuard";
 import { addCredits, spendCredits, getBalance } from "./creditLedger";
 import { sendPasswordResetEmail, sendWelcomeEmail } from "./emailService";
 import { generateResetToken, validateResetToken, markTokenAsUsed } from "./passwordResetService";
+import paymentsRoutes from "./routes/payments";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Rotas de Pagamentos (Mercado Pago)
+app.use("/api/payments", paymentsRoutes);
 
 // Public route – health check
 app.get("/health", (_req, res) => {
@@ -233,6 +238,36 @@ import settingsRouter from './routes/settings';
 app.use('/api/blogs', blogsRouter);
 app.use('/api/integrations/instagram', instagramRouter);
 app.use('/api/settings', settingsRouter);
+
+app.get('/api/facebook/test', async (req: any, res: any) => {
+    const { id, token, path, fields } = req.query;
+
+    if (!id || !token) {
+        return res.status(400).json({ error: 'ID e Token são obrigatórios. Use ?id=...&token=...' });
+    }
+
+    try {
+        const pathParam = path ? `/${path}` : '';
+        const fieldsParam = fields ? `?fields=${fields}` : '?fields=status';
+        // Ensure clean URL construction
+        const url = `https://graph.facebook.com/v24.0/${id}${pathParam}${fieldsParam}`;
+
+        console.log(`🔍 Testando Facebook API: ${url}`);
+
+        const response = await axios.get(url, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        console.log('✅ Sucesso no teste do Facebook:', response.data);
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('❌ Erro no teste do Facebook:', error.response?.data || error.message);
+        res.status(error.response?.status || 500).json({
+            error: 'Erro ao conectar com Facebook',
+            details: error.response?.data || error.message
+        });
+    }
+});
 
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {

@@ -21,15 +21,16 @@ const NavLink: React.FC<NavLinkProps> = ({ icon, text, active = false, onClick, 
                 onClick();
             }
         }}
-        className={`flex items-center w-full px-3 py-2.5 text-sm font-medium rounded-lg transition-colors duration-200 ${active
-            ? 'bg-brand-primary text-white shadow-lg shadow-indigo-500/30'
-            : `text-dark-text-secondary hover:bg-slate-700/50 hover:text-dark-text-primary ${isSubItem ? 'pl-8' : ''}`
+        className={`flex items-center w-full px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 group ${active
+            ? 'bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-lg glow-primary'
+            : `text-dark-text-secondary hover:bg-slate-700/50 hover:text-dark-text-primary hover:translate-x-1 ${isSubItem ? 'pl-8' : ''}`
             }`}
         role="button"
         title={text}
     >
-        {React.cloneElement(icon, { className: 'h-5 w-5 flex-shrink-0' })}
+        {React.cloneElement(icon, { className: `h-5 w-5 flex-shrink-0 transition-transform duration-300 ${active ? '' : 'group-hover:scale-110'}` })}
         <span className="ml-3 font-medium">{text}</span>
+        {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>}
     </a>
 );
 
@@ -112,42 +113,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, search
     }).filter((item): item is NavItem => item !== null);
 
     return (
-        <aside className="hidden md:flex w-64 flex-shrink-0 bg-dark-card p-4 flex-col h-full border-r border-dark-border">
+        <aside className="hidden md:flex w-64 flex-shrink-0 glass-card p-4 flex-col h-full border-r border-dark-border/50">
             {/* Header */}
             <div>
                 <div className="px-3 mb-6 mt-2 flex items-center gap-3">
-                    <svg
-                        width="40"
-                        height="40"
-                        viewBox="0 0 40 40"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="flex-shrink-0"
-                        style={{ color: '#00f5ff' }}
-                    >
-                        {/* Círculo externo */}
-                        <circle
-                            cx="20"
-                            cy="20"
-                            r="18"
-                            stroke="currentColor"
-                            strokeWidth="2"
+                    <div className="relative">
+                        <img
+                            src="/logo-aci.jpg"
+                            alt="ACI Logo"
+                            className="h-10 w-10 flex-shrink-0 rounded-full object-cover border-2 border-brand-primary/50 shadow-lg glow-primary"
                         />
-
-                        {/* Texto central */}
-                        <text
-                            x="20"
-                            y="23"
-                            textAnchor="middle"
-                            fontSize="10"
-                            fontWeight="700"
-                            fontFamily="Arial, Helvetica, sans-serif"
-                            fill="currentColor"
-                        >
-                            ACI
-                        </text>
-                    </svg>
-                    <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-dark-card"></span>
+                    </div>
+                    <span className="text-2xl font-bold text-gradient">
                         Automações
                     </span>
                 </div>
@@ -198,21 +176,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, search
 
             {/* Footer */}
             <div>
-                <div className="p-3 bg-slate-800/50 rounded-lg mb-4 border border-dark-border">
-                    <div className="flex items-center justify-between text-sm mb-2">
-                        <div className="flex items-center text-dark-text-secondary">
+                <div className="p-4 glass rounded-xl mb-4 border border-brand-primary/20 hover:border-brand-primary/40 transition-all duration-300 group cursor-pointer">
+                    <div className="flex items-center justify-between text-sm mb-3">
+                        <div className="flex items-center gap-2 text-dark-text-secondary">
+                            <span className="status-dot online"></span>
                             <span className="font-medium">Créditos</span>
                         </div>
-                        <div className="flex items-center gap-2 font-semibold text-dark-text-primary">
-                            <CreditIcon className="h-5 w-5 text-purple-400" />
+                        <div className="flex items-center gap-2 font-bold text-gradient group-hover:scale-105 transition-transform">
+                            <CreditIcon className="h-5 w-5 text-purple-400 animate-pulse-soft" />
                             <span>{settings.credits.toLocaleString('pt-BR')}</span>
                         </div>
                     </div>
-                    <div className="w-full bg-slate-700 rounded-full h-1.5">
-                        <div className="bg-gradient-to-r from-brand-primary to-brand-secondary h-1.5 rounded-full" style={{ width: `${creditsPercentage}%` }}></div>
+                    <div className="progress-premium">
+                        <div className="progress-premium-bar" style={{ width: `${Math.min(creditsPercentage, 100)}%` }}></div>
                     </div>
+                    <p className="text-[10px] text-dark-text-secondary/60 mt-2 text-center">Clique para adicionar mais</p>
                 </div>
-                <nav className="space-y-1 border-t border-dark-border pt-4">
+                <nav className="space-y-1 border-t border-dark-border/50 pt-4">
                     <NavLink icon={<SettingsIcon />} text="Admin" active={activePage === 'admin'} onClick={() => onNavigate('admin')} />
                     <NavLink icon={<UserIcon />} text="Minha Conta" active={activePage === 'profile'} onClick={() => onNavigate('profile')} />
                     {isAdmin && <NavLink icon={<SettingsIcon />} text="Super Admin" active={activePage === 'user-settings'} onClick={() => onNavigate('user-settings')} />}

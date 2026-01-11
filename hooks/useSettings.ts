@@ -22,6 +22,14 @@ export interface Settings {
     aiImageModel: string;
     aiTemperature: number;
     credits: number;
+    creditBalance: number; // Quantidade atual de créditos
+    creditSpent: number; // Créditos já utilizados
+    creditTransactions: Array<{id: string, date: Date, type: 'purchase' | 'usage', amount: number, description: string}>; // Histórico de transações
+    n8nWebhookUrl: string; // URL do webhook do n8n
+    automationEnabled: boolean; // Se as automações estão habilitadas
+    webhookTimeout: number; // Timeout para chamadas de webhook em segundos
+    webhookRetries: number; // Número de tentativas para chamadas de webhook
+    automationCreditsPerExecution: number; // Quantidade de créditos consumidos por execução de automação
     openaiApiKey: string;
     anthropicApiKey: string;
     groqApiKey: string;
@@ -56,6 +64,22 @@ const defaultSettings: Settings = {
     aiImageModel: 'imagen-4.0-generate-001',
     aiTemperature: 0.7,
     credits: 3000,
+    creditBalance: 3000,
+    creditSpent: 0,
+    creditTransactions: [
+        {
+            id: 'initial_bonus',
+            date: new Date(),
+            type: 'purchase',
+            amount: 3000,
+            description: 'Bônus de boas-vindas para novos usuários'
+        }
+    ],
+    n8nWebhookUrl: '',
+    automationEnabled: false,
+    webhookTimeout: 30,
+    webhookRetries: 3,
+    automationCreditsPerExecution: 5,
     openaiApiKey: '',
     anthropicApiKey: '',
     groqApiKey: '',
@@ -93,12 +117,46 @@ export const useSettings = () => {
 
     const saveSettings = useCallback((newSettings: Settings) => {
         try {
-            localStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
-            setSettings(newSettings);
+            // Atualizar o saldo de créditos com base nas transações
+            const updatedSettings = {
+                ...newSettings,
+                creditBalance: newSettings.credits,
+                creditSpent: newSettings.creditSpent || 0
+            };
+
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(updatedSettings));
+            setSettings(updatedSettings);
         } catch (error) {
             console.error("Failed to save settings to localStorage", error);
         }
     }, []);
 
-    return { settings, saveSettings, isLoading };
+    const addCreditTransaction = useCallback((type: 'purchase' | 'usage', amount: number, description: string) => {
+        setSettings(prev => {
+            const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const newTransaction = {
+                id: transactionId,
+                date: new Date(),
+                type,
+                amount,
+                description
+            };
+
+            const newCreditSpent = type === 'usage' ? prev.creditSpent + amount : prev.creditSpent;
+            const newCreditBalance = type === 'purchase' ? prev.creditBalance + amount : prev.creditBalance - amount;
+
+            const updatedSettings = {
+                ...prev,
+                creditSpent: newCreditSpent,
+                credits: newCreditBalance,
+                creditBalance: newCreditBalance,
+                creditTransactions: [...prev.creditTransactions, newTransaction]
+            };
+
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(updatedSettings));
+            return updatedSettings;
+        });
+    }, []);
+
+    return { settings, saveSettings, addCreditTransaction, isLoading };
 };

@@ -424,6 +424,23 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
         </div>
       </div>
 
+      {/* Payment Integration Section */}
+      <div className="mt-6 space-y-6 p-6 bg-slate-800/50 rounded-lg border border-dark-border">
+        <h4 className="text-lg font-semibold text-dark-text-primary">Integração de Pagamento</h4>
+        <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 p-4 rounded-lg border border-green-700/50">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">💳</div>
+            <div>
+              <h5 className="font-bold text-white">Mercado Pago</h5>
+              <p className="text-sm text-green-400">Integração Ativa</p>
+            </div>
+          </div>
+          <p className="mt-2 text-sm text-dark-text-secondary">
+            Sistema configurado para processar pagamentos via PIX, cartão de crédito e boleto bancário.
+          </p>
+        </div>
+      </div>
+
       {/* Automation Section */}
       <div className="mt-6 space-y-6 p-6 bg-slate-800/50 rounded-lg border border-dark-border">
         <h4 className="text-lg font-semibold text-dark-text-primary">Configurações de Automação</h4>

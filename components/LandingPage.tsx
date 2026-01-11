@@ -225,8 +225,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuthClick }) => {
                 <section id="precos" className="py-20 md:py-24 bg-dark-card/50 animate-fade-in">
                      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center max-w-3xl mx-auto">
-                            <h2 className="text-3xl md:text-4xl font-bold text-dark-text-primary mb-4">Um Preço Simples e Transparente</h2>
-                            <p className="text-lg text-dark-text-secondary">Comece gratuitamente e pague apenas pelo que usar. Sem mensalidades, sem surpresas.</p>
+                            <h2 className="text-3xl md:text-4xl font-bold text-dark-text-primary mb-4">Modelo Pay-Per-Use</h2>
+                            <p className="text-lg text-dark-text-secondary">Pague somente pelo que usar. Sem mensalidades, sem planos fixos. Compre créditos conforme sua necessidade.</p>
                         </div>
                          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                             <PricingCard
@@ -239,8 +239,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuthClick }) => {
                             />
                             <PricingCard
                                 planName="Pay-per-use"
-                                price="A partir de R$ 50"
-                                features={['Recarregue quando quiser', 'Créditos nunca expiram', 'Ideal para uso esporádico ou intenso']}
+                                price="Créditos & Planos"
+                                features={['Pague somente pelo que usar', 'Créditos nunca expiram', 'Sem mensalidades ou compromissos', 'PIX, cartão e boleto via Mercado Pago']}
                                 ctaText="Comprar Créditos"
                                 onCtaClick={onAuthClick}
                             />

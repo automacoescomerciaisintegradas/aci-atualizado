@@ -9,8 +9,11 @@ interface PricingPageProps {
 
 const creditOptions = [
     { value: 50, credits: 50000, label: 'R$ 50,00' },
-    { value: 97, credits: 100000, label: 'R$ 97,00' },
-    { value: 197, credits: 250000, label: 'R$ 197,00' },
+    { value: 99, credits: 100000, label: 'R$ 99,00' },
+    { value: 197, credits: 200000, label: 'R$ 197,00' },
+    { value: 397, credits: 400000, label: 'R$ 397,00' },
+    { value: 697, credits: 700000, label: 'R$ 697,00' },
+    { value: 999, credits: 1000000, label: 'R$ 999,00' },
 ];
 
 const PROMOTION_BONUS_PERCENTAGE = 0.10; // 10%
@@ -105,7 +108,14 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onPaymentSuccess }) =>
         setStep('show_pix');
 
         setTimeout(() => {
-            const baseCredits = creditOptions.find(opt => opt.value === finalAmount)?.credits ?? finalAmount * 1000;
+            let baseCredits;
+            const matchedOption = creditOptions.find(opt => opt.value === finalAmount);
+            if (matchedOption) {
+                baseCredits = matchedOption.credits;
+            } else {
+                // Para valores personalizados, usar a proporção média (1.000 créditos por R$1,00)
+                baseCredits = Math.round(finalAmount * 1000);
+            }
             const bonusCredits = Math.floor(baseCredits * PROMOTION_BONUS_PERCENTAGE);
             onPaymentSuccess(baseCredits + bonusCredits);
             setStep('confirmed');
@@ -120,7 +130,14 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onPaymentSuccess }) =>
     };
 
     const currentAmount = customValue ? parseFloat(customValue) || 0 : selectedValue;
-    const baseCredits = creditOptions.find(opt => opt.value === currentAmount)?.credits ?? currentAmount * 1000;
+    let baseCredits;
+    const matchedOption = creditOptions.find(opt => opt.value === currentAmount);
+    if (matchedOption) {
+        baseCredits = matchedOption.credits;
+    } else {
+        // Para valores personalizados, usar a proporção média (1.000 créditos por R$1,00)
+        baseCredits = Math.round(currentAmount * 1000);
+    }
     const bonus = Math.floor(baseCredits * PROMOTION_BONUS_PERCENTAGE);
     const totalCredits = baseCredits + bonus;
 
@@ -137,15 +154,21 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onPaymentSuccess }) =>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                            {creditOptions.map(opt => (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                            {creditOptions.map((opt, index) => (
                                 <button
                                     key={opt.value}
                                     onClick={() => { setSelectedValue(opt.value); setCustomValue(''); }}
-                                    className={`p-4 border-2 rounded-lg text-center transition-colors ${selectedValue === opt.value && !customValue ? 'bg-brand-primary/20 border-brand-primary' : 'bg-slate-800 border-dark-border hover:border-slate-600'}`}
+                                    className={`p-4 border-2 rounded-lg text-center transition-colors relative ${selectedValue === opt.value && !customValue ? 'bg-brand-primary/20 border-brand-primary' : 'bg-slate-800 border-dark-border hover:border-slate-600'}`}
                                 >
+                                    {index === 2 && (
+                                        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-dark-text-primary text-xs font-bold px-3 py-1 rounded-full">
+                                            👑 Mais Popular
+                                        </div>
+                                    )}
                                     <p className="font-bold text-lg text-dark-text-primary">{opt.label}</p>
                                     <p className="text-xs text-dark-text-secondary">{opt.credits.toLocaleString('pt-BR')} créditos</p>
+                                    <p className="text-xs text-green-400 mt-1">+{Math.floor(opt.credits * PROMOTION_BONUS_PERCENTAGE).toLocaleString('pt-BR')} bônus</p>
                                 </button>
                             ))}
                         </div>
@@ -274,6 +297,52 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onPaymentSuccess }) =>
                         <StepIndicator currentStep={step} />
                     </div>
                     {renderStepContent()}
+                </div>
+
+                {/* Seção explicativa sobre o modelo pay-per-use */}
+                <div className="mt-12 bg-slate-800/50 border border-dark-border rounded-xl p-6">
+                    <h3 className="text-xl font-bold text-dark-text-primary mb-4">Como funciona nosso modelo Pay-Per-Use</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-slate-900/50 p-4 rounded-lg">
+                            <div className="text-brand-primary text-2xl mb-2">1</div>
+                            <h4 className="font-semibold text-dark-text-primary mb-2">Pague Somente pelo que Usa</h4>
+                            <p className="text-sm text-dark-text-secondary">Você compra créditos e só paga quando realmente utiliza nossas ferramentas.</p>
+                        </div>
+                        <div className="bg-slate-900/50 p-4 rounded-lg">
+                            <div className="text-brand-primary text-2xl mb-2">2</div>
+                            <h4 className="font-semibold text-dark-text-primary mb-2">Transações Individuais</h4>
+                            <p className="text-sm text-dark-text-secondary">Cada ação (publicação, geração de conteúdo, etc.) consome créditos individualmente.</p>
+                        </div>
+                        <div className="bg-slate-900/50 p-4 rounded-lg">
+                            <div className="text-brand-primary text-2xl mb-2">3</div>
+                            <h4 className="font-semibold text-dark-text-primary mb-2">Sem Compromissos</h4>
+                            <p className="text-sm text-dark-text-secondary">Sem planos mensais ou anuais. Compre créditos conforme sua necessidade.</p>
+                        </div>
+                    </div>
+
+                    {/* Pacotes de créditos */}
+                    <div className="mt-8">
+                        <h3 className="text-xl font-bold text-dark-text-primary mb-4">Nossos Pacotes de Créditos</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {creditOptions.map((opt, index) => (
+                                <div key={opt.value} className="bg-slate-900/50 p-4 rounded-lg border border-dark-border">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h4 className="font-bold text-lg text-dark-text-primary">{opt.label}</h4>
+                                            <p className="text-sm text-dark-text-secondary">{opt.credits.toLocaleString('pt-BR')} créditos</p>
+                                        </div>
+                                        {index === 2 && (
+                                            <span className="bg-yellow-500 text-dark-text-primary text-xs font-bold px-2 py-1 rounded-full">Popular</span>
+                                        )}
+                                    </div>
+                                    <div className="mt-2">
+                                        <p className="text-xs text-green-400">+{Math.floor(opt.credits * PROMOTION_BONUS_PERCENTAGE).toLocaleString('pt-BR')} bônus</p>
+                                        <p className="text-xs text-purple-400 mt-1">Total: {(opt.credits + Math.floor(opt.credits * PROMOTION_BONUS_PERCENTAGE)).toLocaleString('pt-BR')} créditos</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

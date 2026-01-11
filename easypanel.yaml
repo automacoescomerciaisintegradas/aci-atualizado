@@ -1,0 +1,68 @@
+# =========================================
+# ACI - EasyPanel Configuration
+# =========================================
+# Este arquivo define a configuração para deploy no EasyPanel
+# Copie para o painel do EasyPanel ou use via CLI
+
+name: aci-automacoes
+description: "ACI - Automações Comerciais Integradas"
+
+services:
+  app:
+    name: aci-app
+    type: app
+    
+    # Build configuration
+    build:
+      type: dockerfile
+      dockerfile: Dockerfile
+      context: .
+    
+    # Domains
+    domains:
+      - host: aci.automacoescomerciais.com.br
+        https: true
+        port: 4001
+    
+    # Resources
+    resources:
+      cpu: 1
+      memory: 1024
+    
+    # Environment variables
+    env:
+      NODE_ENV: production
+      PORT: "4001"
+      FRONTEND_URL: https://aci.automacoescomerciais.com.br
+      API_URL: https://aci.automacoescomerciais.com.br
+      
+      # Meta/Instagram - Configure no painel
+      META_APP_ID: "${META_APP_ID}"
+      META_APP_SECRET: "${META_APP_SECRET}"
+      META_REDIRECT_URI: https://aci.automacoescomerciais.com.br/api/integrations/instagram/callback
+      META_API_VERSION: v19.0
+      
+      # Mercado Pago - Configure no painel
+      MERCADOPAGO_ACCESS_TOKEN: "${MERCADOPAGO_ACCESS_TOKEN}"
+      MERCADOPAGO_PUBLIC_KEY: "${MERCADOPAGO_PUBLIC_KEY}"
+      
+      # SMTP - Configure no painel
+      SMTP_HOST: "${SMTP_HOST}"
+      SMTP_PORT: "${SMTP_PORT}"
+      SMTP_USERNAME: "${SMTP_USERNAME}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD}"
+      
+      # JWT
+      JWT_SECRET: "${JWT_SECRET}"
+    
+    # Volumes
+    volumes:
+      - /app/data
+      - /app/uploads
+    
+    # Health check
+    healthCheck:
+      enabled: true
+      path: /api/health
+      interval: 30
+      timeout: 10

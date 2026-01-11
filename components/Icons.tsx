@@ -67,7 +67,11 @@ import {
   Keyboard as KeyboardIcon,
   Dumbbell as DumbbellIcon,
   MessageSquare as ChatIcon,
-  UserSearch as UserSearchIcon
+  UserSearch as UserSearchIcon,
+  Facebook as FacebookIcon,
+  Download as DownloadIcon,
+  Filter as FilterIcon,
+  Zap as ZapIcon
 } from 'lucide-react';
 
 // Custom Icons
@@ -242,7 +246,11 @@ export {
   KeyboardIcon,
   DumbbellIcon,
   ChatIcon,
-  UserSearchIcon
+  UserSearchIcon,
+  FacebookIcon,
+  DownloadIcon,
+  FilterIcon,
+  ZapIcon
 };
 
 // Google Icon (Custom SVG)

@@ -6,13 +6,14 @@ import { ApiKeysTab } from './AdminPageComponents/ApiKeysTab.js';
 import { IntegrationsTab } from './AdminPageComponents/IntegrationsTab.js';
 import { AiTab } from './AdminPageComponents/AiTab.js';
 import { CronTab } from './AdminPageComponents/CronTab.js';
+import { AutomationTab } from './AdminPageComponents/AutomationTab.js';
 import { useAdminValidations } from './AdminPageComponents/useAdminValidations.js';
 import { useAdminSave } from './AdminPageComponents/useAdminSave.js';
 import { useExternalValidations } from './AdminPageComponents/useExternalValidations.js';
-import { ChevronLeftIcon } from './Icons.js';
+import { ChevronLeftIcon, SettingsIcon } from './Icons.js';
 import { Card, Button } from './AdminPageComponents/StyledComponents.js';
 
-type AdminTab = 'apiKeys' | 'integrations' | 'ai' | 'cron';
+type AdminTab = 'apiKeys' | 'integrations' | 'ai' | 'cron' | 'automation';
 
 export const AdminPage: React.FC<{ onBack?: () => void; onNavigate: (page: Page, context?: { from: Page }) => void; }> = ({ onBack, onNavigate }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('apiKeys');
@@ -134,13 +135,18 @@ export const AdminPage: React.FC<{ onBack?: () => void; onNavigate: (page: Page,
       {/* ... (mantendo o JSX anterior até o IntegrationsTab) ... */}
       <div className="flex items-center gap-4 mb-8">
         {onBack && (
-          <Button variant="icon-only" onClick={onBack}>
+          <Button variant="icon-only" onClick={onBack} className="glass hover:bg-white/10 transition-all">
             <ChevronLeftIcon className="h-6 w-6" />
           </Button>
         )}
-        <div>
-          <h1 className="text-2xl font-bold text-[#ffffff]">Painel Administrativo</h1>
-          <p className="text-sm text-[#b4b7bd]">Gerencie suas chaves de API, integrações e configurações de IA.</p>
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center glow-primary">
+            <SettingsIcon className="h-7 w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Painel Administrativo</h1>
+            <p className="text-sm text-dark-text-secondary">Gerencie suas chaves de API, integrações e configurações de IA.</p>
+          </div>
         </div>
       </div>
 
@@ -158,6 +164,9 @@ export const AdminPage: React.FC<{ onBack?: () => void; onNavigate: (page: Page,
             </TabButton>
             <TabButton active={activeTab === 'cron'} onClick={() => setActiveTab('cron')} tabType="cron">
               Agendamentos (Cron)
+            </TabButton>
+            <TabButton active={activeTab === 'automation'} onClick={() => setActiveTab('automation')} tabType="automation">
+              Automação n8n
             </TabButton>
           </aside>
         </div>
@@ -208,6 +217,12 @@ export const AdminPage: React.FC<{ onBack?: () => void; onNavigate: (page: Page,
               <CronTab
                 localConfig={localConfig}
                 handleInputChange={handleInputChange}
+              />
+            )}
+
+            {activeTab === 'automation' && (
+              <AutomationTab
+                onSave={handleSave}
               />
             )}
           </Card>

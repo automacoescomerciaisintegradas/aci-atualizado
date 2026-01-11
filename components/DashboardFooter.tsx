@@ -31,25 +31,28 @@ export const DashboardFooter: React.FC<DashboardFooterProps> = ({ onNavigate }) 
     );
 
     return (
-        <footer className="bg-dark-bg border-t border-dark-border mt-16 py-12" role="contentinfo">
+        <footer className="footer-premium mt-16 py-12" role="contentinfo">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Divider com glow */}
+                <div className="divider-glow mb-12"></div>
+
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
                     {/* Brand and Social Column */}
                     <div className="col-span-2 md:col-span-4 lg:col-span-2 space-y-4">
-                        <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('home'); }} className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">
+                        <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('home'); }} className="text-3xl font-bold text-gradient inline-block hover-scale">
                             ACI
                         </a>
-                        <p className="text-sm text-dark-text-secondary max-w-xs">
+                        <p className="text-sm text-dark-text-secondary max-w-xs leading-relaxed">
                             A suíte completa de ferramentas com IA para automação comercial, marketing de afiliados e gerenciamento de conteúdo.
                         </p>
                         <div className="flex items-center gap-4 pt-2">
-                            <a href="#" className="text-dark-text-secondary hover:text-white transition-colors" aria-label="Instagram"><InstagramIcon /></a>
-                            <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" className="text-dark-text-secondary hover:text-white transition-colors" aria-label="Telegram"><TelegramIcon /></a>
-                            <a href={whatsappGroupUrl} target="_blank" rel="noopener noreferrer" className="text-dark-text-secondary hover:text-white transition-colors" aria-label="WhatsApp Group"><WhatsAppIcon /></a>
+                            <a href="#" className="text-dark-text-secondary hover:text-white hover:glow-instagram transition-all duration-300 p-2 rounded-lg hover:bg-white/5" aria-label="Instagram"><InstagramIcon /></a>
+                            <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" className="text-dark-text-secondary hover:text-white hover:glow-primary transition-all duration-300 p-2 rounded-lg hover:bg-white/5" aria-label="Telegram"><TelegramIcon /></a>
+                            <a href={whatsappGroupUrl} target="_blank" rel="noopener noreferrer" className="text-dark-text-secondary hover:text-white hover:glow-success transition-all duration-300 p-2 rounded-lg hover:bg-white/5" aria-label="WhatsApp Group"><WhatsAppIcon /></a>
                         </div>
-                        <div className="text-xs text-dark-text-secondary/50 pt-4 space-y-1">
-                            <p>Dica: Use <kbd className="bg-slate-800 px-1 rounded border border-dark-border">Shift</kbd> + <kbd className="bg-slate-800 px-1 rounded border border-dark-border">H</kbd> para ir ao início.</p>
-                            <p>Use <kbd className="bg-slate-800 px-1 rounded border border-dark-border">Shift</kbd> + <kbd className="bg-slate-800 px-1 rounded border border-dark-border">O</kbd> para Ofertas.</p>
+                        <div className="text-xs text-dark-text-secondary/50 pt-4 space-y-1 glass-light rounded-lg p-3 inline-block">
+                            <p>💡 Dica: Use <kbd className="bg-slate-800 px-1.5 py-0.5 rounded border border-dark-border text-[10px]">Shift</kbd> + <kbd className="bg-slate-800 px-1.5 py-0.5 rounded border border-dark-border text-[10px]">H</kbd> para ir ao início.</p>
+                            <p>Use <kbd className="bg-slate-800 px-1.5 py-0.5 rounded border border-dark-border text-[10px]">Shift</kbd> + <kbd className="bg-slate-800 px-1.5 py-0.5 rounded border border-dark-border text-[10px]">O</kbd> para Ofertas.</p>
                         </div>
                     </div>
 
@@ -70,12 +73,17 @@ export const DashboardFooter: React.FC<DashboardFooterProps> = ({ onNavigate }) 
                 </div>
 
                 {/* Bottom part with copyright */}
-                <div className="mt-12 text-center text-xs text-dark-text-secondary border-t border-dark-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p>&copy; {new Date().getFullYear()} Automações Comerciais Integradas. Todos os Direitos Reservados.</p>
-                    <div className="flex gap-4">
-                        <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('admin') }} className="hover:text-dark-text-primary transition-colors">Admin</a>
-                        <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('profile') }} className="hover:text-dark-text-primary transition-colors">Minha Conta</a>
-                        <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('faq') }} className="hover:text-dark-text-primary transition-colors">Ajuda</a>
+                <div className="mt-12 pt-8 border-t border-white/5">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-dark-text-secondary">
+                        <p className="flex items-center gap-2">
+                            <span className="status-dot online"></span>
+                            &copy; {new Date().getFullYear()} Automações Comerciais Integradas. Todos os Direitos Reservados.
+                        </p>
+                        <div className="flex gap-6">
+                            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('admin') }} className="hover:text-white hover:text-gradient transition-all duration-300">Admin</a>
+                            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('profile') }} className="hover:text-white hover:text-gradient transition-all duration-300">Minha Conta</a>
+                            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('faq') }} className="hover:text-white hover:text-gradient transition-all duration-300">Ajuda</a>
+                        </div>
                     </div>
                 </div>
             </div>

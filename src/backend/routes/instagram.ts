@@ -42,13 +42,21 @@ router.get('/auth', authMiddleware, (req: any, res) => {
 router.get('/callback', async (req: any, res) => {
     const { code, state, error, error_reason, error_description } = req.query;
 
+    console.log('=== INSTAGRAM CALLBACK ===');
+    console.log('FRONTEND_URL:', FRONTEND_URL);
+    console.log('REDIRECT_URI:', REDIRECT_URI);
+    console.log('Code:', code ? 'Recebido' : 'Ausente');
+    console.log('State (userId):', state);
+    console.log('Error:', error || 'Nenhum');
+
     if (error) {
         console.error('Erro retornado pelo Facebook:', error, error_reason, error_description);
-        return res.redirect(`${FRONTEND_URL}?instagram_status=error&message=${encodeURIComponent(error_description as string || 'Erro ao conectar Instagram')}`);
+        return res.redirect(`${FRONTEND_URL}?page=instagram-connect&status=error&message=${encodeURIComponent(error_description as string || 'Erro ao conectar Instagram')}`);
     }
 
     if (!code || !state) {
-        return res.redirect(`${FRONTEND_URL}?instagram_status=error&message=${encodeURIComponent('Código ou estado ausente')}`);
+        console.error('Código ou estado ausente');
+        return res.redirect(`${FRONTEND_URL}?page=instagram-connect&status=error&message=${encodeURIComponent('Código ou estado ausente')}`);
     }
 
     try {
@@ -164,15 +172,16 @@ router.get('/callback', async (req: any, res) => {
         }
 
         if (connectedCount === 0) {
-            return res.redirect(`${FRONTEND_URL}?instagram_status=warning&message=${encodeURIComponent('Nenhuma conta Instagram Business encontrada')}`);
+            return res.redirect(`${FRONTEND_URL}?page=instagram-connect&status=warning&message=${encodeURIComponent('Nenhuma conta Instagram Business encontrada')}`);
         }
 
-        // Sucesso - Redirecionar para home com mensagem de sucesso
-        res.redirect(`${FRONTEND_URL}?instagram_status=success&message=${encodeURIComponent(`${connectedCount} conta(s) Instagram conectada(s) com sucesso!`)}`);
+        // Sucesso - Redirecionar para página de Instagram com mensagem de sucesso
+        console.log(`Contas conectadas: ${connectedCount}`);
+        res.redirect(`${FRONTEND_URL}?page=instagram-connect&status=success&message=${encodeURIComponent(`${connectedCount} conta(s) Instagram conectada(s) com sucesso!`)}`);
 
     } catch (error: any) {
         console.error('Erro no callback do Instagram:', error.response?.data || error.message);
-        res.redirect(`${FRONTEND_URL}?instagram_status=error&message=${encodeURIComponent('Erro ao conectar Instagram. Tente novamente.')}`);
+        res.redirect(`${FRONTEND_URL}?page=instagram-connect&status=error&message=${encodeURIComponent('Erro ao conectar Instagram. Tente novamente.')}`);
     }
 });
 

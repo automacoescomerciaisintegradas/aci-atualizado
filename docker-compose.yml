@@ -1,33 +1,87 @@
+# =========================================
+# ACI - Docker Compose para Desenvolvimento e Produção
+# =========================================
+
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: saas_postgres
+  # =========================================
+  # App Principal (Frontend + Backend)
+  # =========================================
+  aci-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aci-app
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+      - "3000:3000"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: marketing_automation
-    ports:
-      - "5432:5432"
+      - NODE_ENV=production
+      - PORT=4001
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - API_URL=${API_URL:-http://localhost:4001}
+      - DATABASE_URL=${DATABASE_URL:-file:./data/dev.db}
+      # Meta/Instagram
+      - META_APP_ID=${META_APP_ID}
+      - META_APP_SECRET=${META_APP_SECRET}
+      - META_REDIRECT_URI=${META_REDIRECT_URI}
+      - META_API_VERSION=${META_API_VERSION:-v19.0}
+      # Mercado Pago
+      - MERCADOPAGO_ACCESS_TOKEN=${MERCADOPAGO_ACCESS_TOKEN}
+      - MERCADOPAGO_PUBLIC_KEY=${MERCADOPAGO_PUBLIC_KEY}
+      # SMTP
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      # JWT
+      - JWT_SECRET=${JWT_SECRET:-super-secret-key-change-in-production}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - aci-data:/app/data
+      - aci-uploads:/app/uploads
+    networks:
+      - aci-network
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "curl", "-f", "http://localhost:4001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  redis:
-    image: redis:7-alpine
-    container_name: saas_redis
+  # =========================================
+  # Nginx Reverse Proxy (Opcional)
+  # =========================================
+  nginx:
+    image: nginx:alpine
+    container_name: aci-nginx
+    restart: unless-stopped
     ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - aci-app
+    networks:
+      - aci-network
+    profiles:
+      - with-nginx
 
+# =========================================
+# Volumes Persistentes
+# =========================================
 volumes:
-  pgdata:
+  aci-data:
+    driver: local
+  aci-uploads:
+    driver: local
+
+# =========================================
+# Networks
+# =========================================
+networks:
+  aci-network:
+    driver: bridge

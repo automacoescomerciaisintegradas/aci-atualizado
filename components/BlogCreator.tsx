@@ -3,7 +3,8 @@ import { useSettings } from '../hooks/useSettings';
 import { getShopeeProductDetailsFromUrl, generateFullBlogPostFromDetails, FullBlogPost } from '../services/geminiService';
 import { publishToWordPress, getWordPressCategories, getWordPressTags, createWordPressCategory, createWordPressTag } from '../services/wordpressService';
 import { Page } from '../App';
-import { BookIcon, MagicWandIcon, SpinnerIcon, SearchIcon, AlertTriangleIcon, CheckIcon, WordPressIcon, ClipboardListIcon, ClockIcon, UploadIcon } from './Icons';
+import { BookIcon, MagicWandIcon, SpinnerIcon, SearchIcon, AlertTriangleIcon, CheckIcon, WordPressIcon, ClipboardListIcon, ClockIcon, UploadIcon, ChevronLeftIcon } from './Icons';
+import { FacebookLikeButton, FacebookShareButton, useFacebookSDK } from './FacebookPlugins';
 
 export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate }) => {
     const { settings } = useSettings();
@@ -189,10 +190,10 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
     const handlePublish = async (status: 'draft' | 'publish' | 'future' = 'publish') => {
         if (!generatedPost) return;
         setPublishState({ status: 'loading' });
-        
+
         // Deduct credits for publishing (R$ 0,09)
         // This would typically be handled by a backend service
-        
+
         // Upload featured image if selected
         let featuredMediaId: number | undefined = undefined;
         if (featuredImage) {
@@ -205,11 +206,11 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                 return;
             }
         }
-        
+
         const result = await publishToWordPress(
-            settings, 
-            generatedPost.title, 
-            generatedPost.content, 
+            settings,
+            generatedPost.title,
+            generatedPost.content,
             '', // CSS is empty for now
             status,
             selectedCategories.length > 0 ? selectedCategories : undefined,
@@ -217,12 +218,12 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
             featuredMediaId, // Featured media ID
             status === 'future' ? scheduledDate : undefined // Scheduled date for future posts
         );
-        
+
         if (result.success) {
-            setPublishState({ 
-                status: 'success', 
-                message: status === 'draft' ? 'Post salvo como rascunho!' : 'Post publicado!', 
-                link: result.postLink 
+            setPublishState({
+                status: 'success',
+                message: status === 'draft' ? 'Post salvo como rascunho!' : 'Post publicado!',
+                link: result.postLink
             });
         } else {
             setPublishState({ status: 'error', message: result.message });
@@ -326,22 +327,38 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
 
 
     return (
-        <div className="animate-fade-in">
-            <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-dark-text-primary mb-2">Criador de Post para Blog</h1>
-                    <p className="text-md text-dark-text-secondary">Gere posts completos com IA e publique automaticamente.</p>
+        <div className="animate-fade-in px-2 sm:px-0">
+            {/* Header com botão voltar */}
+            <div className="mb-6 sm:mb-8 flex flex-col gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
+                    <button
+                        onClick={() => onNavigate('home')}
+                        className="glass hover:bg-white/10 p-2 sm:p-2.5 rounded-xl text-dark-text-secondary transition-all duration-300 flex-shrink-0"
+                    >
+                        <ChevronLeftIcon className="h-5 w-5" />
+                    </button>
+                    <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl gradient-primary flex items-center justify-center glow-primary flex-shrink-0">
+                            <BookIcon className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
+                        </div>
+                        <div className="min-w-0">
+                            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-text-primary truncate">Criador de Post para Blog</h1>
+                            <p className="text-xs sm:text-sm text-dark-text-secondary hidden sm:block">Gere posts completos com IA e publique automaticamente.</p>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex bg-slate-800 p-1 rounded-lg">
+
+                {/* Tabs - responsivo */}
+                <div className="flex bg-slate-800 p-1 rounded-lg w-full sm:w-auto sm:self-end">
                     <button
                         onClick={() => setActiveTab('single')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'single' ? 'bg-brand-primary text-white' : 'text-slate-400 hover:text-white'}`}
+                        className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${activeTab === 'single' ? 'bg-brand-primary text-white' : 'text-slate-400 hover:text-white'}`}
                     >
                         Post Único
                     </button>
                     <button
                         onClick={() => setActiveTab('csv')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'csv' ? 'bg-brand-primary text-white' : 'text-slate-400 hover:text-white'}`}
+                        className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${activeTab === 'csv' ? 'bg-brand-primary text-white' : 'text-slate-400 hover:text-white'}`}
                     >
                         Em Massa (CSV)
                     </button>
@@ -444,12 +461,12 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                         {isCopied ? <CheckIcon className="h-5 w-5 text-green-400" /> : <ClipboardListIcon className="h-5 w-5" />}
                                         {isCopied ? 'Copiado!' : 'Copiar Tudo'}
                                     </button>
-                                    
+
                                     {/* Categories and Tags section */}
                                     {isWpConfigured && (
                                         <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700 w-full">
                                             <h4 className="text-md font-semibold mb-3">Categorias e Tags</h4>
-                                            
+
                                             {/* Categories */}
                                             <div className="mb-4">
                                                 <label className="block text-sm font-medium mb-2">Categorias</label>
@@ -472,7 +489,7 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                                         </label>
                                                     ))}
                                                 </div>
-                                                
+
                                                 {/* Add new category */}
                                                 <div className="flex gap-2 mt-2">
                                                     <input
@@ -496,7 +513,7 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                                     </button>
                                                 </div>
                                             </div>
-                                            
+
                                             {/* Tags */}
                                             <div>
                                                 <label className="block text-sm font-medium mb-2">Tags</label>
@@ -519,7 +536,7 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                                         </label>
                                                     ))}
                                                 </div>
-                                                
+
                                                 {/* Add new tag */}
                                                 <div className="flex gap-2 mt-2">
                                                     <input
@@ -545,19 +562,19 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                             </div>
                                         </div>
                                     )}
-                                    
+
                                     {/* Featured Image section */}
                                     {isWpConfigured && (
                                         <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700 w-full">
                                             <h4 className="text-md font-semibold mb-3">Imagem Destacada</h4>
-                                            
+
                                             <div className="flex flex-col sm:flex-row gap-4">
                                                 {/* Image preview */}
                                                 <div className="flex-1">
                                                     {featuredImagePreview ? (
-                                                        <img 
-                                                            src={featuredImagePreview} 
-                                                            alt="Preview" 
+                                                        <img
+                                                            src={featuredImagePreview}
+                                                            alt="Preview"
                                                             className="w-full h-48 object-cover rounded-lg border border-slate-700"
                                                         />
                                                     ) : (
@@ -566,7 +583,7 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                                         </div>
                                                     )}
                                                 </div>
-                                                
+
                                                 {/* Upload controls */}
                                                 <div className="flex-1">
                                                     <input
@@ -581,14 +598,14 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                                         }}
                                                         className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-sm mb-2"
                                                     />
-                                                    
+
                                                     <button
                                                         onClick={async () => {
                                                             if (!featuredImage) {
                                                                 alert('Por favor, selecione uma imagem primeiro.');
                                                                 return;
                                                             }
-                                                            
+
                                                             setUploadingImage(true);
                                                             try {
                                                                 const result = await uploadMediaToWordPress(settings, featuredImage);
@@ -619,7 +636,7 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                                             </>
                                                         )}
                                                     </button>
-                                                    
+
                                                     <button
                                                         onClick={() => {
                                                             setFeaturedImage(null);
@@ -633,7 +650,7 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                             </div>
                                         </div>
                                     )}
-                                    
+
                                     {/* Schedule post section */}
                                     {isWpConfigured && (
                                         <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700 w-full">
@@ -648,14 +665,14 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                                         min={new Date().toISOString().slice(0, 16)}
                                                     />
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={() => {
                                                         if (!scheduledDate) {
                                                             alert('Por favor, selecione uma data e hora para agendar.');
                                                             return;
                                                         }
                                                         handlePublish('future');
-                                                    }} 
+                                                    }}
                                                     disabled={!isWpConfigured || publishState.status === 'loading' || !scheduledDate}
                                                     className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-4 rounded-lg disabled:opacity-50 whitespace-nowrap"
                                                 >
@@ -670,7 +687,7 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                             )}
                                         </div>
                                     )}
-                                    
+
                                     <button onClick={() => handlePublish('draft')} disabled={!isWpConfigured || publishState.status === 'loading'} className="flex items-center gap-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg disabled:opacity-50" title={!isWpConfigured ? 'Configure o WordPress no Painel Admin' : ''}>
                                         {publishState.status === 'loading' ? <SpinnerIcon /> : <BookIcon className="h-5 w-5" />}
                                         {publishState.status === 'loading' ? 'Salvando...' : 'Salvar como Rascunho'}
@@ -682,25 +699,72 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                     {!isWpConfigured && <button onClick={() => onNavigate('admin')} className="text-xs text-brand-secondary hover:underline">Configurar WordPress</button>}
                                 </div>
                                 {publishState.status === 'success' && (
-                                    <div className="text-sm text-green-400 flex items-center gap-2">
-                                        <CheckIcon /> 
-                                        {publishState.message} 
+                                    <div className="space-y-4">
+                                        <div className="text-sm text-green-400 flex items-center gap-2">
+                                            <CheckIcon />
+                                            {publishState.message}
+                                            {publishState.link && (
+                                                <a href={publishState.link} target="_blank" rel="noopener noreferrer" className="underline">
+                                                    Ver Post
+                                                </a>
+                                            )}
+                                            {/* Show cost deduction message */}
+                                            {!publishState.link && (
+                                                <span className="text-yellow-400">
+                                                    R$ 0,09 deduzido da sua conta
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Facebook Social Buttons */}
                                         {publishState.link && (
-                                            <a href={publishState.link} target="_blank" rel="noopener noreferrer" className="underline">
-                                                Ver Post
-                                            </a>
-                                        )}
-                                        {/* Show cost deduction message */}
-                                        {!publishState.link && (
-                                            <span className="text-yellow-400">
-                                                R$ 0,09 deduzido da sua conta
-                                            </span>
+                                            <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                                                <p className="text-sm text-slate-400 mb-3">📢 Compartilhe seu post nas redes sociais:</p>
+                                                <div className="flex flex-wrap items-center gap-4">
+                                                    <FacebookLikeButton
+                                                        href={publishState.link}
+                                                        layout="button_count"
+                                                        size="large"
+                                                        share={false}
+                                                        showFaces={false}
+                                                    />
+                                                    <FacebookShareButton
+                                                        href={publishState.link}
+                                                        layout="button_count"
+                                                        size="large"
+                                                    />
+                                                    <a
+                                                        href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(publishState.link)}&text=${encodeURIComponent(generatedPost?.titulo || '')}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-2 px-4 py-2 bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white text-sm font-medium rounded-lg transition-colors"
+                                                    >
+                                                        𝕏 Tweetar
+                                                    </a>
+                                                    <a
+                                                        href={`https://wa.me/?text=${encodeURIComponent((generatedPost?.titulo || '') + ' ' + publishState.link)}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-2 px-4 py-2 bg-[#25D366] hover:bg-[#20bd5a] text-white text-sm font-medium rounded-lg transition-colors"
+                                                    >
+                                                        📱 WhatsApp
+                                                    </a>
+                                                    <a
+                                                        href={`https://t.me/share/url?url=${encodeURIComponent(publishState.link)}&text=${encodeURIComponent(generatedPost?.titulo || '')}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-2 px-4 py-2 bg-[#0088cc] hover:bg-[#0077b5] text-white text-sm font-medium rounded-lg transition-colors"
+                                                    >
+                                                        ✈️ Telegram
+                                                    </a>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 )}
                                 {publishState.status === 'error' && (
                                     <div className="text-sm text-red-400 flex items-center gap-2">
-                                        <AlertTriangleIcon className="h-5 w-5" /> 
+                                        <AlertTriangleIcon className="h-5 w-5" />
                                         {publishState.message}
                                     </div>
                                 )}

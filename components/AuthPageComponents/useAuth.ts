@@ -8,7 +8,7 @@ interface User {
   isAdmin: boolean;
 }
 
-export const useAuth = (onLoginSuccess: (user: User) => void) => {
+export const useAuth = (onLoginSuccess: (user: User, isNewUser?: boolean) => void) => {
   const [view, setView] = useState<'login' | 'signup' | 'pending-confirmation' | 'forgot-password'>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
@@ -57,7 +57,7 @@ export const useAuth = (onLoginSuccess: (user: User) => void) => {
 
   const handleFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted with:', { email, password, view, phone });
+    // Log removido para produção
 
     // Validações básicas
     if (!validateEmail(email)) {
@@ -137,7 +137,7 @@ export const useAuth = (onLoginSuccess: (user: User) => void) => {
           throw new Error(response.error || 'Erro ao criar conta');
         }
 
-        console.log('Signup successful:', response);
+        // Log removido para produção
 
         // Login automático após signup
         const user = response.user;
@@ -146,7 +146,7 @@ export const useAuth = (onLoginSuccess: (user: User) => void) => {
           email: user.email,
           photoUrl: user.avatar_url || '',
           isAdmin: user.role === 'admin'
-        });
+        }, true); // true = novo usuário
         setIsLoading(false);
         return;
 
@@ -156,7 +156,7 @@ export const useAuth = (onLoginSuccess: (user: User) => void) => {
         // Login with D1 API
         const response = await apiClient.login(email, password);
 
-        console.log('📦 Login response:', JSON.stringify(response, null, 2));
+        // Log removido para produção
 
         if (!response.success) {
           throw new Error(response.error || 'Credenciais inválidas');
@@ -170,7 +170,7 @@ export const useAuth = (onLoginSuccess: (user: User) => void) => {
           email: user.email,
           photoUrl: user.avatar_url || '',
           isAdmin: user.role === 'admin'
-        });
+        }, false); // false = usuário existente
         setIsLoading(false);
         return;
       }

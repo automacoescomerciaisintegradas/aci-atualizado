@@ -14,21 +14,17 @@ import { useSettings } from './hooks/useSettings';
 import { SpinnerIcon } from './components/Icons';
 import { ProfilePage } from './components/ProfilePage';
 import { LandingPage } from './components/LandingPage';
-import { DashboardHeader } from './components/DashboardHeader';
+import { TopNavbar } from './components/TopNavbar';
 import { PricingPage } from './components/PricingPage';
 import { TelegramShopeePage } from './components/TelegramShopeePage';
 import { FaqPage } from './components/FaqPage';
 import { MultiChannelPublisher } from './components/MultiChannelPublisher';
 import { ShopeeLotePage } from './components/ShopeeLotePage';
-import { InstagramCaptionGenerator } from './components/InstagramCaptionGenerator';
-import { WhatsAppFloat } from './components/WhatsAppFloat';
-import { CreditDashboard } from './components/CreditDashboard';
 import { BlogCreator } from './components/BlogCreator';
 import { ChatPage } from './components/ChatPage';
 import { ImageGenerator } from './components/ImageGenerator';
 import { InstagramProfilePage } from './components/InstagramProfilePage';
 import { TelegramIdPage } from './components/TelegramIdPage';
-import { Sidebar } from './components/Sidebar';
 import { BlogsPage } from './components/BlogsPage';
 import { CreateContentPage } from './components/CreateContentPage';
 import { OAuthConsentPage } from './components/OAuthConsentPage';
@@ -37,9 +33,20 @@ import { AnalyticsPage } from './components/AnalyticsPage';
 import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { DashboardFooter } from './components/DashboardFooter';
 import { SuperAdminPage } from './components/SuperAdminPage';
+import { FacebookIntegrationTutorialPage } from './components/FacebookIntegrationTutorialPage';
+import { UserProfilePage } from './components/UserProfilePage';
+import { UserBillingPage } from './components/UserBillingPage';
+import { UserOrdersPage } from './components/UserOrdersPage';
+import { CreditPurchasePage } from './components/CreditPurchasePage';
+import { InstagramCaptionGenerator } from './components/InstagramCaptionGenerator';
+import { AutomationPage } from './components/AutomationPage';
+import { WelcomeModal } from './components/WelcomeModal';
+import { ComingSoonPage } from './components/ComingSoonPage';
+import { ShopeeAffiliateProgramPage } from './components/ShopeeAffiliateProgramPage';
+import { SupportPage } from './components/SupportPage';
+import { IntegrationsHubPage } from './components/IntegrationsHubPage';
 
-
-export type Page = 'home' | 'product-search' | 'generate' | 'top-sales' | 'telegram' | 'admin' | 'aci-posts' | 'instagram-connect' | 'blog' | 'profile' | 'telegram-shopee' | 'faq' | 'precos' | 'multi-channel-publisher' | 'shopee-lote' | 'instagram-caption' | 'blog-creator' | 'chat' | 'image-generator' | 'instagram-profile' | 'telegram-id-catcher' | 'wordpress-blogs' | 'wordpress-create' | 'payment-methods' | 'analytics' | 'user-settings';
+export type Page = 'home' | 'product-search' | 'generate' | 'top-sales' | 'telegram' | 'admin' | 'aci-posts' | 'instagram-connect' | 'blog' | 'profile' | 'telegram-shopee' | 'faq' | 'precos' | 'multi-channel-publisher' | 'shopee-lote' | 'instagram-caption' | 'blog-creator' | 'chat' | 'image-generator' | 'instagram-profile' | 'telegram-id-catcher' | 'wordpress-blogs' | 'wordpress-create' | 'payment-methods' | 'analytics' | 'user-settings' | 'facebook-integration-tutorial' | 'user-profile' | 'user-billing' | 'user-orders' | 'credit-purchase' | 'automation' | 'shopee-affiliate' | 'whatsapp-business' | 'api-integration' | 'ai-insights' | 'advanced-analytics' | 'custom-automations' | 'priority-support' | 'billing' | 'orders' | 'integrations-hub';
 
 const transactions = [
   { id: 1, date: '15/07/2024', type: 'Compra', description: 'Compra de 50.000 créditos', amount: '+ R$ 50,00', credits: '+50000' },
@@ -79,20 +86,22 @@ const App: React.FC = () => {
   const [navigationContext, setNavigationContext] = useState<{ from?: Page } | null>(null);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error' | 'warning', message: string } | null>(null);
 
-  // Check for Instagram callback parameters
+  // Check for callback parameters (Instagram, Payments, etc)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const instagramStatus = urlParams.get('instagram_status');
+    const status = urlParams.get('status') || urlParams.get('instagram_status');
     const message = urlParams.get('message');
 
-    if (instagramStatus && message) {
+    if (status && message) {
       setToastMessage({
-        type: instagramStatus as 'success' | 'error' | 'warning',
+        type: status as 'success' | 'error' | 'warning',
         message: decodeURIComponent(message)
       });
 
-      // Clean URL
-      window.history.replaceState({}, document.title, '/');
+      // Clean URL parameters but keep the page if present
+      const page = urlParams.get('page');
+      const newUrl = page ? `/?page=${page}` : '/';
+      window.history.replaceState({}, document.title, newUrl);
 
       // Auto hide after 5 seconds
       setTimeout(() => setToastMessage(null), 5000);
@@ -133,11 +142,17 @@ const App: React.FC = () => {
   };
 
   const [user, setUser] = useState<{ name: string; email: string; photoUrl: string; isAdmin: boolean } | null>(null);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
-  const handleLogin = (userData: { name: string; email: string; photoUrl: string; isAdmin: boolean }) => {
+  const handleLogin = (userData: { name: string; email: string; photoUrl: string; isAdmin: boolean }, isNewUser?: boolean) => {
     setIsAuthenticated(true);
     setUser(userData);
     setActivePage('home');
+
+    // Mostrar modal de boas-vindas para novos usuários
+    if (isNewUser) {
+      setShowWelcomeModal(true);
+    }
   };
   const handleLogout = () => {
     setIsAuthenticated(false);
@@ -273,7 +288,7 @@ const App: React.FC = () => {
       case 'aci-posts':
         return <AciPage onNavigate={handleNavigate} />;
       case 'instagram-connect':
-        return <InstagramConnectPage onBack={onBack} />;
+        return <InstagramConnectPage onBack={onBack} onNavigate={handleNavigate} />;
       case 'instagram-caption':
         return <InstagramCaptionGenerator />;
       case 'telegram':
@@ -310,36 +325,65 @@ const App: React.FC = () => {
         return <AnalyticsPage />;
       case 'user-settings':
         return <SuperAdminPage onBack={onBack} onNavigate={handleNavigate} />;
+      case 'facebook-integration-tutorial':
+        return <FacebookIntegrationTutorialPage onBack={onBack} onNavigate={handleNavigate} />;
+      case 'user-profile':
+        return <UserProfilePage onNavigate={handleNavigate} user={user || undefined} />;
+      case 'user-billing':
+        return <UserBillingPage onNavigate={handleNavigate} onAddCreditsClick={() => handleNavigate('credit-purchase' as Page)} />;
+      case 'user-orders':
+        return <UserOrdersPage onNavigate={handleNavigate} />;
+      case 'credit-purchase':
+        return <CreditPurchasePage onNavigate={handleNavigate} onPaymentSuccess={handleAddCredits} />;
+      case 'automation':
+        return <AutomationPage />;
+      case 'integrations-hub':
+        return <IntegrationsHubPage onNavigate={handleNavigate} />;
+
+      // Páginas em desenvolvimento
+      case 'shopee-affiliate':
+        return <ShopeeAffiliateProgramPage onNavigate={handleNavigate} />;
+      case 'whatsapp-business':
+        return <ComingSoonPage title="WhatsApp Business" description="Conecte sua conta do WhatsApp Business para envio automático de mensagens, promoções e atendimento aos clientes." onNavigate={handleNavigate} />;
+      case 'api-integration':
+        return <ComingSoonPage title="Integração API" description="Acesse nossa API RESTful para integrar o ACI com suas próprias aplicações e automatizar processos." onNavigate={handleNavigate} />;
+      case 'ai-insights':
+        return <ComingSoonPage title="Análises com IA" description="Insights inteligentes sobre seus produtos, vendas e engajamento gerados por inteligência artificial." onNavigate={handleNavigate} />;
+      case 'advanced-analytics':
+        return <ComingSoonPage title="Analytics Avançado" description="Dashboards avançados com métricas detalhadas, comparativos e previsões de vendas." onNavigate={handleNavigate} />;
+      case 'custom-automations':
+        return <ComingSoonPage title="Automações Personalizadas" description="Crie fluxos de automação personalizados para otimizar seus processos de vendas." onNavigate={handleNavigate} />;
+      case 'priority-support':
+        return <SupportPage onNavigate={handleNavigate} />;
+      case 'billing':
+        return <UserBillingPage onNavigate={handleNavigate} onAddCreditsClick={() => handleNavigate('credit-purchase' as Page)} />;
+      case 'orders':
+        return <UserOrdersPage onNavigate={handleNavigate} />;
+
+      // Default - página não encontrada
+      default:
+        return <ComingSoonPage title="Página não encontrada" description="Esta página ainda não foi implementada." onNavigate={handleNavigate} />;
     }
   };
 
   return (
-    <div className="flex h-screen bg-dark-bg text-dark-text-primary font-sans overflow-hidden">
-      {/* Sidebar for Desktop */}
-      <Sidebar
+    <div className="flex flex-col min-h-screen bg-dark-bg text-dark-text-primary font-sans">
+      {/* Top Navigation Bar */}
+      <TopNavbar
         activePage={activePage}
-        onNavigate={(page) => handleNavigate(page)}
-        searchTerm={globalSearchTerm}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
+        onAddCreditsClick={() => handleNavigate('credit-purchase' as any)}
         isAdmin={user?.isAdmin}
       />
 
-      <div className="flex flex-col flex-1 min-w-0">
-        <DashboardHeader
-          activePage={activePage}
-          onNavigate={handleNavigate}
-          onLogout={handleLogout}
-          onAddCreditsClick={() => handleNavigate('precos')}
-          onDownloadExtract={handleDownloadExtract}
-          searchTerm={globalSearchTerm}
-          onSearchChange={setGlobalSearchTerm}
-        />
-        <main className="flex-1 overflow-y-auto w-full scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent bg-dark-bg/50">
-          <div className="w-full max-w-[1920px] mx-auto p-4 sm:p-6 lg:p-8 flex flex-col min-h-full gap-6">
-            {renderPage()}
-            <DashboardFooter onNavigate={handleNavigate} />
-          </div>
-        </main>
-      </div>
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto w-full scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <div className="w-full max-w-[1920px] mx-auto p-4 sm:p-6 lg:p-8 flex flex-col min-h-full gap-6">
+          {renderPage()}
+          <DashboardFooter onNavigate={handleNavigate} />
+        </div>
+      </main>
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -382,7 +426,12 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <WhatsAppFloat />
+      {/* Welcome Modal for New Users */}
+      <WelcomeModal
+        isOpen={showWelcomeModal}
+        onClose={() => setShowWelcomeModal(false)}
+        userName={user?.name}
+      />
     </div>
   );
 };

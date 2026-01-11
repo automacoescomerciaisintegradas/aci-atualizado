@@ -102,7 +102,41 @@
 </head>
 
 <body class="bg-white dark:bg-dark-bg text-gray-800 dark:text-dark-text-secondary font-sans">
+  <!-- Facebook SDK -->
+  <div id="fb-root"></div>
+  <script>
+    window.fbAsyncInit = function () {
+      FB.init({
+        appId: '3728761024095089',
+        cookie: true,
+        xfbml: true,
+        version: 'v19.0'
+      });
+      FB.AppEvents.logPageView();
+    };
+
+    (function (d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) { return; }
+      js = d.createElement(s); js.id = id;
+      js.src = "https://connect.facebook.net/pt_BR/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+
+    // Função global para verificar estado do login
+    function checkFacebookLoginState() {
+      FB.getLoginStatus(function (response) {
+        console.log('Facebook Login Status:', response);
+        if (response.status === 'connected') {
+          // Usuário logado no Facebook e autorizou o app
+          window.dispatchEvent(new CustomEvent('fbLoginSuccess', { detail: response }));
+        }
+      });
+    }
+  </script>
+
   <div id="root"></div>
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
   <script type="module" src="/index.tsx"></script>
 </body>
 

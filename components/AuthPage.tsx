@@ -8,7 +8,7 @@ import { WhatsAppIcon, TelegramIcon, InstagramIcon, BrainCircuitIcon, BookIcon, 
 import { subscribeToNewsletter } from '../services/newsletterService';
 
 interface AuthPageProps {
-  onLoginSuccess: (user: { name: string; email: string; photoUrl: string; isAdmin: boolean }) => void;
+  onLoginSuccess: (user: { name: string; email: string; photoUrl: string; isAdmin: boolean }, isNewUser?: boolean) => void;
   onBackToLanding: () => void;
 }
 
