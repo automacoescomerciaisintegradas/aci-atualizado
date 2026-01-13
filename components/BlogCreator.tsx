@@ -47,6 +47,7 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
     const [featuredImage, setFeaturedImage] = useState<File | null>(null);
     const [featuredImagePreview, setFeaturedImagePreview] = useState<string>('');
     const [uploadingImage, setUploadingImage] = useState<boolean>(false);
+    const [uploadedMediaId, setUploadedMediaId] = useState<number | null>(null);
 
     // Load categories and tags when component mounts and WordPress is configured
     useEffect(() => {
@@ -129,7 +130,7 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
     };
 
     const handleFetchShopeeProduct = useCallback(async () => {
-        if (!shopeeUrl.trim()) return;
+        if (!shopeeUrl.trim() || !shopeeUrl.startsWith('http')) return;
         setIsFetching(true);
         setError(null);
         try {
@@ -139,6 +140,9 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
             } else {
                 setProductName(details.title);
                 setProductDescription(`Produto: ${details.title}, Preço: ${details.price}. URL: ${details.product_url}`);
+                if (details.image_url) {
+                    setFeaturedImagePreview(details.image_url);
+                }
             }
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Falha ao buscar detalhes do produto.');
@@ -146,6 +150,16 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
             setIsFetching(false);
         }
     }, [shopeeUrl]);
+
+    // Busca automática quando o link é colado
+    useEffect(() => {
+        if (shopeeUrl.includes('shopee.com.br') && shopeeUrl.length > 20) {
+            const timer = setTimeout(() => {
+                handleFetchShopeeProduct();
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [shopeeUrl, handleFetchShopeeProduct]);
 
     const handleGeneratePost = useCallback(async (e: FormEvent) => {
         e.preventDefault();
@@ -158,14 +172,22 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
         setGeneratedPost(null);
         setPublishState({ status: 'idle' });
         try {
-            const post = await generateFullBlogPostFromDetails(productName, productDescription, toneOfVoice, targetAudience, postObjective);
+            // Passamos a URL da Shopee para gerar o link "CLIQUE AQUI" automaticamente
+            const post = await generateFullBlogPostFromDetails(
+                productName,
+                productDescription,
+                toneOfVoice,
+                targetAudience,
+                postObjective,
+                shopeeUrl
+            );
             setGeneratedPost(post);
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Falha ao gerar o post.');
         } finally {
             setIsGenerating(false);
         }
-    }, [productName, productDescription, toneOfVoice, targetAudience, postObjective]);
+    }, [productName, productDescription, toneOfVoice, targetAudience, postObjective, shopeeUrl]);
 
     const handleInsert = (textToInsert: string) => {
         const textarea = contentRef.current;
@@ -195,17 +217,38 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
         // This would typically be handled by a backend service
 
         // Upload featured image if selected
-        let featuredMediaId: number | undefined = undefined;
-        if (featuredImage) {
-            const uploadResult = await uploadMediaToWordPress(settings, featuredImage);
-            if (uploadResult.success && uploadResult.mediaId) {
-                featuredMediaId = uploadResult.mediaId;
-            } else {
-                alert(uploadResult.message || 'Erro ao enviar imagem destacada');
-                setPublishState({ status: 'idle' });
-                return;
+        let featuredMediaId: number | undefined = uploadedMediaId || undefined;
+
+        if (!featuredMediaId && (featuredImage || (featuredImagePreview && featuredImagePreview.startsWith('http')))) {
+            setPublishState({ status: 'loading', message: 'Enviando imagem destacada...' });
+
+            try {
+                let fileToUpload: File | null = featuredImage;
+
+                // Se não tem arquivo mas tem URL (auto-fetch), tenta baixar (proxy via fetch)
+                if (!fileToUpload && featuredImagePreview.startsWith('http')) {
+                    try {
+                        const response = await fetch(featuredImagePreview);
+                        const blob = await response.blob();
+                        fileToUpload = new File([blob], 'product-image.jpg', { type: 'image/jpeg' });
+                    } catch (e) {
+                        console.error('CORS error or failed to fetch image, proceeding without image');
+                    }
+                }
+
+                if (fileToUpload) {
+                    const uploadResult = await uploadMediaToWordPress(settings, fileToUpload);
+                    if (uploadResult.success && uploadResult.mediaId) {
+                        featuredMediaId = uploadResult.mediaId;
+                        setUploadedMediaId(featuredMediaId);
+                    }
+                }
+            } catch (imageError) {
+                console.error('Error handling image upload:', imageError);
             }
         }
+
+        setPublishState({ status: 'loading', message: status === 'draft' ? 'Salvando rascunho...' : 'Publicando...' });
 
         const result = await publishToWordPress(
             settings,
@@ -610,8 +653,8 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                                             try {
                                                                 const result = await uploadMediaToWordPress(settings, featuredImage);
                                                                 if (result.success && result.mediaId) {
+                                                                    setUploadedMediaId(result.mediaId);
                                                                     alert(`Imagem enviada com sucesso! ID: ${result.mediaId}`);
-                                                                    // You would typically store this ID to use when publishing
                                                                 } else {
                                                                     alert(result.message || 'Erro ao enviar imagem');
                                                                 }
@@ -641,6 +684,7 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                                         onClick={() => {
                                                             setFeaturedImage(null);
                                                             setFeaturedImagePreview('');
+                                                            setUploadedMediaId(null);
                                                         }}
                                                         className="w-full mt-2 text-sm text-slate-400 hover:text-white"
                                                     >
@@ -750,7 +794,11 @@ export const BlogCreator: React.FC<{ onNavigate: (page: Page) => void; }> = ({ o
                                                         📱 WhatsApp
                                                     </a>
                                                     <a
-                                                        href={`https://t.me/share/url?url=${encodeURIComponent(publishState.link)}&text=${encodeURIComponent(generatedPost?.titulo || '')}`}
+                                                        href={settings.telegramChatId ?
+                                                            (settings.telegramChatId.startsWith('@') ? `https://t.me/${settings.telegramChatId.substring(1)}` :
+                                                                settings.telegramChatId.startsWith('http') ? settings.telegramChatId :
+                                                                    `https://t.me/share/url?url=${encodeURIComponent(publishState.link)}&text=${encodeURIComponent(generatedPost?.title || '')}`) :
+                                                            `https://t.me/share/url?url=${encodeURIComponent(publishState.link)}&text=${encodeURIComponent(generatedPost?.title || '')}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="flex items-center gap-2 px-4 py-2 bg-[#0088cc] hover:bg-[#0077b5] text-white text-sm font-medium rounded-lg transition-colors"

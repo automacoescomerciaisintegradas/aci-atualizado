@@ -1,6 +1,7 @@
 
 import { Router } from 'express';
 import { prisma } from '../prisma';
+import { authMiddleware } from '../auth';
 import { encrypt, decrypt } from '../lib/crypto';
 import {
     testWordPressConnection,
@@ -11,18 +12,8 @@ import {
 
 const router = Router();
 
-// Middleware to ensure authentication
-const requireAuth = (req: any, res: any, next: any) => {
-    // For development, we'll use a simple user ID from headers or default
-    const userId = req.headers['x-user-id'] || 'default-user-id';
-
-    if (!userId) {
-        return res.status(401).json({ error: "Não autenticado. Forneça X-User-Id no header." });
-    }
-
-    req.user = { id: userId };
-    next();
-};
+// Use the standard authMiddleware instead of a dev stub
+const requireAuth = authMiddleware;
 
 // GET - Listar todos os blogs do usuário
 router.get('/', requireAuth, async (req: any, res) => {

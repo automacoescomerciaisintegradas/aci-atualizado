@@ -1,4 +1,5 @@
 import { validateWordPressCredentials, testWordPressApiConnection } from '../../services/wordpressService.js';
+import { validateWooCommerceCredentials } from '../../services/woocommerceService.js';
 
 interface ValidationState {
   status: 'idle' | 'loading' | 'valid' | 'invalid';
@@ -57,6 +58,15 @@ export const useExternalValidations = () => {
     }
   };
 
+  const validateWooCommerceConnection = async (url: string, key: string, secret: string) => {
+    const result = await validateWooCommerceCredentials({ url, consumerKey: key, consumerSecret: secret });
+    if (result.success) {
+      return { status: 'valid', message: result.message } as ValidationState;
+    } else {
+      return { status: 'invalid', message: result.message } as ValidationState;
+    }
+  };
+
   const validateShopeeId = (id: string) => {
     if (!id) return { status: 'idle', message: '' } as ValidationState;
     // Shopee ID geralmente é numérico ou alfanumérico curto.
@@ -95,6 +105,7 @@ export const useExternalValidations = () => {
     validateTelegramChatId,
     validateWordPressConnection,
     testWordPressApi,
+    validateWooCommerceConnection,
     validateShopeeId,
     validateAmazonId,
     validateMercadoLivreId

@@ -43,7 +43,10 @@ export class WooCommerceAPI {
         this.baseUrl = `${cleanUrl}/wp-json/wc/v3`;
 
         // Base64 encode consumer_key:consumer_secret
-        this.auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
+        const creds = `${config.consumerKey}:${config.consumerSecret}`;
+        this.auth = typeof Buffer !== 'undefined'
+            ? Buffer.from(creds).toString('base64')
+            : btoa(creds);
     }
 
     /**

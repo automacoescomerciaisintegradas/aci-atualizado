@@ -2,6 +2,7 @@ import React from 'react';
 import { Page } from '../App.js';
 import { FeaturesSection } from './HomePageComponents/FeaturesSection.js';
 import { FeaturedProductSection } from './HomePageComponents/FeaturedProductSection.js';
+import { VideoOffersSection } from './HomePageComponents/VideoOffersSection';
 import { OffersSection } from './HomePageComponents/OffersSection.js';
 import { SecuritySection } from './HomePageComponents/SecuritySection.js';
 import { HomeFooter } from './HomePageComponents/HomeFooter.js';
@@ -35,6 +36,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       <FeaturedProductSection affiliateLink={affiliateLink} images={images} />
 
       <OffersSection />
+
+
 
       <HomeFooter />
     </div>

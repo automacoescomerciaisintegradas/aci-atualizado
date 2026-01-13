@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Settings } from '../../hooks/useSettings.js';
-import { EyeIcon, EyeOffIcon, CheckIcon } from '../Icons.js';
+import { EyeIcon, EyeOffIcon, CheckIcon, HelpCircleIcon } from '../Icons.js';
 import { FormField } from './FormField.js';
 import { ValidationStatusIndicator } from './ValidationStatusIndicator.js';
 import type { Page } from '../../App.js';
@@ -78,7 +78,19 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
 
       {/* Telegram Section */}
       <div className="space-y-6 p-6 bg-slate-800/50 rounded-lg border border-dark-border">
-        <h4 className="text-lg font-semibold text-dark-text-primary">Integração com Telegram</h4>
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-lg font-semibold text-dark-text-primary">Integração com Telegram</h4>
+          <a
+            href="/TELEGRAM_BOT_SETUP.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs flex items-center gap-1 text-brand-primary hover:text-brand-primary/80 transition-colors bg-brand-primary/10 px-3 py-1.5 rounded-full"
+            title="Abrir guia de como criar e configurar o bot"
+          >
+            <HelpCircleIcon className="h-3 w-3" />
+            Guia de Configuração
+          </a>
+        </div>
 
         <div>
           <label htmlFor="telegramBotToken" className="block text-sm font-medium text-dark-text-secondary mb-2">

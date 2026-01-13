@@ -1,57 +1,77 @@
 version: '3.8'
 
 services:
+  # Serviço do Traefik (Reverse Proxy)
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - traefik-public
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic_conf.yml:/etc/traefik/dynamic_conf.yml:ro
+      - ./traefik/acme.json:/etc/traefik/acme.json
+      - ./logs/traefik:/var/log/traefik
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.aci.automacoescomerciais.com.br`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+
   aci-app:
-    image: aci-automacoes:latest
     build:
       context: .
       dockerfile: Dockerfile
-    # container_name: aci-app
-    # restart: unless-stopped
+    restart: unless-stopped
     env_file: .env
-    # Removemos os ports expostos para o mundo, o Traefik cuidará disso via HTTPS (Porta 443)
-    # Mantemos apenas se você quiser acessar via IP direto ainda
-    ports:
-      - "4001:4001"
-      - "4050:4001"
     volumes:
       - aci-data:/app/data
       - aci-uploads:/app/uploads
     networks:
-      - easypanel # Rede do Traefik/EasyPanel
-      - aci-network
-    deploy:
-      restart_policy:
-        condition: any
-      labels:
-        - "traefik.enable=true"
-        - "traefik.docker.network=easypanel"
-        - "traefik.http.routers.aci-frontend.rule=Host(`aci.automacoescomerciais.com.br`)"
-        - "traefik.http.routers.aci-frontend.entrypoints=websecure"
-        - "traefik.http.routers.aci-frontend.tls.certresolver=letsencrypt"
-        - "traefik.http.services.aci-frontend.loadbalancer.server.port=4001"
-        - "traefik.http.routers.aci-api.rule=Host(`aci.automacoescomerciais.com.br`) && PathPrefix(`/api`)"
-        - "traefik.http.routers.aci-api.entrypoints=websecure"
-        - "traefik.http.routers.aci-api.tls.certresolver=letsencrypt"
-        - "traefik.http.services.aci-api.loadbalancer.server.port=4001"
+      - traefik-public
+      - aci-internal
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=easypanel"
-      - "traefik.http.routers.aci-frontend.rule=Host(`aci.automacoescomerciais.com.br`)"
-      - "traefik.http.routers.aci-frontend.entrypoints=websecure"
-      - "traefik.http.routers.aci-frontend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.aci-frontend.loadbalancer.server.port=4001"
-      - "traefik.http.routers.aci-api.rule=Host(`aci.automacoescomerciais.com.br`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.aci-api.entrypoints=websecure"
-      - "traefik.http.routers.aci-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.aci-api.loadbalancer.server.port=4001"
+      # Router principal (Frontend + API)
+      - "traefik.http.routers.aci.rule=Host(`aci.automacoescomerciais.com.br`)"
+      - "traefik.http.routers.aci.entrypoints=websecure"
+      - "traefik.http.routers.aci.tls.certresolver=letsencrypt"
+      - "traefik.http.services.aci.loadbalancer.server.port=4001"
+      # Middlewares Aplicados (@file indica que estão no dynamic_conf.yml)
+      - "traefik.http.routers.aci.middlewares=secHeaders@file,compression@file,apiRateLimit@file"
 
 volumes:
   aci-data:
   aci-uploads:
 
 networks:
-  aci-network:
-    driver: overlay
-  easypanel:
+  traefik-public:
     external: true
+  aci-internal:
+    driver: bridge

@@ -6,8 +6,8 @@ interface SupportPageProps {
     onNavigate: (page: Page) => void;
 }
 
-const WHATSAPP_NUMBER = '558894227586';
-const WHATSAPP_DISPLAY = '+55 88 9215-67214';
+const WHATSAPP_NUMBER = '5588921567214';
+const WHATSAPP_DISPLAY = '+55 88 92156-7214';
 const EMAIL = 'contato@automacoescomerciais.com.br';
 
 const SUPPORT_FEATURES = [
@@ -71,7 +71,10 @@ export const SupportPage: React.FC<SupportPageProps> = ({ onNavigate }) => {
                             </div>
                         </div>
                     </div>
-                    <button className="w-full mt-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleWhatsAppClick(); }}
+                        className="w-full mt-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                    >
                         <span>💬</span>
                         Iniciar Conversa
                     </button>
@@ -92,7 +95,10 @@ export const SupportPage: React.FC<SupportPageProps> = ({ onNavigate }) => {
                             </div>
                         </div>
                     </div>
-                    <button className="w-full mt-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleEmailClick(); }}
+                        className="w-full mt-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                    >
                         <MailIcon className="h-5 w-5" />
                         Enviar E-mail
                     </button>

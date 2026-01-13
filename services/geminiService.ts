@@ -8,9 +8,101 @@ const getSettings = (): Partial<Settings> => {
     const storedSettings = localStorage.getItem('aci-settings');
     return storedSettings ? JSON.parse(storedSettings) : {};
   } catch (e) {
-    console.error("Could not parse settings from localStorage", e);
     return {};
   }
+};
+
+interface AiConfigOptions {
+  systemInstruction?: string;
+  responseMimeType?: string;
+  temperature?: number;
+}
+
+const callAiUnified = async (prompt: string, options: AiConfigOptions = {}): Promise<string> => {
+  const settings = getSettings();
+  const model = settings.aiTextModel || 'gemini-2.0-flash';
+
+  // 1. GEMINI
+  if (model.includes('gemini') || !model.includes('-')) { // Fallback to Gemini if model name doesn't specify provider
+    const ai = getAiClient();
+    const result = await ai.models.generateContent({
+      model: model,
+      contents: prompt,
+      config: {
+        systemInstruction: options.systemInstruction,
+        temperature: options.temperature ?? settings.aiTemperature ?? 0.7,
+        topP: settings.aiTopP ?? 0.95,
+        topK: settings.aiTopK ?? 40,
+        maxOutputTokens: settings.aiMaxOutputTokens ?? 2048,
+        ...(options.responseMimeType === 'application/json' ? { responseMimeType: 'application/json' } : {})
+      }
+    });
+    return result.text;
+  }
+
+  // 2. OPENAI / ANTHROPIC / GROQ / OLLAMA
+  let apiKey = '';
+  let baseUrl = '';
+  let provider = '';
+
+  if (model.includes('gpt') || model.startsWith('openai/')) {
+    provider = 'openai';
+    apiKey = settings.openaiApiKey || '';
+    baseUrl = 'https://api.openai.com/v1/chat/completions';
+  } else if (model.includes('claude') || model.includes('anthropic')) {
+    provider = 'anthropic';
+    apiKey = settings.anthropicApiKey || '';
+    baseUrl = 'https://api.anthropic.com/v1/messages';
+  } else if (model.includes('groq/') || model.includes('llama3') || model.includes('mixtral')) {
+    provider = 'groq';
+    apiKey = settings.groqApiKey || '';
+    baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
+  } else if (settings.ollamaApiKey) {
+    provider = 'ollama';
+    baseUrl = `${settings.ollamaApiKey}/v1/chat/completions`;
+    apiKey = 'local';
+  }
+
+  if (!apiKey && provider !== 'ollama') {
+    throw new Error(`Chave de API necessária para o modelo ${model}. Configure no Painel Administrativo.`);
+  }
+
+  const isAnthropic = provider === 'anthropic';
+  const requestBody: any = isAnthropic ? {
+    model: model,
+    messages: [{ role: 'user', content: prompt }],
+    system: options.systemInstruction,
+    max_tokens: settings.aiMaxOutputTokens || 2048,
+    temperature: options.temperature ?? settings.aiTemperature ?? 0.7
+  } : {
+    model: model,
+    messages: [
+      ...(options.systemInstruction ? [{ role: 'system', content: options.systemInstruction }] : []),
+      { role: 'user', content: prompt }
+    ],
+    temperature: options.temperature ?? settings.aiTemperature ?? 0.7,
+    max_tokens: settings.aiMaxOutputTokens || 2048,
+    top_p: settings.aiTopP || 0.95,
+    ...(options.responseMimeType === 'application/json' ? { response_format: { type: 'json_object' } } : {})
+  };
+
+  const response = await fetch(baseUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      ...(isAnthropic ? { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' } : {})
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Erro do provedor AI: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return isAnthropic ? data.content[0].text : data.choices[0].message.content;
 };
 
 const getAiClient = (): GoogleGenAI => {
@@ -72,24 +164,12 @@ export const generateShopeeLinkFromApi = async (productUrl: string, affiliateId:
   `;
 
   try {
-    const ai = getAiClient();
-    const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-1.5-flash';
-    const temperature = settings.aiTemperature ?? 0.2;
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: {
-        systemInstruction: "Você é um assistente de IA especialista em gerar links de afiliados para a plataforma Shopee Brasil, incluindo Sub_IDs para rastreamento.",
-        temperature: temperature,
-        topP: 1,
-        topK: 32,
-      }
+    const text = await callAiUnified(prompt, {
+      systemInstruction: "Você é um assistente de IA especialista em gerar links de afiliados para a plataforma Shopee Brasil, incluindo Sub_IDs para rastreamento.",
+      temperature: options?.temperature || 0.2
     });
 
-    // Trim to remove any potential whitespace or newlines from the model's output
-    return response.text.trim();
+    return text.trim();
   } catch (error) {
     console.error("Error calling Gemini API for link generation:", error);
     const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido na API.";
@@ -127,26 +207,16 @@ export const searchShopeeProductsFromApi = async (keyword: string): Promise<Prod
   `;
 
   try {
-    const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-1.5-flash';
-    const temperature = settings.aiTemperature ?? 0.1;
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        temperature: temperature,
-      }
+    const text = await callAiUnified(prompt, {
+      responseMimeType: "application/json",
+      temperature: settings.aiTemperature ?? 0.1
     });
 
-    const parsedData = parseJsonFromGeminiResponse<Product[]>(response.text);
-
+    const parsedData = parseJsonFromGeminiResponse<Product[]>(text);
     if (!Array.isArray(parsedData)) {
       throw new Error("A API não retornou um array de produtos válido.");
     }
-
     return parsedData;
 
   } catch (error) {
@@ -175,21 +245,13 @@ export const getTopSalesFromApi = async (category: string): Promise<Product[]> =
   `;
 
   try {
-    const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-1.5-flash';
-    const temperature = settings.aiTemperature ?? 0.1;
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        temperature: temperature,
-      }
+    const text = await callAiUnified(prompt, {
+      responseMimeType: "application/json",
+      temperature: settings.aiTemperature ?? 0.1
     });
 
-    const parsedData = parseJsonFromGeminiResponse<Product[]>(response.text);
+    const parsedData = parseJsonFromGeminiResponse<Product[]>(text);
 
     if (!Array.isArray(parsedData)) {
       throw new Error("A API não retornou um array de produtos válido.");
@@ -216,21 +278,11 @@ export const generateTelegramMessageFromApi = async (topic: string): Promise<str
     `;
 
   try {
-    const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-1.5-flash';
-    const temperature = settings.aiTemperature ?? 0.8;
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: {
-        temperature: temperature,
-        topP: 1,
-        topK: 40,
-      }
+    const text = await callAiUnified(prompt, {
+      temperature: settings.aiTemperature ?? 0.8
     });
-    return response.text.trim();
+    return text.trim();
   } catch (error) {
     console.error("Error calling Gemini API for Telegram message:", error);
     const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido na API.";
@@ -296,21 +348,11 @@ export const generateShopeeOfferMessageFromApi = async (product: Product): Promi
   `;
 
   try {
-    const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-1.5-flash';
-    const temperature = settings.aiTemperature ?? 0.8;
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: {
-        temperature: temperature,
-        topP: 1,
-        topK: 40,
-      }
+    const text = await callAiUnified(prompt, {
+      temperature: settings.aiTemperature ?? 0.8
     });
-    return response.text.trim();
+    return text.trim();
   } catch (error) {
     console.error("Error calling Gemini API for Shopee offer:", error);
     const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido na API.";
@@ -327,21 +369,11 @@ export const generateInstagramCaptionFromProduct = async (product: Product, tone
   `;
 
   try {
-    const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-1.5-flash';
-    const temperature = settings.aiTemperature ?? 0.8;
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: {
-        temperature: temperature,
-        topP: 1,
-        topK: 40,
-      }
+    const text = await callAiUnified(prompt, {
+      temperature: settings.aiTemperature ?? 0.8
     });
-    return response.text.trim();
+    return text.trim();
   } catch (error) {
     console.error("Error calling Gemini API for Instagram caption:", error);
     const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido na API.";
@@ -383,6 +415,9 @@ export const generateInstagramCaptionFromDetails = async (details: InstagramCapt
       contents: prompt,
       config: {
         temperature: temperature,
+        topP: settings.aiTopP ?? 0.95,
+        topK: settings.aiTopK ?? 40,
+        maxOutputTokens: settings.aiMaxOutputTokens ?? 2048,
       }
     });
     return response.text.trim();
@@ -410,21 +445,13 @@ export const suggestInstagramHashtags = async (productName: string, productDescr
   `;
 
   try {
-    const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-1.5-flash';
-    const temperature = settings.aiTemperature ?? 0.5;
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        temperature: temperature,
-      }
+    const text = await callAiUnified(prompt, {
+      responseMimeType: "application/json",
+      temperature: settings.aiTemperature ?? 0.5
     });
 
-    const parsedData = parseJsonFromGeminiResponse<string[]>(response.text);
+    const parsedData = parseJsonFromGeminiResponse<string[]>(text);
 
     if (Array.isArray(parsedData) && parsedData.every(item => typeof item === 'string')) {
       return parsedData;
@@ -457,21 +484,13 @@ export const suggestEmojisForCaption = async (productName: string, productDescri
   `;
 
   try {
-    const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-1.5-flash';
-    const temperature = settings.aiTemperature ?? 0.5;
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        temperature: temperature,
-      }
+    const text = await callAiUnified(prompt, {
+      responseMimeType: "application/json",
+      temperature: settings.aiTemperature ?? 0.5
     });
 
-    const parsedData = parseJsonFromGeminiResponse<string[]>(response.text);
+    const parsedData = parseJsonFromGeminiResponse<string[]>(text);
 
     if (Array.isArray(parsedData) && parsedData.every(item => typeof item === 'string')) {
       return parsedData;
@@ -564,6 +583,9 @@ export const analyzeInstagramProfileFromApi = async (username: string): Promise<
       config: {
         tools: [{ googleSearch: {} }],
         temperature: temperature,
+        topP: settings.aiTopP ?? 0.95,
+        topK: settings.aiTopK ?? 40,
+        maxOutputTokens: settings.aiMaxOutputTokens ?? 2048,
       }
     });
 
@@ -687,7 +709,8 @@ export const generateFullBlogPostFromDetails = async (
   productDescription: string,
   toneOfVoice: string,
   targetAudience: string,
-  postObjective: string
+  postObjective: string,
+  affiliateLink?: string
 ): Promise<FullBlogPost> => {
   const prompt = `
         Você é um copywriter especialista em SEO e marketing de afiliados. Sua tarefa é criar um post de blog completo e otimizado sobre um produto.
@@ -695,6 +718,7 @@ export const generateFullBlogPostFromDetails = async (
         Dados do Produto:
         - Nome: "${productName}"
         - Descrição: "${productDescription}"
+        ${affiliateLink ? `- Link de Afiliado: "${affiliateLink}"` : ''}
 
         Diretrizes do Post:
         - Tom de Voz: "${toneOfVoice}"
@@ -704,10 +728,12 @@ export const generateFullBlogPostFromDetails = async (
         Instruções:
         1.  **Estrutura da Resposta:** A resposta DEVE ser um único objeto JSON com as chaves: "title", "content", "hashtags", "emojis".
         2.  **title (string):** Crie um título magnético e otimizado para SEO para o post do blog.
-        3.  **content (string):** Escreva o corpo do post em formato Markdown. O conteúdo deve ser bem estruturado, com parágrafos, subtítulos (usando ##), e talvez uma lista de benefícios. Deve ser persuasivo e focar nos benefícios para o público-alvo, alinhado ao objetivo do post.
-        4.  **hashtags (array de strings):** Sugira 5 a 7 hashtags relevantes para redes sociais, começando com '#'.
-        5.  **emojis (array de strings):** Sugira 3 a 5 emojis que combinem com o post.
-        6.  **NÃO inclua** explicações, markdown ou qualquer texto fora do objeto JSON.
+        3.  **content (string):** Escreva o corpo do post em formato Markdown. O conteúdo deve ser bem estruturado, com parágrafos, subtítulos (usando ##), e talvez uma lista de benefícios.
+        ${affiliateLink ? `4.  **Botão de Compra:** No final do conteúdo, inclua obrigatoriamente uma linha com o seguinte formato:
+            👉 **[CLIQUE AQUI PARA VER O PRODUTO](${affiliateLink})**` : ''}
+        ${affiliateLink ? `5.` : `4.`}  **hashtags (array de strings):** Sugira 5 a 7 hashtags relevantes para redes sociais, começando com '#'.
+        ${affiliateLink ? `6.` : `5.`}  **emojis (array de strings):** Sugira 3 a 5 emojis que combinem com o post.
+        ${affiliateLink ? `7.` : `6.`}  **NÃO inclua** explicações, markdown ou qualquer texto fora do objeto JSON.
 
         Exemplo de Saída JSON:
         {
@@ -719,21 +745,13 @@ export const generateFullBlogPostFromDetails = async (
     `;
 
   try {
-    const ai = getAiClient();
     const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-1.5-flash';
-    const temperature = settings.aiTemperature ?? 0.7;
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        temperature: temperature,
-      }
+    const text = await callAiUnified(prompt, {
+      responseMimeType: "application/json",
+      temperature: settings.aiTemperature ?? 0.7
     });
 
-    const parsedData = parseJsonFromGeminiResponse<FullBlogPost>(response.text);
+    const parsedData = parseJsonFromGeminiResponse<FullBlogPost>(text);
 
     if (!parsedData.title || !parsedData.content || !Array.isArray(parsedData.hashtags) || !Array.isArray(parsedData.emojis)) {
       throw new Error("A resposta da API está incompleta ou mal formatada.");
@@ -798,17 +816,12 @@ const genericLinkGeneratorPrompt = (platform: string, productUrl: string, affili
 
 async function fetchProductList(prompt: string): Promise<Product[]> {
   try {
-    const ai = getAiClient();
-    const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-1.5-flash';
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: { responseMimeType: "application/json" }
+    const text = await callAiUnified(prompt, {
+      responseMimeType: "application/json",
+      temperature: 0.1
     });
 
-    const parsedData = parseJsonFromGeminiResponse<Product[]>(response.text);
+    const parsedData = parseJsonFromGeminiResponse<Product[]>(text);
     if (!Array.isArray(parsedData)) {
       throw new Error("API did not return a valid product array.");
     }
@@ -821,12 +834,10 @@ async function fetchProductList(prompt: string): Promise<Product[]> {
 
 async function generateAffiliateLink(prompt: string): Promise<string> {
   try {
-    const ai = getAiClient();
-    const settings = getSettings();
-    const model = settings.aiTextModel || 'gemini-1.5-flash';
-
-    const response = await ai.models.generateContent({ model, contents: prompt });
-    return response.text.trim();
+    const text = await callAiUnified(prompt, {
+      temperature: 0.2
+    });
+    return text.trim();
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown API error.";
     throw new Error(`Failed to generate link: ${errorMessage}`);

@@ -15,16 +15,15 @@ export const AiTab: React.FC<AiTabProps> = ({ localConfig, handleInputChange }) 
         Ajuste os parâmetros dos modelos de IA para otimizar os resultados para suas tarefas.
       </p>
 
-      <div className="p-6 bg-slate-800/50 rounded-lg border border-dark-border">
-        <h4 className="text-lg font-semibold text-dark-text-primary">Parâmetros dos Modelos</h4>
-        <div className="space-y-6 mt-4">
+      <div className="p-6 bg-slate-800/50 rounded-lg border border-dark-border mb-6">
+        <h4 className="text-lg font-semibold text-dark-text-primary mb-4">Modelos Ativos</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             label="Modelo de Texto Padrão"
             id="aiTextModel"
-            placeholder="ex: gemini-2.5-pro, anthropic/claude-3.7-sonnet"
+            placeholder="ex: gemini-2.0-flash, gpt-4o, claude-3-5-sonnet"
             value={localConfig.aiTextModel}
             onChange={handleInputChange}
-            description="Modelo usado para geração de texto, chat, etc. Modelos 'pro' são mais capazes, mas mais caros. Modelos 'flash' são mais rápidos e econômicos."
           />
           <FormField
             label="Modelo de Imagem Padrão"
@@ -32,40 +31,102 @@ export const AiTab: React.FC<AiTabProps> = ({ localConfig, handleInputChange }) 
             placeholder="ex: imagen-4.0-generate-001"
             value={localConfig.aiImageModel}
             onChange={handleInputChange}
-            description="Modelo usado para a geração de imagens."
           />
-          <div>
-            <label htmlFor="aiTemperature" className="block text-sm font-medium text-dark-text-secondary mb-2">Temperatura (Criatividade)</label>
-            <div className="flex items-center gap-4">
-              <input type="range" id="aiTemperature" min="0" max="1" step="0.1" value={localConfig.aiTemperature} onChange={handleInputChange} className="w-full" />
-              <span className="font-mono text-dark-text-primary bg-slate-900 px-2 py-1 rounded-md text-sm">{localConfig.aiTemperature.toFixed(1)}</span>
-            </div>
-            <p className="text-xs text-dark-text-secondary mt-2">Valores mais baixos (ex: 0.2) geram respostas mais diretas e consistentes. Valores mais altos (ex: 0.9) geram respostas mais criativas e diversas.</p>
-          </div>
         </div>
       </div>
 
-      <div className="p-6 bg-slate-800/50 rounded-lg border border-dark-border mt-6">
-        <h4 className="text-lg font-semibold text-dark-text-primary mb-4">Google AI (Gemini)</h4>
-        <div className="space-y-4">
-          <FormField
-            label="GEMINI_API_KEY"
-            id="geminiApiKey"
-            isSecret
-            placeholder="AIzaSyB..."
-            value={localConfig.geminiApiKey || ''}
-            onChange={handleInputChange}
-            description="Chave de API do Google Gemini para acesso aos modelos de IA."
-          />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        {/* Parâmetros Avançados */}
+        <div className="p-6 bg-slate-800/50 rounded-lg border border-dark-border">
+          <h4 className="text-lg font-semibold text-dark-text-primary mb-4 flex items-center gap-2">
+            ⚙️ Parâmetros de Geração
+          </h4>
+          <div className="space-y-6">
+            <div>
+              <label htmlFor="aiTemperature" className="block text-sm font-medium text-dark-text-secondary mb-2">Temperatura (Criatividade)</label>
+              <div className="flex items-center gap-4">
+                <input type="range" id="aiTemperature" min="0" max="1" step="0.1" value={localConfig.aiTemperature} onChange={handleInputChange} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-primary" />
+                <span className="font-mono text-dark-text-primary bg-slate-900 px-2 py-1 rounded-md text-sm">{localConfig.aiTemperature.toFixed(1)}</span>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="aiTopP" className="block text-sm font-medium text-dark-text-secondary mb-2">Top P (Nucleus Sampling)</label>
+              <div className="flex items-center gap-4">
+                <input type="range" id="aiTopP" min="0" max="1" step="0.05" value={localConfig.aiTopP} onChange={handleInputChange} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-secondary" />
+                <span className="font-mono text-dark-text-primary bg-slate-900 px-2 py-1 rounded-md text-sm">{localConfig.aiTopP.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="aiTopK" className="block text-sm font-medium text-dark-text-secondary mb-2">Top K</label>
+              <div className="flex items-center gap-4">
+                <input type="range" id="aiTopK" min="1" max="100" step="1" value={localConfig.aiTopK} onChange={handleInputChange} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500" />
+                <span className="font-mono text-dark-text-primary bg-slate-900 px-2 py-1 rounded-md text-sm">{localConfig.aiTopK}</span>
+              </div>
+            </div>
+
+            <FormField
+              label="Máximo de Tokens de Saída"
+              id="aiMaxOutputTokens"
+              type="number"
+              placeholder="ex: 2048"
+              value={localConfig.aiMaxOutputTokens}
+              onChange={handleInputChange}
+              description="Limite máximo de palavras/tokens que a IA pode gerar em uma resposta."
+            />
+          </div>
         </div>
-        <div className="mt-4 text-sm text-dark-text-secondary">
-          <h5 className="font-medium">Modelos Disponíveis:</h5>
-          <ul className="list-disc pl-5 space-y-1 mt-2">
-            <li><strong>Gemini 2.5 Pro</strong>: Mais capaz, para tarefas complexas ($1.25 entrada, $10.00 saída por 1M tokens)</li>
-            <li><strong>Gemini 2.5 Flash</strong>: Rápido e econômico, para tarefas simples ($0.30 entrada, $2.50 saída por 1M tokens)</li>
-            <li><strong>Gemini 2.0 Flash</strong>: Mais rápido, para tarefas de baixa complexidade ($0.10 entrada, $0.40 saída por 1M tokens)</li>
-          </ul>
-          <p className="mt-2">Modelos 'pro' são mais precisos, mas mais caros. Modelos 'flash' são mais rápidos e econômicos.</p>
+
+        {/* Provedores de API */}
+        <div className="space-y-6">
+          <div className="p-6 bg-slate-800/50 rounded-lg border border-dark-border">
+            <h4 className="text-lg font-semibold text-dark-text-primary mb-4 flex items-center gap-2">
+              📂 Provedores e Chaves
+            </h4>
+            <div className="space-y-4">
+              <FormField
+                label="Google Gemini Key"
+                id="geminiApiKey"
+                isSecret
+                placeholder="AIzaSy..."
+                value={localConfig.geminiApiKey || ''}
+                onChange={handleInputChange}
+              />
+              <FormField
+                label="OpenAI API Key"
+                id="openaiApiKey"
+                isSecret
+                placeholder="sk-..."
+                value={localConfig.openaiApiKey || ''}
+                onChange={handleInputChange}
+              />
+              <FormField
+                label="Anthropic Key"
+                id="anthropicApiKey"
+                isSecret
+                placeholder="sk-ant-..."
+                value={localConfig.anthropicApiKey || ''}
+                onChange={handleInputChange}
+              />
+              <FormField
+                label="Groq API Key"
+                id="groqApiKey"
+                isSecret
+                placeholder="gsk_..."
+                value={localConfig.groqApiKey || ''}
+                onChange={handleInputChange}
+              />
+              <FormField
+                label="Ollama / Local API Base"
+                id="ollamaApiKey"
+                placeholder="http://localhost:11434"
+                value={localConfig.ollamaApiKey || ''}
+                onChange={handleInputChange}
+                description="URL base para Ollama ou provedores compatíveis com OpenAI."
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

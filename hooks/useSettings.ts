@@ -21,10 +21,13 @@ export interface Settings {
     aiTextModel: string;
     aiImageModel: string;
     aiTemperature: number;
+    aiTopP: number;
+    aiTopK: number;
+    aiMaxOutputTokens: number;
     credits: number;
     creditBalance: number; // Quantidade atual de créditos
     creditSpent: number; // Créditos já utilizados
-    creditTransactions: Array<{id: string, date: Date, type: 'purchase' | 'usage', amount: number, description: string}>; // Histórico de transações
+    creditTransactions: Array<{ id: string, date: Date, type: 'purchase' | 'usage', amount: number, description: string }>; // Histórico de transações
     n8nWebhookUrl: string; // URL do webhook do n8n
     automationEnabled: boolean; // Se as automações estão habilitadas
     webhookTimeout: number; // Timeout para chamadas de webhook em segundos
@@ -37,6 +40,9 @@ export interface Settings {
     wordpressUrl: string;
     wordpressUsername: string;
     wordpressAppPassword: string;
+    woocommerceUrl: string;
+    woocommerceConsumerKey: string;
+    woocommerceConsumerSecret: string;
     supabaseUrl: string;
     supabaseAnonKey: string;
     geminiApiKey: string;
@@ -60,9 +66,12 @@ const defaultSettings: Settings = {
     primaryColor: '#4f46e5',
     secondaryColor: '#7c3aed',
     fontFamily: 'Inter',
-    aiTextModel: 'gemini-2.5-flash',
+    aiTextModel: 'gemini-2.0-flash',
     aiImageModel: 'imagen-4.0-generate-001',
     aiTemperature: 0.7,
+    aiTopP: 0.95,
+    aiTopK: 40,
+    aiMaxOutputTokens: 2048,
     credits: 3000,
     creditBalance: 3000,
     creditSpent: 0,
@@ -87,6 +96,9 @@ const defaultSettings: Settings = {
     wordpressUrl: '',
     wordpressUsername: '',
     wordpressAppPassword: '',
+    woocommerceUrl: '',
+    woocommerceConsumerKey: '',
+    woocommerceConsumerSecret: '',
     supabaseUrl: '',
     supabaseAnonKey: '',
     geminiApiKey: '',

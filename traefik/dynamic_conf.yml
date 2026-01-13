@@ -1,0 +1,39 @@
+http:
+  middlewares:
+    # Middleware de Segurança (Headers)
+    secHeaders:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        sslRedirect: true
+        stsPreload: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        customResponseHeaders:
+          server: ""
+          X-Powered-By: ""
+
+    # Middleware de Compressão (Gzip)
+    compression:
+      compress: {}
+
+    # Middleware de Limite de Requisições (Proteção Brute Force)
+    apiRateLimit:
+      rateLimit:
+        average: 100
+        burst: 50
+
+    # Middleware de Redirecionamento (Remover WWW)
+    strip-www:
+      redirectRegex:
+        regex: "^https?://www\\.(.*)"
+        replacement: "https://${1}"
+        permanent: true
+
+  # Configuração para o Dashboard do Traefik (Opcional - Protegido por Basic Auth)
+  # Gere o hash usando: echo $(htpasswd -nB user) | sed -e s/\\$/\\$\\$/g
+  # auth-dashboard:
+  #   basicAuth:
+  #     users:
+  #       - "admin:$$2y$$05$$..."

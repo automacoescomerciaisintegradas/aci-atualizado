@@ -219,7 +219,19 @@ app.get("*", (req, res, next) => {
     res.sendFile(path.join(__dirname, "../../dist/index.html"));
 });
 
-// Middleware de Autenticação - Apenas para o que vem abaixo (APIs protegidas)
+// Register Routers BEFORE global authMiddleware if they handle public callbacks
+// Note: Each router already uses authMiddleware internally for protected routes
+import blogsRouter from './routes/blogs';
+import instagramRouter from './routes/instagram';
+import settingsRouter from './routes/settings';
+import woocommerceRouter from './routes/woocommerce';
+
+app.use('/api/blogs', blogsRouter);
+app.use('/api/integrations/instagram', instagramRouter);
+app.use('/api/integrations/woocommerce', woocommerceRouter);
+app.use('/api/settings', settingsRouter);
+
+// Middleware de Autenticação - Apenas para o que vem abaixo (APIs protegidas genéricas)
 app.use(authMiddleware);
 
 app.get("/api/credits/balance", (req: any, res) => {
@@ -243,18 +255,6 @@ app.post("/api/actions/generate", costGuard(5), (req: any, res) => {
     // Here you would call AI worker etc.
     res.json({ message: "Action executed, 5 credits deducted" });
 });
-
-// Import routers (comentados até serem criados)
-import blogsRouter from './routes/blogs';
-// import contentRouter from './routes/content';
-import instagramRouter from './routes/instagram';
-import settingsRouter from './routes/settings';
-
-// ...
-
-app.use('/api/blogs', blogsRouter);
-app.use('/api/integrations/instagram', instagramRouter);
-app.use('/api/settings', settingsRouter);
 
 app.get('/api/facebook/test', async (req: any, res: any) => {
     const { id, token, path, fields } = req.query;

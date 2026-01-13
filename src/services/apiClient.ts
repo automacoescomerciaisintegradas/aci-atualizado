@@ -321,6 +321,14 @@ class ApiClient {
     async getPaymentStatus(paymentId: string) {
         return await this.request(`/api/payments/status/${paymentId}`);
     }
+
+    // WooCommerce Integration
+    async validateWooCommerce(data: { url: string; consumerKey: string; consumerSecret: string }) {
+        return await this.request('/api/integrations/woocommerce/validate', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
 }
 
 // Singleton instance
