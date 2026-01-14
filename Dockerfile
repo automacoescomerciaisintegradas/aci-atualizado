@@ -32,6 +32,8 @@ RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npx prisma generate
+# Compilar TypeScript para JavaScript
+RUN npm run build:server
 
 # =========================================
 # Stage 3: Imagem Final de Produção
@@ -39,19 +41,17 @@ FROM node:20-bookworm-slim AS production
 WORKDIR /app
 RUN apt-get update && apt-get install -y curl openssl && rm -rf /var/lib/apt/lists/*
 
-# Copiar tudo (incluindo devDependencies para o tsx funcionar se necessário, 
-# ou instalar tsx globalmente. Melhor: instalar todas as dependências)
+# Copiar dependências de produção
 COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci --legacy-peer-deps --only=production
 
 # Copiar build do frontend
 COPY --from=frontend-builder /app/dist ./dist
 
-# Copiar código fonte e prisma
-COPY src ./src
-COPY prisma ./prisma
+# Copiar build do backend e prisma
+COPY --from=backend-builder /app/dist-server ./dist-server
 COPY --from=backend-builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY tsconfig.json ./
+COPY prisma ./prisma
 
 # Expor portas
 EXPOSE 4001
@@ -62,9 +62,9 @@ ENV NODE_ENV=production
 ENV PORT=4001
 ENV FRONTEND_URL=http://localhost:3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+# Health check (Ajustado para maior tolerância)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD curl -f http://localhost:4001/health || exit 1
 
-# Comando para iniciar
-CMD ["npm", "run", "start:prod"]
+# Comando para iniciar (Node.js puro - Rápido e Leve)
+CMD ["node", "dist-server/backend/server.js"]

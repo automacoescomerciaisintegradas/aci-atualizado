@@ -1,5 +1,23 @@
 import type { Settings } from '../hooks/useSettings.js';
 
+// Interfaces para tipagem
+interface JwtAuthResponse {
+    token?: string;
+    [key: string]: any;
+}
+
+interface WpApiResponse {
+    code?: string;
+    message?: string;
+    [key: string]: any;
+}
+
+interface WpUserResponse {
+    name?: string;
+    slug?: string;
+    [key: string]: any;
+}
+
 // Helper to sanitize credentials
 const sanitizeCredentials = (settings: { wordpressUrl: string; wordpressUsername: string; wordpressAppPassword: string }) => {
     let cleanUrl = settings.wordpressUrl.trim().replace(/\/+$/, "");
@@ -21,7 +39,7 @@ const tryGetJwtToken = async (url: string, username: string, password: string): 
         });
 
         if (response.ok) {
-            const data = await response.json();
+            const data: JwtAuthResponse = await response.json();
             return data.token || null;
         }
     } catch (e) {
@@ -63,29 +81,40 @@ export const validateWordPressCredentials = async (settings: { wordpressUrl: str
         }
 
         if (!response.ok) {
-            const data = await response.json().catch(() => ({ code: 'unknown', message: response.statusText }));
+            const data = await response.json().catch(() => ({ code: 'unknown', message: response.statusText })) as WpApiResponse;
+            
+            // Verificar se data é um objeto antes de acessar propriedades
             let errorMessage = '';
+            const responseData: WpApiResponse = typeof data === 'object' && data !== null ? data : { code: 'unknown', message: response.statusText };
 
-            if (data.code === 'rest_cannot_edit') {
+            if (responseData.code === 'rest_cannot_edit') {
                 errorMessage = "Usuário não tem permissão para editar posts.";
-            } else if (data.code === 'rest_not_logged_in' || response.status === 401) {
-                errorMessage = "⛔ Falha na Autenticação: O servidor recusou as credenciais.\n1. Tente remover espaços da senha.\n2. Se usa Nginx/Easypanel, o header Authorization está sendo bloqueado.\n3. Tente usar a senha de login real em vez da senha de aplicativo (para teste JWT).";
-            } else if (data.code === 'rest_user_invalid_id') {
+            } else if (responseData.code === 'rest_not_logged_in' || response.status === 401) {
+                errorMessage = "⛔ Falha na Autenticação: O servidor recusou as credenciais.\n1. Tente remover espaços da senha.\n2. Verifique se você criou uma Senha de Aplicativo (não é a senha de login).\n3. Se usa Nginx/Easypanel, o header Authorization está sendo bloqueado (veja instruções na aba de Integrações).\n4. Tente usar a senha de login real em vez da senha de aplicativo (para teste JWT).";
+            } else if (responseData.code === 'rest_user_invalid_id') {
                 errorMessage = "Usuário inválido.";
+            } else if (responseData.code === 'rest_forbidden_context') {
+                errorMessage = "Acesso negado. Verifique as permissões do usuário no WordPress.";
+            } else if (responseData.code === 'rest_no_route') {
+                errorMessage = "Rota da API não encontrada. Verifique se o WordPress REST API está ativado.";
             }
 
-            return { success: false, message: errorMessage || `Erro na conexão: ${data.message || response.statusText}` };
+            return { success: false, message: errorMessage || `Erro na conexão: ${responseData.message || response.statusText}` };
         }
 
-        const userData = await response.json();
-        return { success: true, message: `Conectado com sucesso como ${userData.name || userData.slug}!` };
+        const userData: WpUserResponse = await response.json();
+        // Verificar se userData é um objeto antes de acessar propriedades
+        return { success: true, message: `Conectado com sucesso como ${userData.name || userData.slug || 'usuário'}!` };
 
     } catch (error) {
-        return { success: false, message: error instanceof Error ? error.message : 'Erro de rede ou URL inválida.' };
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+            return { success: false, message: 'Erro de rede: Não foi possível conectar ao servidor WordPress. Verifique a URL e sua conexão de internet.' };
+        }
+        return { success: false, message: error instanceof Error ? error.message : 'Erro desconhecido ao validar credenciais.' };
     }
 };
 
-// Function to test WordPress REST API connection
+// Função para testar conexão com API WordPress
 export const testWordPressApiConnection = async (settings: { wordpressUrl: string; wordpressUsername: string; wordpressAppPassword: string }): Promise<{ success: boolean; message: string }> => {
     if (!settings.wordpressUrl || !settings.wordpressUsername || !settings.wordpressAppPassword) {
         return { success: false, message: "Credenciais incompletas." };
@@ -105,15 +134,19 @@ export const testWordPressApiConnection = async (settings: { wordpressUrl: strin
         });
 
         if (!response.ok) {
-            const data = await response.json().catch(() => ({ code: 'unknown', message: response.statusText }));
+            const data = await response.json().catch(() => ({ code: 'unknown', message: response.statusText })) as WpApiResponse;
             let errorMessage = '';
 
             if (data.code === 'rest_cannot_edit') {
                 errorMessage = "Usuário não tem permissão para editar posts.";
             } else if (data.code === 'rest_not_logged_in' || response.status === 401) {
-                errorMessage = "⛔ Falha na Autenticação: O servidor recusou as credenciais.\n1. Tente remover espaços da senha.\n2. Se usa Nginx/Easypanel, o header Authorization está sendo bloqueado.\n3. Tente usar a senha de login real em vez da senha de aplicativo (para teste JWT).";
+                errorMessage = "⛔ Falha na Autenticação: O servidor recusou as credenciais.\n1. Tente remover espaços da senha.\n2. Verifique se você criou uma Senha de Aplicativo (não é a senha de login).\n3. Se usa Nginx/Easypanel, o header Authorization está sendo bloqueado (veja instruções na aba de Integrações).\n4. Tente usar a senha de login real em vez da senha de aplicativo (para teste JWT).";
             } else if (data.code === 'rest_user_invalid_id') {
                 errorMessage = "Usuário inválido.";
+            } else if (data.code === 'rest_forbidden_context') {
+                errorMessage = "Acesso negado. Verifique as permissões do usuário no WordPress.";
+            } else if (data.code === 'rest_no_route') {
+                errorMessage = "Rota da API não encontrada. Verifique se o WordPress REST API está ativado.";
             }
 
             return { success: false, message: errorMessage || `Erro na conexão: ${data.message || response.statusText}` };
@@ -122,7 +155,10 @@ export const testWordPressApiConnection = async (settings: { wordpressUrl: strin
         return { success: true, message: "Conexão com a API do WordPress estabelecida com sucesso!" };
 
     } catch (error) {
-        return { success: false, message: error instanceof Error ? error.message : 'Erro de rede ou URL inválida.' };
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+            return { success: false, message: 'Erro de rede: Não foi possível conectar ao servidor WordPress. Verifique a URL e sua conexão de internet.' };
+        }
+        return { success: false, message: error instanceof Error ? error.message : 'Erro desconhecido ao validar credenciais.' };
     }
 };
 
@@ -202,17 +238,18 @@ export const publishToWordPress = async (
         }
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: response.statusText }));
-            return { success: false, message: `Falha ao publicar: ${errorData.message}` };
+            const errorData = await response.json().catch(() => ({ message: response.statusText })) as { message?: string };
+            return { success: false, message: `Falha ao publicar: ${errorData.message || response.statusText}` };
         }
 
         const data = await response.json();
+        const responseData = typeof data === 'object' && data !== null ? data : {};
         return { 
             success: true, 
             message: status === 'draft' ? 'Post salvo como rascunho!' : 
                      status === 'future' ? 'Post agendado com sucesso!' : 
                      'Post publicado com sucesso!', 
-            postLink: data.link 
+            postLink: (responseData as any).link 
         };
 
     } catch (error) {
@@ -220,7 +257,7 @@ export const publishToWordPress = async (
     }
 };
 
-// Function to get WordPress categories
+// Função para obter categorias do WordPress
 export const getWordPressCategories = async (
     settings: Pick<Settings, 'wordpressUrl' | 'wordpressUsername' | 'wordpressAppPassword'>
 ): Promise<{ success: boolean; categories?: any[]; message?: string }> => {
@@ -258,18 +295,19 @@ export const getWordPressCategories = async (
         }
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: response.statusText }));
-            return { success: false, message: `Falha ao buscar categorias: ${errorData.message}` };
+            const errorData = await response.json().catch(() => ({ message: response.statusText })) as { message?: string };
+            return { success: false, message: `Falha ao buscar categorias: ${errorData.message || response.statusText}` };
         }
 
         const categories = await response.json();
-        return { success: true, categories };
+        const categoriesData = Array.isArray(categories) ? categories : [];
+        return { success: true, categories: categoriesData };
     } catch (error) {
         return { success: false, message: error instanceof Error ? error.message : 'Erro desconhecido ao buscar categorias.' };
     }
 };
 
-// Function to create a WordPress category
+// Função para criar uma categoria do WordPress
 export const createWordPressCategory = async (
     settings: Pick<Settings, 'wordpressUrl' | 'wordpressUsername' | 'wordpressAppPassword'>,
     categoryName: string
@@ -309,18 +347,19 @@ export const createWordPressCategory = async (
         }
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: response.statusText }));
-            return { success: false, message: `Falha ao criar categoria: ${errorData.message}` };
+            const errorData = await response.json().catch(() => ({ message: response.statusText })) as { message?: string };
+            return { success: false, message: `Falha ao criar categoria: ${errorData.message || response.statusText}` };
         }
 
         const category = await response.json();
-        return { success: true, categoryId: category.id };
+        const categoryData = typeof category === 'object' && category !== null ? category : {};
+        return { success: true, categoryId: (categoryData as any).id };
     } catch (error) {
         return { success: false, message: error instanceof Error ? error.message : 'Erro desconhecido ao criar categoria.' };
     }
 };
 
-// Function to get WordPress tags
+// Função para obter tags do WordPress
 export const getWordPressTags = async (
     settings: Pick<Settings, 'wordpressUrl' | 'wordpressUsername' | 'wordpressAppPassword'>
 ): Promise<{ success: boolean; tags?: any[]; message?: string }> => {
@@ -358,18 +397,19 @@ export const getWordPressTags = async (
         }
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: response.statusText }));
-            return { success: false, message: `Falha ao buscar tags: ${errorData.message}` };
+            const errorData = await response.json().catch(() => ({ message: response.statusText })) as { message?: string };
+            return { success: false, message: `Falha ao buscar tags: ${errorData.message || response.statusText}` };
         }
 
         const tags = await response.json();
-        return { success: true, tags };
+        const tagsData = Array.isArray(tags) ? tags : [];
+        return { success: true, tags: tagsData };
     } catch (error) {
         return { success: false, message: error instanceof Error ? error.message : 'Erro desconhecido ao buscar tags.' };
     }
 };
 
-// Function to create a WordPress tag
+// Função para criar uma tag do WordPress
 export const createWordPressTag = async (
     settings: Pick<Settings, 'wordpressUrl' | 'wordpressUsername' | 'wordpressAppPassword'>,
     tagName: string
@@ -409,18 +449,19 @@ export const createWordPressTag = async (
         }
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: response.statusText }));
-            return { success: false, message: `Falha ao criar tag: ${errorData.message}` };
+            const errorData = await response.json().catch(() => ({ message: response.statusText })) as { message?: string };
+            return { success: false, message: `Falha ao criar tag: ${errorData.message || response.statusText}` };
         }
 
         const tag = await response.json();
-        return { success: true, tagId: tag.id };
+        const tagData = typeof tag === 'object' && tag !== null ? tag : {};
+        return { success: true, tagId: (tagData as any).id };
     } catch (error) {
         return { success: false, message: error instanceof Error ? error.message : 'Erro desconhecido ao criar tag.' };
     }
 };
 
-// Function to get WordPress stats
+// Função para obter estatísticas do WordPress
 export const getWordPressStats = async (
     settings: Pick<Settings, 'wordpressUrl' | 'wordpressUsername' | 'wordpressAppPassword'>
 ): Promise<{ success: boolean; stats?: any; message?: string }> => {
@@ -507,6 +548,7 @@ export const getWordPressStats = async (
         }
 
         const recentPosts = await recentPostsResponse.json();
+        const recentPostsData = Array.isArray(recentPosts) ? recentPosts : [];
 
         return {
             success: true,
@@ -515,7 +557,7 @@ export const getWordPressStats = async (
                 totalCategories,
                 totalTags,
                 totalComments,
-                recentPosts: recentPosts.map((post: any) => ({
+                recentPosts: recentPostsData.map((post: any) => ({
                     id: post.id,
                     title: post.title?.rendered || 'Sem título',
                     date: post.date,
@@ -529,7 +571,7 @@ export const getWordPressStats = async (
     }
 };
 
-// Function to upload media to WordPress
+// Função para enviar mídia para o WordPress
 export const uploadMediaToWordPress = async (
     settings: Pick<Settings, 'wordpressUrl' | 'wordpressUsername' | 'wordpressAppPassword'>,
     file: File
@@ -576,14 +618,119 @@ export const uploadMediaToWordPress = async (
         }
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: response.statusText }));
-            return { success: false, message: `Falha ao enviar mídia: ${errorData.message}` };
+            const errorData = await response.json().catch(() => ({ message: response.statusText })) as { message?: string };
+            return { success: false, message: `Falha ao enviar mídia: ${errorData.message || response.statusText}` };
         }
 
         const data = await response.json();
-        return { success: true, mediaId: data.id };
+        const mediaData = typeof data === 'object' && data !== null ? data : {};
+        return { success: true, mediaId: (mediaData as any).id };
 
     } catch (error) {
         return { success: false, message: error instanceof Error ? error.message : 'Erro desconhecido ao enviar mídia.' };
+    }
+};
+
+// Função para testar diferentes métodos de autenticação do WordPress
+export const testWordPressAuthenticationMethods = async (settings: { wordpressUrl: string; wordpressUsername: string; wordpressAppPassword: string }): Promise<{ success: boolean; method: 'basic' | 'jwt' | 'none'; message: string }> => {
+    if (!settings.wordpressUrl || !settings.wordpressUsername || !settings.wordpressAppPassword) {
+        return { success: false, method: 'none', message: "Credenciais incompletas." };
+    }
+
+    const { cleanUrl, cleanPassword } = sanitizeCredentials(settings);
+    const basicAuth = btoa(`${settings.wordpressUsername}:${cleanPassword}`);
+
+    // Teste 1: Tentar autenticação básica
+    try {
+        const basicAuthResponse = await fetch(`${cleanUrl}/wp-json/wp/v2/users/me`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Basic ${basicAuth}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (basicAuthResponse.ok) {
+            const userData = await basicAuthResponse.json();
+            const userResponse = typeof userData === 'object' && userData !== null ? userData : {};
+            return { 
+                success: true, 
+                method: 'basic', 
+                message: `Autenticação Básica funcionando. Conectado como ${(userResponse as any).name || (userResponse as any).slug || 'usuário'}!` 
+            };
+        }
+    } catch (error) {
+        console.warn("Falha na autenticação básica:", error);
+    }
+
+    // Teste 2: Tentar autenticação JWT
+    try {
+        const jwtToken = await tryGetJwtToken(cleanUrl, settings.wordpressUsername, cleanPassword);
+        if (jwtToken) {
+            const jwtResponse = await fetch(`${cleanUrl}/wp-json/wp/v2/users/me`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${jwtToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (jwtResponse.ok) {
+                const userData = await jwtResponse.json();
+                const userResponse = typeof userData === 'object' && userData !== null ? userData : {};
+                return { 
+                    success: true, 
+                    method: 'jwt', 
+                    message: `Autenticação JWT funcionando. Conectado como ${(userResponse as any).name || (userResponse as any).slug || 'usuário'}!` 
+                };
+            }
+        }
+    } catch (error) {
+        console.warn("Falha na autenticação JWT:", error);
+    }
+
+    // Se ambos falharem, verificar o tipo de erro
+    try {
+        const basicAuthResponse = await fetch(`${cleanUrl}/wp-json/wp/v2/users/me`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Basic ${basicAuth}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const data = await basicAuthResponse.json().catch(() => ({ code: 'unknown', message: basicAuthResponse.statusText })) as WpApiResponse;
+        let errorMessage = '';
+
+        if (data.code === 'rest_cannot_edit') {
+            errorMessage = "Usuário não tem permissão para editar posts.";
+        } else if (data.code === 'rest_not_logged_in' || basicAuthResponse.status === 401) {
+            errorMessage = "Falha na autenticação. Possíveis causas:\n1. Senha de aplicativo incorreta\n2. Servidor bloqueando cabeçalho Authorization (Apache/Nginx)\n3. Plugin de segurança bloqueando API REST\n4. Verifique as instruções na aba de Integrações";
+        } else if (data.code === 'rest_user_invalid_id') {
+            errorMessage = "Usuário inválido.";
+        } else if (data.code === 'rest_forbidden_context') {
+            errorMessage = "Acesso negado. Verifique as permissões do usuário no WordPress.";
+        } else if (data.code === 'rest_no_route') {
+            errorMessage = "Rota da API não encontrada. Verifique se o WordPress REST API está ativado.";
+        }
+
+        return { 
+            success: false, 
+            method: 'none', 
+            message: errorMessage || `Erro na conexão: ${data.message || basicAuthResponse.statusText}` 
+        };
+    } catch (error) {
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+            return { 
+                success: false, 
+                method: 'none', 
+                message: 'Erro de rede: Não foi possível conectar ao servidor WordPress. Verifique a URL e sua conexão de internet.' 
+            };
+        }
+        return { 
+            success: false, 
+            method: 'none', 
+            message: error instanceof Error ? error.message : 'Erro desconhecido durante o teste de autenticação.' 
+        };
     }
 };

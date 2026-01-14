@@ -209,16 +209,6 @@ app.post('/api/auth/reset-password', (req, res) => {
     });
 });
 
-// Redirecionar rotas do Frontend para o index.html (SPA) - DEVE VIR ANTES DO AUTH MIDDLEWARE
-app.get("*", (req, res, next) => {
-    // Se a rota começar com /api ou /health, deixa passar para as rotas abaixo
-    if (req.path.startsWith("/api") || req.path === "/health") {
-        return next();
-    }
-    // Caso contrário, serve o index.html do frontend
-    res.sendFile(path.join(__dirname, "../../dist/index.html"));
-});
-
 // Register Routers BEFORE global authMiddleware if they handle public callbacks
 // Note: Each router already uses authMiddleware internally for protected routes
 import blogsRouter from './routes/blogs';
@@ -230,6 +220,16 @@ app.use('/api/blogs', blogsRouter);
 app.use('/api/integrations/instagram', instagramRouter);
 app.use('/api/integrations/woocommerce', woocommerceRouter);
 app.use('/api/settings', settingsRouter);
+
+// Redirecionar rotas do Frontend para o index.html (SPA) - DEVE VIR DEPOIS DAS ROTAS DA API
+app.get("*", (req, res, next) => {
+    // Se a rota começar com /api ou /health, deixa passar para as rotas abaixo
+    if (req.path.startsWith("/api") || req.path === "/health") {
+        return next();
+    }
+    // Caso contrário, serve o index.html do frontend
+    res.sendFile(path.join(__dirname, "../../dist/index.html"));
+});
 
 // Middleware de Autenticação - Apenas para o que vem abaixo (APIs protegidas genéricas)
 app.use(authMiddleware);

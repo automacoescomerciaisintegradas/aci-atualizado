@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # Serviço do Traefik (Reverse Proxy)
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - traefik-public
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic_conf.yml:/etc/traefik/dynamic_conf.yml:ro
+      - ./traefik/acme.json:/etc/traefik/acme.json
+      - ./logs/traefik:/var/log/traefik
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.aci.automacoescomerciais.com.br`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+
+  aci-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - aci-data:/app/data
+      - aci-uploads:/app/uploads
+    networks:
+      - traefik-public
+      - aci-internal
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      # Router principal (Frontend + API)
+      - "traefik.http.routers.aci.rule=Host(`aci.automacoescomerciais.com.br`)"
+      - "traefik.http.routers.aci.entrypoints=websecure"
+      - "traefik.http.routers.aci.tls.certresolver=letsencrypt"
+      - "traefik.http.services.aci.loadbalancer.server.port=4001"
+      # Middlewares Aplicados (@file indica que estão no dynamic_conf.yml)
+      - "traefik.http.routers.aci.middlewares=secHeaders@file,compression@file,apiRateLimit@file"
+
+volumes:
+  aci-data:
+  aci-uploads:
+
+networks:
+  traefik-public:
+    external: true
+  aci-internal:
+    driver: bridge

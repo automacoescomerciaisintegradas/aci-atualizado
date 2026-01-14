@@ -39,6 +39,7 @@ router.get('/', requireAuth, async (req: any, res) => {
 
 // POST - Validar credenciais (sem salvar)
 router.post('/validate', async (req: any, res) => {
+    console.log("🔍 [BlogsAPI] Recebida requisição de validação:", req.body);
     try {
         // Accept both new generic format and old WordPress specific format
         const { url, clientId, clientSecret, wordpressUrl, wordpressUsername, wordpressAppPassword } = req.body;
@@ -48,13 +49,17 @@ router.post('/validate', async (req: any, res) => {
         const targetUsername = clientId || wordpressUsername;
         const targetPassword = clientSecret || wordpressAppPassword;
 
+        console.log(`📡 [BlogsAPI] Testando conexão com: ${targetUrl} (User: ${targetUsername})`);
+
         if (!targetUrl || !targetUsername || !targetPassword) {
+            console.log("⚠️ [BlogsAPI] Campos obrigatórios ausentes");
             return res.status(400).json({ success: false, message: "Todos os campos (URL, Client ID, Secret ID) são obrigatórios" });
         }
 
         try {
             new URL(targetUrl);
         } catch {
+            console.log("⚠️ [BlogsAPI] URL inválida:", targetUrl);
             return res.status(400).json({ success: false, message: "URL inválida" });
         }
 
@@ -64,10 +69,11 @@ router.post('/validate', async (req: any, res) => {
             password: targetPassword,
         });
 
+        console.log("✅ [BlogsAPI] Resultado do teste:", testResult);
         res.json(testResult);
     } catch (error: any) {
-        console.error("Erro na validação:", error);
-        res.status(500).json({ success: false, message: "Erro interno na validação" });
+        console.error("❌ [BlogsAPI] Erro na validação:", error);
+        res.status(500).json({ success: false, message: "Erro interno na validação: " + error.message });
     }
 });
 

@@ -447,13 +447,172 @@ export default {
                     return errorResponse('Code and user ID required', 400);
                 }
 
-                // TODO: Trocar code por access_token usando Facebook Graph API
-                // TODO: Salvar token no banco de dados
+                // Verificar se o usuário existe
+                const user = await auth.getUser(userId);
+                if (!user) {
+                    return errorResponse('User not found', 404);
+                }
 
-                return jsonResponse({
-                    success: true,
-                    message: 'Callback recebido. Implementação pendente.'
-                });
+                try {
+                    // Obter tokens de acesso usando o código de autorização
+                    const appId = env.FACEBOOK_APP_ID || '';
+                    const appSecret = env.FACEBOOK_APP_SECRET || '';
+                    const redirectUri = `${env.FRONTEND_URL}/instagram-callback`;
+
+                    if (!appId || !appSecret) {
+                        return errorResponse('Facebook App credentials not configured', 500);
+                    }
+
+                    // Primeira etapa: trocar o código por um token de acesso temporário
+                    const tokenExchangeUrl = `https://graph.facebook.com/v18.0/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&redirect_uri=${encodeURIComponent(redirectUri)}&code=${code}`;
+
+                    const tokenResponse = await fetch(tokenExchangeUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (!tokenResponse.ok) {
+                        const errorData = await tokenResponse.json();
+                        return errorResponse(`Failed to exchange code for token: ${JSON.stringify(errorData)}`, 500);
+                    }
+
+                    const tokenData = await tokenResponse.json();
+                    const shortLivedToken = tokenData.access_token;
+
+                    // Segunda etapa: obter token de longa duração
+                    const longLivedTokenUrl = `https://graph.facebook.com/v18.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${shortLivedToken}`;
+
+                    const longLivedResponse = await fetch(longLivedTokenUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (!longLivedResponse.ok) {
+                        const errorData = await longLivedResponse.json();
+                        return errorResponse(`Failed to get long-lived token: ${JSON.stringify(errorData)}`, 500);
+                    }
+
+                    const longLivedData = await longLivedResponse.json();
+                    const accessToken = longLivedData.access_token;
+
+                    // Terceira etapa: obter informações da conta do Instagram
+                    const instagramAccountUrl = `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}&fields=id,name,instagram_business_account{id,username,account_type,profile_picture_url,followers_count,media_count}`;
+
+                    const accountResponse = await fetch(instagramAccountUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (!accountResponse.ok) {
+                        const errorData = await accountResponse.json();
+                        return errorResponse(`Failed to get Instagram account info: ${JSON.stringify(errorData)}`, 500);
+                    }
+
+                    const accountData = await accountResponse.json();
+
+                    // Encontrar a conta do Instagram Business
+                    let instagramAccount = null;
+                    for (const account of accountData.data) {
+                        if (account.instagram_business_account) {
+                            // Obter informações adicionais da conta do Instagram
+                            const igInfoUrl = `https://graph.facebook.com/v18.0/${account.instagram_business_account.id}?fields=username,account_type,profile_picture_url,followers_count,media_count,name&access_token=${accessToken}`;
+
+                            const igResponse = await fetch(igInfoUrl, {
+                                method: 'GET',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                            });
+
+                            if (igResponse.ok) {
+                                const igData = await igResponse.json();
+                                instagramAccount = {
+                                    ...account.instagram_business_account,
+                                    ...igData,
+                                    page_id: account.id,
+                                    page_name: account.name,
+                                };
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!instagramAccount) {
+                        return errorResponse('No Instagram Business Account found', 404);
+                    }
+
+                    // Salvar informações da integração no banco de dados
+                    const now = new Date().toISOString();
+
+                    // Verificar se já existe uma integração para este usuário
+                    const existingIntegration = await db.first(
+                        'SELECT * FROM instagram_integrations WHERE user_id = ?',
+                        [userId]
+                    );
+
+                    if (existingIntegration) {
+                        // Atualizar integração existente
+                        await db.execute(
+                            `UPDATE instagram_integrations
+                             SET
+                                 instagram_account_id = ?,
+                                 instagram_username = ?,
+                                 access_token = ?,
+                                 account_info = ?,
+                                 last_sync_at = ?,
+                                 updated_at = ?
+                             WHERE user_id = ?`,
+                            [
+                                instagramAccount.id,
+                                instagramAccount.username,
+                                accessToken,
+                                JSON.stringify(instagramAccount),
+                                now,
+                                now,
+                                userId
+                            ]
+                        );
+                    } else {
+                        // Criar nova integração
+                        await db.execute(
+                            `INSERT INTO instagram_integrations
+                             (id, user_id, instagram_account_id, instagram_username, access_token, account_info, last_sync_at, created_at, updated_at)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                            [
+                                crypto.randomUUID(),
+                                userId,
+                                instagramAccount.id,
+                                instagramAccount.username,
+                                accessToken,
+                                JSON.stringify(instagramAccount),
+                                now,
+                                now,
+                                now
+                            ]
+                        );
+                    }
+
+                    return jsonResponse({
+                        success: true,
+                        message: 'Instagram integration successful',
+                        instagramAccount: {
+                            id: instagramAccount.id,
+                            username: instagramAccount.username,
+                            followers_count: instagramAccount.followers_count,
+                            media_count: instagramAccount.media_count,
+                            profile_picture_url: instagramAccount.profile_picture_url
+                        }
+                    });
+                } catch (error: any) {
+                    console.error('Instagram callback error:', error);
+                    return errorResponse(`Instagram integration failed: ${error.message}`, 500);
+                }
             }
 
             // Health check

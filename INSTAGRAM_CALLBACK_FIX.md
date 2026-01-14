@@ -24,11 +24,11 @@ Isso causa erro ao tentar conectar o Instagram porque:
 4. Role até a seção "**Instagram Graph API**"
 
 #### **Para Desenvolvimento Local:**
-- **URI de Redirecionamento**: `http://localhost:5173/instagram-connect`
+- **URI de Redirecionamento**: `http://localhost:4001/api/integrations/instagram/callback`
 
 #### **Para Produção:**
-- **URI de Redirecionamento**: `https://SEU-DOMINIO.com/instagram-connect`
-  - Exemplo: `https://aci.automacoescomerciais.com.br/instagram-connect`
+- **URI de Redirecionamento**: `https://SEU-DOMINIO.com/api/integrations/instagram/callback`
+  - Exemplo: `https://aci.automacoescomerciais.com.br/api/integrations/instagram/callback`
 
 5. Clique em **Salvar Alterações**
 
@@ -45,12 +45,12 @@ Você precisa atualizar a mesma URL no Facebook Developer Console:
 
 **Para Desenvolvimento:**
 ```
-http://localhost:5173/instagram-connect
+http://localhost:4001/api/integrations/instagram/callback
 ```
 
 **Para Produção:**
 ```
-https://SEU-DOMINIO.com/instagram-connect
+https://aci.automacoescomerciais.com.br/api/integrations/instagram/callback
 ```
 
 5. Clique em **Salvar Alterações**
@@ -76,8 +76,8 @@ location.reload();
 
 | Ambiente | URL Correta |
 |----------|-------------|
-| **Desenvolvimento (localhost)** | `http://localhost:5173/instagram-connect` |
-| **Produção** | `https://SEU-DOMINIO.com/instagram-connect` |
+| **Desenvolvimento (localhost)** | `http://localhost:4001/api/integrations/instagram/callback` |
+| **Produção** | `https://aci.automacoescomerciais.com.br/api/integrations/instagram/callback` |
 
 ---
 
@@ -130,14 +130,14 @@ location.reload();
 ### **No AdminPage (Integrações):**
 ```
 Instagram Client ID: 3728761024095089
-Instagram Redirect URI: http://localhost:5173/instagram-connect
+Instagram Redirect URI: http://localhost:4001/api/integrations/instagram/callback
 ```
 
 ### **No Facebook App (Configurações > Básicas):**
 ```
 URLs Válidas de Redirecionamento para OAuth:
-  - http://localhost:5173/instagram-connect
-  - https://aci.automacoescomerciais.com.br/instagram-connect
+  - http://localhost:4001/api/integrations/instagram/callback
+  - https://aci.automacoescomerciais.com.br/api/integrations/instagram/callback
 ```
 
 ---

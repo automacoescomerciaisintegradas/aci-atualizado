@@ -199,12 +199,24 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
           <div className="mt-4 p-4 bg-blue-900/20 border border-blue-800 rounded-lg text-sm text-blue-200">
             <p className="font-bold mb-2 flex items-center gap-2"> Solução de Problemas de Conexão:</p>
             <ul className="list-disc list-inside space-y-1 text-xs text-blue-300">
-              <li><strong>Erro "Você não está logado":</strong> Seu servidor pode estar bloqueando o cabeçalho de autorização.</li>
-              <li><strong>Correção:</strong> Adicione esta linha ao seu arquivo <code>.htaccess</code> no servidor:
-                <code className="block bg-black/30 p-1 mt-1 rounded text-green-400 font-mono">SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1</code>
+              <li><strong>Erro "Você não está logado" ou "Falha na autenticação":</strong> Seu servidor pode estar bloqueando o cabeçalho de autorização.</li>
+              <li><strong>Solução para Apache/cPanel:</strong> Adicione estas linhas ao início do arquivo <code>.htaccess</code> no servidor:
+                <div className="block bg-black/30 p-1 mt-1 rounded text-green-400 font-mono text-xs">
+                  RewriteEngine On<br/>
+                  RewriteCond &#123;HTTP:Authorization&#125; ^(.*)<br/>
+                  RewriteRule ^(.*) - [E=HTTP_AUTHORIZATION:%1]<br/>
+                  SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+                </div>
               </li>
-              <li>Certifique-se de usar uma <strong>Senha de Aplicativo</strong> (não sua senha de login).</li>
-              <li>Verifique se plugins de segurança (Wordfence, etc) não estão bloqueando a API REST.</li>
+              <li><strong>Solução para Nginx (VPS/Easypanel):</strong> Adicione estas configurações ao bloco de configuração do seu site:
+                <div className="block bg-black/30 p-1 mt-1 rounded text-green-400 font-mono text-xs">
+                  fastcgi_pass_request_headers on;<br/>
+                  fastcgi_param HTTP_AUTHORIZATION $http_authorization;
+                </div>
+              </li>
+              <li>Certifique-se de usar uma <strong>Senha de Aplicativo</strong> (não sua senha de login normal).</li>
+              <li>Verifique se plugins de segurança (Wordfence, etc) não estão bloqueando a API REST ou "Application Passwords".</li>
+              <li>Se continuar com problemas, entre em contato com o suporte da sua hospedagem pedindo para "habilitar o pass-through do cabeçalho Authorization para o PHP".</li>
             </ul>
           </div>
 
