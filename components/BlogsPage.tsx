@@ -98,11 +98,10 @@ export const BlogsPage = () => {
 
     const fetchBlogs = async () => {
         try {
-            const token = localStorage.getItem('authToken');
+            const userId = localStorage.getItem('userId') || 'default-user-id';
             const res = await fetch("/api/blogs", {
                 headers: {
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                    'Content-Type': 'application/json'
+                    'X-User-Id': userId
                 }
             })
             const data = await res.json()
@@ -132,13 +131,9 @@ export const BlogsPage = () => {
 
         try {
             // Validate credentials
-            const token = localStorage.getItem('authToken');
             const validationRes = await fetch("/api/blogs/validate", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     url: formData.url,
                     clientId: formData.clientId,
@@ -153,11 +148,12 @@ export const BlogsPage = () => {
             }
 
             // Create blog
+            const userId = localStorage.getItem('userId') || 'default-user-id';
             const res = await fetch("/api/blogs", {
                 method: "POST",
-                headers: {
+                headers: { 
                     "Content-Type": "application/json",
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    'X-User-Id': userId
                 },
                 body: JSON.stringify({
                     name: formData.name,

@@ -5,7 +5,10 @@
  * =========================================
  */
 
-import { supabase } from './supabaseClient';
+import { enhancedSupabase as supabase } from './enhancedSupabaseClient';
+import { PaymentConfig } from '../config/payment';
+import { PaymentErrorFactory, PaymentErrorHandler } from './paymentErrorHandler';
+import { creditService } from './creditService';
 
 // Declaração de tipos para variáveis de ambiente Vite
 declare global {
@@ -55,7 +58,7 @@ export interface PixPaymentResponse {
 
 export interface PaymentStatus {
     id: string;
-    status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'in_process' | 'refunded';
+    status: string; // Alterado de enum restrito para string para compatibilidade
     statusDetail?: string;
     amount: number;
     creditsAmount: number;
@@ -74,6 +77,56 @@ export interface WebhookPayload {
     data: {
         id: string;
     };
+}
+
+// ==========================================
+// TIPOS DO MERCADO PAGO
+// ==========================================
+
+interface MercadoPagoPaymentResponse {
+  id: number;
+  status: string;
+  status_detail: string;
+  transaction_amount: number;
+  date_approved?: string;
+  date_of_expiration?: string;
+  point_of_interaction?: {
+    transaction_data: {
+      qr_code: string;
+      qr_code_base64: string;
+      ticket_url: string;
+    };
+  };
+  metadata?: {
+    user_id: string;
+    credits_amount: number;
+    bonus_credits: number;
+    package_id?: string;
+  };
+}
+
+interface MercadoPagoPaymentPayload {
+  transaction_amount: number;
+  description: string;
+  payment_method_id: string;
+  external_reference: string;
+  notification_url: string;
+  date_of_expiration: string;
+  payer: {
+    email: string;
+    first_name: string;
+    last_name: string;
+    identification?: {
+      type: string;
+      number: string;
+    };
+  };
+  metadata: {
+    user_id: string;
+    credits_amount: number;
+    bonus_credits: number;
+    package_id?: string;
+  };
 }
 
 // ==========================================
@@ -126,17 +179,25 @@ class PixPaymentService {
      */
     async createPixPayment(request: PixPaymentRequest): Promise<PixPaymentResponse> {
         try {
+            // Validar configuração
+            const configValidation = PaymentConfig.utils.validateConfig();
+            if (!configValidation.isValid) {
+                throw PaymentErrorFactory.configMissing(configValidation.errors.join(', '));
+            }
+
             // Obter usuário atual
-            const { data: { user } } = await getSupabase().auth.getUser();
+            const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                return {
-                    success: false,
-                    error: { code: 'NOT_AUTHENTICATED', message: 'Usuário não autenticado' },
-                };
+                throw PaymentErrorFactory.invalidUser();
+            }
+
+            // Validar valor mínimo
+            if (request.amount < PaymentConfig.security.minPaymentAmount) {
+                throw PaymentErrorFactory.invalidAmount(request.amount);
             }
 
             // Obter perfil do usuário
-            const { data: profile } = await getSupabase()
+            const { data: profile } = await supabase
                 .from('profiles')
                 .select('email, full_name, personal_document')
                 .eq('id', user.id)
@@ -147,18 +208,18 @@ class PixPaymentService {
 
             // Calcular data de expiração
             const expirationDate = new Date();
-            expirationDate.setMinutes(expirationDate.getMinutes() + MERCADO_PAGO_CONFIG.paymentExpirationMinutes);
+            expirationDate.setMinutes(expirationDate.getMinutes() + PaymentConfig.mercadoPago.paymentExpirationMinutes);
 
             // Payload para o Mercado Pago
-            const paymentPayload = {
+            const paymentPayload: MercadoPagoPaymentPayload = {
                 transaction_amount: request.amount,
                 description: request.description,
                 payment_method_id: 'pix',
                 external_reference: externalReference,
-                notification_url: MERCADO_PAGO_CONFIG.notificationUrl,
+                notification_url: PaymentConfig.mercadoPago.webhookUrl,
                 date_of_expiration: expirationDate.toISOString(),
                 payer: {
-                    email: profile?.email || user.email,
+                    email: profile?.email || user.email || '',
                     first_name: profile?.full_name?.split(' ')[0] || 'Cliente',
                     last_name: profile?.full_name?.split(' ').slice(1).join(' ') || 'ACI',
                     identification: profile?.personal_document ? {
@@ -175,34 +236,28 @@ class PixPaymentService {
             };
 
             // Fazer requisição para o Mercado Pago
-            const response = await fetch(`${MERCADO_PAGO_CONFIG.apiUrl}/v1/payments`, {
+            const response = await fetch(`${PaymentConfig.mercadoPago.apiUrl}/v1/payments`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.accessToken}`,
+                    'Authorization': `Bearer ${PaymentConfig.mercadoPago.accessToken}`,
                     'X-Idempotency-Key': externalReference,
                 },
                 body: JSON.stringify(paymentPayload),
             });
 
-            const data = await response.json();
+            const data: MercadoPagoPaymentResponse = await response.json();
 
             if (!response.ok) {
                 console.error('Erro Mercado Pago:', data);
-                return {
-                    success: false,
-                    error: {
-                        code: data.error || 'API_ERROR',
-                        message: data.message || 'Erro ao criar pagamento PIX',
-                    },
-                };
+                throw PaymentErrorFactory.gatewayError('Mercado Pago', data);
             }
 
             // Extrair dados do PIX
             const pixData = data.point_of_interaction?.transaction_data;
 
             // Salvar transação no banco
-            const { data: transaction, error: dbError } = await getSupabase()
+            const { data: transaction } = await supabase
                 .from('payment_transactions')
                 .insert({
                     user_id: user.id,
@@ -230,10 +285,6 @@ class PixPaymentService {
                 .select()
                 .single();
 
-            if (dbError) {
-                console.error('Erro ao salvar transação:', dbError);
-            }
-
             return {
                 success: true,
                 paymentId: data.id.toString(),
@@ -247,13 +298,15 @@ class PixPaymentService {
                 expiresAt: expirationDate,
                 status: data.status,
             };
-        } catch (error: any) {
-            console.error('Erro ao criar pagamento PIX:', error);
+        } catch (error: unknown) {
+            const paymentError = PaymentErrorHandler.handle(error);
+            PaymentErrorHandler.log(paymentError, 'createPixPayment');
+            
             return {
                 success: false,
                 error: {
-                    code: 'INTERNAL_ERROR',
-                    message: error.message || 'Erro interno ao processar pagamento',
+                    code: paymentError.code,
+                    message: paymentError.message,
                 },
             };
         }
@@ -268,9 +321,9 @@ class PixPaymentService {
      */
     async getPaymentStatus(paymentId: string): Promise<PaymentStatus | null> {
         try {
-            const response = await fetch(`${MERCADO_PAGO_CONFIG.apiUrl}/v1/payments/${paymentId}`, {
+            const response = await fetch(`${PaymentConfig.mercadoPago.apiUrl}/v1/payments/${paymentId}`, {
                 headers: {
-                    'Authorization': `Bearer ${this.accessToken}`,
+                    'Authorization': `Bearer ${PaymentConfig.mercadoPago.accessToken}`,
                 },
             });
 
@@ -279,7 +332,7 @@ class PixPaymentService {
                 return null;
             }
 
-            const data = await response.json();
+            const data: MercadoPagoPaymentResponse = await response.json();
 
             return {
                 id: data.id.toString(),

@@ -9,7 +9,9 @@
  * Vercel Serverless, ou similar)
  */
 
-import { createClient } from '@supabase/supabase-js';
+// REMOVIDO: import { createClient } from '@supabase/supabase-js';
+// USANDO: implementação customizada de Supabase
+import { enhancedSupabase as supabase } from '../../services/enhancedSupabaseClient';
 import crypto from 'crypto';
 
 // ==========================================
@@ -50,12 +52,8 @@ const CONFIG = {
 };
 
 // Cliente Supabase com service role
-const supabase = createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-    },
-});
+// REMOVIDO: const supabase = createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKey, {...});
+// USANDO: cliente customizado já importado
 
 // ==========================================
 // VALIDAÇÃO DE ASSINATURA
@@ -114,7 +112,8 @@ async function getPaymentDetails(paymentId: string): Promise<any | null> {
             return null;
         }
 
-        return await response.json();
+        const data: any = await response.json();
+        return data;
     } catch (error) {
         console.error('Erro na requisição:', error);
         return null;

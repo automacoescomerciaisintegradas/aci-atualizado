@@ -6,14 +6,21 @@ import axios from "axios";
 import { generateToken } from "./auth";
 import { authMiddleware } from "./auth";
 import { costGuard } from "./costGuard";
-import { addCredits, spendCredits, getBalance } from "./creditLedger";
+import { creditService } from "../../services/simpleCreditService";
 import { sendPasswordResetEmail, sendWelcomeEmail } from "./emailService";
 import { generateResetToken, validateResetToken, markTokenAsUsed } from "./passwordResetService";
 import paymentsRoutes from "./routes/payments";
+// import { performanceMonitoringMiddleware, systemMonitor, logger, performanceMonitor } from '../../services/monitoringService';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Adicionar middleware de monitoramento
+// app.use(performanceMonitoringMiddleware(performanceMonitor));
+
+// Iniciar monitoramento de recursos do sistema
+// systemMonitor.startResourceMonitoring(60000); // A cada minuto
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,6 +34,35 @@ app.use("/api/payments", paymentsRoutes);
 // Public route – health check
 app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
+});
+
+// Endpoint de métricas de performance (apenas admin)
+/*app.get("/api/metrics/performance", authMiddleware, (req: any, res) => {
+    if (req.user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+    }
+    
+    const stats = performanceMonitor.getOverallStats(24);
+    const systemInfo = systemMonitor.getSystemInfo();
+    
+    res.json({
+        performance: stats,
+        system: systemInfo,
+        timestamp: new Date().toISOString()
+    });
+});*/
+
+// Endpoint de estatísticas do cache
+app.get("/api/metrics/cache", authMiddleware, (req: any, res) => {
+    if (req.user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+    }
+    
+    // TODO: Implementar quando o cacheService estiver integrado
+    res.json({
+        message: 'Cache metrics endpoint - implementation pending',
+        timestamp: new Date().toISOString()
+    });
 });
 
 // Auth routes
@@ -83,7 +119,7 @@ app.post("/api/auth/signup", async (req, res) => {
 
     // BÔNUS DE BOAS-VINDAS: R$ 3,00 = 3000 créditos
     const WELCOME_BONUS = 3000;
-    addCredits(email, WELCOME_BONUS);
+    creditService.addCredits(email, WELCOME_BONUS, 'Bônus de boas-vindas', { source: 'signup' });
     console.log(`✅ Novo usuário ${email} recebeu bônus de ${WELCOME_BONUS} créditos!`);
 
     // Envia e-mail de boas-vindas
@@ -234,20 +270,31 @@ app.get("*", (req, res, next) => {
 // Middleware de Autenticação - Apenas para o que vem abaixo (APIs protegidas genéricas)
 app.use(authMiddleware);
 
-app.get("/api/credits/balance", (req: any, res) => {
+app.get("/api/credits/balance", async (req: any, res) => {
     const userId = req.user.id;
-    const balance = getBalance(userId);
-    res.json({ balance });
+    try {
+        const credits = await creditService.getBalance(userId);
+        res.json({ balance: credits?.balance || 0 });
+    } catch (error) {
+        console.error('Erro ao obter saldo:', error);
+        res.status(500).json({ error: 'Erro ao obter saldo' });
+    }
 });
 
-app.post("/api/credits/add", (req: any, res) => {
+app.post("/api/credits/add", async (req: any, res) => {
     const userId = req.user.id;
     const { amount } = req.body;
     if (typeof amount !== "number" || amount <= 0) {
         return res.status(400).json({ error: "Invalid amount" });
     }
-    addCredits(userId, amount);
-    res.json({ balance: getBalance(userId) });
+    try {
+        await creditService.addCredits(userId, amount, 'Adição manual de créditos');
+        const credits = await creditService.getBalance(userId);
+        res.json({ balance: credits?.balance || 0 });
+    } catch (error) {
+        console.error('Erro ao adicionar créditos:', error);
+        res.status(500).json({ error: 'Erro ao adicionar créditos' });
+    }
 });
 
 // Example protected action that costs credits – uses costGuard middleware

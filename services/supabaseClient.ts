@@ -4,7 +4,7 @@
  * que ainda usa imports do supabaseClient
  */
 
-import { apiClient } from '../src/services/apiClient';
+import { apiClient } from './universalApiClient';
 
 // Mock do supabase client para compatibilidade
 export const supabase = {

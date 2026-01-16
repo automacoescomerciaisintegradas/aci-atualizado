@@ -1,6 +1,10 @@
 /**
- * Cliente API para comunicação com Cloudflare Worker
- * Substitui o Supabase Client no frontend
+ * =========================================
+ * ACI - Cliente API Compatível Universal
+ * =========================================
+ * 
+ * Cliente API que funciona tanto no frontend quanto no backend
+ * Evita dependências específicas de ambiente
  */
 
 // URL da API - detecta automaticamente se está em produção ou desenvolvimento
@@ -20,35 +24,67 @@ interface ApiResponse<T = any> {
     [key: string]: any;
 }
 
-class ApiClient {
+class UniversalApiClient {
     private baseUrl: string;
     private userId: string | null = null;
+    private token: string | null = null;
+
+    // Storage handling (works in both frontend and backend)
+    private getStorage(): Storage | null {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            return window.localStorage;
+        }
+        // Mock storage for backend
+        return {
+            getItem: (key: string) => {
+                if (key === 'authToken') return this.token;
+                if (key === 'userId') return this.userId;
+                return null;
+            },
+            setItem: (key: string, value: string) => {
+                if (key === 'authToken') this.token = value;
+                if (key === 'userId') this.userId = value;
+            },
+            removeItem: (key: string) => {
+                if (key === 'authToken') this.token = null;
+                if (key === 'userId') this.userId = null;
+            },
+            clear: () => {
+                this.token = null;
+                this.userId = null;
+            },
+            length: 0,
+            key: (index: number) => null
+        } as Storage;
+    }
 
     // Token handling
     private getToken(): string | null {
-        return localStorage.getItem('authToken');
+        return this.getStorage()?.getItem('authToken') || null;
     }
 
     private setToken(token: string | null) {
+        const storage = this.getStorage();
         if (token) {
-            localStorage.setItem('authToken', token);
+            storage?.setItem('authToken', token);
         } else {
-            localStorage.removeItem('authToken');
+            storage?.removeItem('authToken');
         }
     }
 
     constructor(baseUrl: string = API_BASE_URL) {
         this.baseUrl = baseUrl;
-        // Recuperar userId do localStorage se existir
-        this.userId = localStorage.getItem('userId');
+        // Recuperar userId do storage se existir
+        this.userId = this.getStorage()?.getItem('userId') || null;
     }
 
     setUserId(userId: string | null) {
         this.userId = userId;
+        const storage = this.getStorage();
         if (userId) {
-            localStorage.setItem('userId', userId);
+            storage?.setItem('userId', userId);
         } else {
-            localStorage.removeItem('userId');
+            storage?.removeItem('userId');
         }
     }
 
@@ -106,7 +142,7 @@ class ApiClient {
 
         if (response.success && response.user) {
             this.setUserId(response.user.id);
-            // Salvar token JWT no localStorage
+            // Salvar token JWT no storage
             if (response.token) {
                 this.setToken(response.token);
             }
@@ -123,7 +159,7 @@ class ApiClient {
 
         if (response.success && response.user) {
             this.setUserId(response.user.id);
-            // Salvar token JWT no localStorage
+            // Salvar token JWT no storage
             if (response.token) {
                 this.setToken(response.token);
             }
@@ -155,6 +191,7 @@ class ApiClient {
 
     logout() {
         this.setUserId(null);
+        this.setToken(null);
     }
 
     // Password Reset endpoints
@@ -207,132 +244,154 @@ class ApiClient {
         return await this.request(`/api/wordpress/connections?userId=${id}`);
     }
 
-    async addWordPressConnection(data: {
-        name: string;
-        site_url: string;
+    async connectWordPress(data: {
+        siteUrl: string;
         username: string;
-        application_password: string;
+        password: string;
+        userId?: string;
     }) {
-        if (!this.userId) throw new Error('User not logged in');
+        const userId = data.userId || this.userId;
+        if (!userId) throw new Error('User ID not available');
 
-        return await this.request('/api/wordpress/connection', {
+        return await this.request('/api/wordpress/connect', {
             method: 'POST',
-            body: JSON.stringify({ userId: this.userId, ...data }),
+            body: JSON.stringify({ ...data, userId }),
         });
     }
 
-    // API Keys endpoints
-    async getApiKeys(userId?: string) {
+    async disconnectWordPress(connectionId: string, userId?: string) {
         const id = userId || this.userId;
         if (!id) throw new Error('User ID not available');
 
-        return await this.request(`/api/keys?userId=${id}`);
+        return await this.request(`/api/wordpress/disconnect?connectionId=${connectionId}&userId=${id}`, {
+            method: 'DELETE',
+        });
     }
 
-    async addApiKey(data: {
-        service: 'openai' | 'telegram' | 'instagram' | 'whatsapp' | 'other';
-        key_name: string;
-        api_key: string;
+    async publishToWordPress(data: {
+        connectionId: string;
+        postTitle: string;
+        postContent: string;
+        postStatus?: 'draft' | 'publish';
+        userId?: string;
     }) {
-        if (!this.userId) throw new Error('User not logged in');
+        const userId = data.userId || this.userId;
+        if (!userId) throw new Error('User ID not available');
 
-        return await this.request('/api/keys', {
+        return await this.request('/api/wordpress/publish', {
             method: 'POST',
-            body: JSON.stringify({ userId: this.userId, ...data }),
+            body: JSON.stringify({ ...data, userId }),
         });
     }
 
-    // Avatar endpoints
-    async uploadAvatar(file: File) {
-        if (!this.userId) throw new Error('User not logged in');
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('userId', this.userId);
-
-        const response = await fetch(`${this.baseUrl}/api/avatar/upload`, {
-            method: 'POST',
-            body: formData, // Não definir Content-Type, o browser define automaticamente para multipart/form-data
-        });
-
-        const data = await response.json() as any;
-
-        if (!response.ok) {
-            throw new Error(data.error || 'Upload failed');
-        }
-
-        return data;
-    }
-
-    getAvatarUrl(userId?: string): string {
-        const id = userId || this.userId;
-        if (!id) return '';
-        return `${this.baseUrl}/api/avatar/${id}`;
-    }
-
-    // Sessions endpoints
-    async getSessions(userId?: string) {
+    // Instagram endpoints
+    async getInstagramAccounts(userId?: string) {
         const id = userId || this.userId;
         if (!id) throw new Error('User ID not available');
 
-        return await this.request(`/api/sessions?userId=${id}`);
+        return await this.request(`/api/instagram/accounts?userId=${id}`);
     }
 
-    async createSession(userAgent?: string, ipAddress?: string) {
-        if (!this.userId) throw new Error('User not logged in');
+    async connectInstagram(data: {
+        accessToken: string;
+        userId?: string;
+    }) {
+        const userId = data.userId || this.userId;
+        if (!userId) throw new Error('User ID not available');
 
-        return await this.request('/api/sessions', {
+        return await this.request('/api/instagram/connect', {
             method: 'POST',
-            body: JSON.stringify({
-                userId: this.userId,
-                userAgent: userAgent || navigator.userAgent,
-                ipAddress,
-            }),
+            body: JSON.stringify({ ...data, userId }),
         });
     }
 
-    async updateSessionActivity(sessionId: string) {
-        return await this.request('/api/sessions/activity', {
+    async disconnectInstagram(accountId: string, userId?: string) {
+        const id = userId || this.userId;
+        if (!id) throw new Error('User ID not available');
+
+        return await this.request(`/api/instagram/disconnect?accountId=${accountId}&userId=${id}`, {
+            method: 'DELETE',
+        });
+    }
+
+    async postToInstagram(data: {
+        accountId: string;
+        caption: string;
+        imageUrl: string;
+        userId?: string;
+    }) {
+        const userId = data.userId || this.userId;
+        if (!userId) throw new Error('User ID not available');
+
+        return await this.request('/api/instagram/post', {
+            method: 'POST',
+            body: JSON.stringify({ ...data, userId }),
+        });
+    }
+
+    // Payments endpoints
+    async createPaymentIntent(data: {
+        amount: number;
+        currency?: string;
+        userId?: string;
+    }) {
+        const userId = data.userId || this.userId;
+        if (!userId) throw new Error('User ID not available');
+
+        return await this.request('/api/payments/create-intent', {
+            method: 'POST',
+            body: JSON.stringify({ ...data, userId }),
+        });
+    }
+
+    async confirmPayment(data: {
+        paymentIntentId: string;
+        paymentMethodId: string;
+        userId?: string;
+    }) {
+        const userId = data.userId || this.userId;
+        if (!userId) throw new Error('User ID not available');
+
+        return await this.request('/api/payments/confirm', {
+            method: 'POST',
+            body: JSON.stringify({ ...data, userId }),
+        });
+    }
+
+    async getPaymentHistory(userId?: string) {
+        const id = userId || this.userId;
+        if (!id) throw new Error('User ID not available');
+
+        return await this.request(`/api/payments/history?userId=${id}`);
+    }
+
+    // Settings endpoints
+    async getUserSettings(userId?: string) {
+        const id = userId || this.userId;
+        if (!id) throw new Error('User ID not available');
+
+        return await this.request(`/api/settings/user?userId=${id}`);
+    }
+
+    async updateUserSettings(data: {
+        notifications?: boolean;
+        emailNotifications?: boolean;
+        smsNotifications?: boolean;
+        theme?: 'light' | 'dark';
+        language?: string;
+        userId?: string;
+    }) {
+        const userId = data.userId || this.userId;
+        if (!userId) throw new Error('User ID not available');
+
+        return await this.request('/api/settings/update', {
             method: 'PUT',
-            body: JSON.stringify({ sessionId }),
-        });
-    }
-
-    async endSession(sessionId: string) {
-        return await this.request('/api/sessions/end', {
-            method: 'PUT',
-            body: JSON.stringify({ sessionId }),
-        });
-    }
-
-    // Health check
-    async healthCheck() {
-        return await this.request('/api/health');
-    }
-
-    // Payment endpoints (Mercado Pago)
-    async createPixPayment(amount: number, packageId?: string, description?: string) {
-        return await this.request('/api/payments/create-pix', {
-            method: 'POST',
-            body: JSON.stringify({ amount, packageId, description }),
-        });
-    }
-
-    async getPaymentStatus(paymentId: string) {
-        return await this.request(`/api/payments/status/${paymentId}`);
-    }
-
-    // WooCommerce Integration
-    async validateWooCommerce(data: { url: string; consumerKey: string; consumerSecret: string }) {
-        return await this.request('/api/integrations/woocommerce/validate', {
-            method: 'POST',
-            body: JSON.stringify(data),
+            body: JSON.stringify({ ...data, userId }),
         });
     }
 }
 
-// Singleton instance
-export const apiClient = new ApiClient();
+// Exportar instância singleton
+export const apiClient = new UniversalApiClient();
 
-// Para compatibilidade com código existente que usa "supabase"
-export const d1Client = apiClient;
+export default apiClient;

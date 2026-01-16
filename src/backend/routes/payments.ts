@@ -6,7 +6,7 @@
 
 import { Router } from 'express';
 import { authMiddleware } from '../auth';
-import { addCredits } from '../creditLedger';
+import { creditService } from '../../../services/creditService';
 
 const router = Router();
 
@@ -230,8 +230,22 @@ router.post('/webhook', async (req, res) => {
 
         if (payment.status === 'approved') {
             if (userId && totalCredits > 0) {
-                addCredits(userId, totalCredits);
-                console.log(`✅ Pagamento Aprovado: ${totalCredits.toLocaleString('pt-BR')} créditos -> ${userId.substring(0, 8)}`);
+                try {
+                    await creditService.addCredits(
+                        userId,
+                        totalCredits,
+                        `Recarga via Mercado Pago - Pagamento ${payment.id}`,
+                        {
+                            payment_id: payment.id,
+                            gateway: 'mercadopago',
+                            amount: payment.transaction_amount,
+                            bonus_credits: payment.metadata?.bonus_credits || 0,
+                        }
+                    );
+                    console.log(`✅ Pagamento Aprovado: ${totalCredits.toLocaleString('pt-BR')} créditos -> ${userId.substring(0, 8)}`);
+                } catch (error) {
+                    console.error('❌ Erro ao adicionar créditos:', error);
+                }
             }
         } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
             console.log(`❌ Pagamento ${payment.status}: ${paymentId}`);
