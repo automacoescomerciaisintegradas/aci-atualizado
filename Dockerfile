@@ -67,4 +67,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD curl -f http://localhost:4001/health || exit 1
 
 # Comando para iniciar (Node.js puro - Rápido e Leve)
-CMD ["node", "dist-server/backend/server.js"]
+CMD ["node", "dist-server/server.js"]
