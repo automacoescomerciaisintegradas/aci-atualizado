@@ -71,6 +71,7 @@
     "@types/supertest": "^2.0.12",
     "@vitejs/plugin-react": "^5.1.1",
     "concurrently": "^9.2.1",
+    "esbuild": "^0.27.2",
     "esbuild-plugin-styled-components": "^3.0.1",
     "picomatch": "^4.0.3",
     "supertest": "^6.3.3",
