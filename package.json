@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "server": "tsx watch src/backend/server.ts",
-    "start": "node dist/backend/server.js",
+    "start": "node dist-server/server.js",
     "start:prod": "tsx src/backend/server.ts",
     "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
     "build": "vite build",
