@@ -1,0 +1,39 @@
+{
+    "services": [
+        {
+            "type": "app",
+            "data": {
+                "projectName": "docker",
+                "serviceName": "aci",
+                "source": {
+                    "type": "github",
+                    "owner": "automacoescomerciaisintegradas",
+                    "repository": "aci-atualizado",
+                    "branch": "main"
+                },
+                "build": {
+                    "type": "dockerfile"
+                },
+                "env": "NODE_ENV=production\nPORT=4001\nFRONTEND_URL=https://aci.automacoescomerciais.com.br\nAPI_URL=https://aci.automacoescomerciais.com.br\n\n# === META / INSTAGRAM ===\nMETA_APP_ID=3728761024095089\nMETA_APP_SECRET=ddfc2bf4eeb041514ba7beb41567f209\nMETA_API_VERSION=v24.0\nMETA_REDIRECT_URI=https://aci.automacoescomerciais.com.br/api/integrations/instagram/callback\n\n# === EMAIL (SMTP) ===\nSMTP_HOST=smtp.gmail.com\nSMTP_PORT=587\nSMTP_USERNAME=automacoescomerciais@gmail.com\nSMTP_PASSWORD=nzhyikkbecdamomf\nSMTP_SENDER=ACI Automações <automacoescomerciais@gmail.com>\n\n# === MERCADO PAGO ===\nMERCADOPAGO_ACCESS_TOKEN=APP_USR-5083641703420753-011012-3d013021a466b2a5e56cebf8c9b513ea-1035963718\nMERCADOPAGO_PUBLIC_KEY=APP_USR-93683fff-bd35-4fcd-80bb-eb750d0a75c3\n\n# === OUTROS ===\nJWT_SECRET=sua-jwt-secret-aqui\nDATABASE_URL=seu-db-url-se-externo",
+                "deploy": {
+                    "replicas": 1,
+                    "zeroDowntime": true
+                },
+                "domains": [
+                    {
+                        "host": "aci.automacoescomerciais.com.br",
+                        "https": true,
+                        "port": 4001,
+                        "certificateResolver": "letsencrypt"
+                    }
+                ],
+                "resources": {
+                    "memoryReservation": 512,
+                    "memoryLimit": 1024,
+                    "cpuReservation": 0.5,
+                    "cpuLimit": 1
+                }
+            }
+        }
+    ]
+}

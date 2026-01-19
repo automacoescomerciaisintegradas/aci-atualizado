@@ -1,0 +1,621 @@
+# Web Agent Bundle Instructions
+version: "1.0"
+project: "ACI Automações"
+last_updated: "2026-01-14"
+
+## 🎯 Project Overview
+project_name: "ACI Automações - Marketing Automation Platform"
+description: "Full-stack web application for marketing automation with AI integration"
+tech_stack:
+  frontend:
+    framework: "React 19"
+    build_tool: "Vite 6"
+    language: "TypeScript 5.8"
+    styling: "Tailwind CSS"
+    ui_library: "Radix UI + Lucide Icons"
+    state_management: "React Hooks (useState, useEffect, useContext)"
+  
+  backend:
+    runtime: "Node.js 20"
+    framework: "Express"
+    orm: "Prisma"
+    database: "PostgreSQL"
+    auth: "JWT"
+  
+  ai_integration:
+    - "OpenAI GPT-4"
+    - "Google Gemini"
+  
+  deployment:
+    containerization: "Docker"
+    orchestration: "docker-compose"
+    reverse_proxy: "Traefik"
+    cloud_provider: "Supabase"
+
+## ⚙️ Environment Configuration
+required_env_vars:
+  - name: "JWT_SECRET"
+    description: "Secret key for JWT token generation"
+    requirements: "32+ characters"
+    example: "your-super-secret-jwt-key-min-32-chars"
+  
+  - name: "OPENAI_API_KEY"
+    description: "API key for OpenAI GPT-4 integration"
+    requirements: "Valid OpenAI API key"
+    example: "sk-..."
+  
+  - name: "META_APP_ID"
+    description: "Facebook/Instagram App ID for social media integration"
+    requirements: "Meta Developer Platform App ID"
+  
+  - name: "META_APP_SECRET"
+    description: "Facebook/Instagram App Secret"
+    requirements: "Meta Developer Platform App Secret"
+  
+  - name: "PORT"
+    description: "Backend server port"
+    default: "4001"
+  
+  - name: "FRONTEND_URL"
+    description: "Frontend application URL"
+    default: "http://localhost:3000"
+
+## 🚀 Development Commands
+development:
+  start_all: "npm run dev:all"          # Starts frontend (3000) + backend (4001)
+  start_frontend: "npm run dev"         # Frontend only on port 3000
+  start_backend: "npm run dev:server"   # Backend only on port 4001
+  build_frontend: "npm run build"       # Build frontend to dist/
+  production_start: "npm run start:prod" # Production mode
+
+docker_commands:
+  development: "docker-compose up"
+  production: "docker-compose -f docker-compose.prod.yml up -d"
+  rebuild: "docker-compose up --build"
+  stop: "docker-compose down"
+
+## 📁 Project Structure
+directory_structure:
+  root:
+    - "components/"        # React components
+    - "services/"          # Backend services
+    - "api/"              # API endpoints
+    - "hooks/"            # Custom React hooks
+    - "types/"            # TypeScript definitions
+    - "supabase/"         # Supabase configuration
+    - "docs/"             # Documentation
+    - "migrations/"       # Database migrations
+    - "scripts/"          # Utility scripts
+  
+  components_subdirs:
+    - "AdminPageComponents/"
+    - "AuthPageComponents/"
+    - "HomePageComponents/"
+    - "Common/"
+    - "ui/"
+
+## 🔧 Key Services & Integrations
+services:
+  authentication:
+    description: "User authentication with JWT"
+    files:
+      - "services/supabaseClient.ts"
+      - "hooks/useAuth.ts"
+  
+  ai_services:
+    description: "AI-powered content generation"
+    files:
+      - "services/aiService.ts"
+      - "services/geminiService.ts"
+  
+  payment_integration:
+    description: "Mercado Pago payment processing"
+    files:
+      - "services/pixPaymentService.ts"
+      - "hooks/useMercadoPago.ts"
+  
+  automation_engine:
+    description: "Marketing automation workflows"
+    files:
+      - "services/automationService.ts"
+      - "services/automationExecutor.ts"
+
+## 🛠️ Development Workflows
+
+### 🔄 Daily Development Workflow
+standard_development:
+  morning_setup:
+    description: "Setup routine for daily development"
+    steps:
+      - "Check for port conflicts: netstat -ano | findstr :(3000|4001)"
+      - "Kill conflicting processes if needed: taskkill /PID <pid> /F"
+      - "Verify .env file exists and is configured"
+      - "Start development servers: npm run dev:all"
+      - "Verify both frontend (3000) and backend (4001) are running"
+  
+  during_development:
+    description: "Best practices while coding"
+    practices:
+      - "Commit frequently with descriptive messages"
+      - "Test changes locally before pushing"
+      - "Monitor browser console for errors"
+      - "Check backend logs for API issues"
+      - "Validate TypeScript compilation"
+  
+  end_of_day:
+    description: "Wrap-up routine"
+    steps:
+      - "Stop development servers gracefully"
+      - "Commit all changes"
+      - "Push to remote repository"
+      - "Document any issues encountered"
+
+### 🐛 Debugging Workflow
+error_resolution:
+  identification:
+    steps:
+      - "Reproduce the error consistently"
+      - "Check browser console/network tab"
+      - "Check backend terminal logs"
+      - "Verify environment variables"
+      - "Test API endpoints directly"
+  
+  isolation:
+    techniques:
+      - "Comment out recent changes"
+      - "Test in incognito/private mode"
+      - "Clear browser cache and localStorage"
+      - "Test with minimal reproduction case"
+      - "Check database state if applicable"
+  
+  resolution:
+    approach:
+      - "Fix the root cause, not symptoms"
+      - "Write tests to prevent regression"
+      - "Document the solution"
+      - "Verify fix doesn't break other features"
+
+### 🚀 Feature Implementation Workflow
+new_feature:
+  planning:
+    steps:
+      - "Define feature requirements clearly"
+      - "Identify affected components/files"
+      - "Plan database schema changes if needed"
+      - "Design API endpoints"
+      - "Create implementation checklist"
+  
+  implementation:
+    phases:
+      1:
+        phase: "Backend First"
+        tasks:
+          - "Create/update database models if needed"
+          - "Implement API endpoints"
+          - "Add validation and error handling"
+          - "Test endpoints with Postman/curl"
+      
+      2:
+        phase: "Frontend Integration"
+        tasks:
+          - "Create React components"
+          - "Connect to API endpoints"
+          - "Implement state management"
+          - "Add loading/error states"
+      
+      3:
+        phase: "Testing & Polish"
+        tasks:
+          - "End-to-end testing"
+          - "Cross-browser testing"
+          - "Mobile responsiveness check"
+          - "Performance optimization"
+  
+  deployment_prep:
+    checklist:
+      - "Update documentation"
+      - "Remove console.logs and debug code"
+      - "Verify all environment variables"
+      - "Test in staging environment"
+      - "Prepare migration scripts if needed"
+
+### 🐳 Docker Workflow
+container_development:
+  setup:
+    steps:
+      - "Ensure Docker Desktop is running"
+      - "Verify docker-compose.yml configuration"
+      - "Build images: docker-compose build"
+      - "Start containers: docker-compose up"
+      - "Monitor container logs: docker-compose logs -f"
+  
+  development_cycle:
+    iterative_process:
+      - "Make code changes"
+      - "Rebuild specific service: docker-compose build <service>"
+      - "Restart service: docker-compose restart <service>"
+      - "Test changes"
+      - "Repeat until satisfied"
+  
+  troubleshooting:
+    common_issues:
+      - "Container won't start: Check logs and configuration"
+      - "Port conflicts: Stop other services or change ports"
+      - "Volume mounting issues: Verify file permissions"
+      - "Network issues: Check docker network settings"
+
+### 🧪 Testing Workflow
+testing_strategy:
+  unit_testing:
+    when: "Component logic, utility functions, services"
+    tools: "Jest, React Testing Library"
+    frequency: "After each significant change"
+  
+  integration_testing:
+    when: "API endpoints, database interactions"
+    tools: "Supertest, Postman"
+    frequency: "Before merging feature branches"
+  
+  e2e_testing:
+    when: "User flows, critical paths"
+    tools: "Cypress, manual testing"
+    frequency: "Before releases"
+  
+  manual_testing:
+    checklist:
+      - "Test all user roles if applicable"
+      - "Verify responsive design"
+      - "Check browser compatibility"
+      - "Test error scenarios"
+      - "Validate accessibility"
+
+### 🔧 Maintenance Workflow
+regular_maintenance:
+  daily:
+    tasks:
+      - "Check application health"
+      - "Review error logs"
+      - "Monitor resource usage"
+      - "Verify backups are running"
+  
+  weekly:
+    tasks:
+      - "Update dependencies: npm outdated && npm update"
+      - "Security audit: npm audit"
+      - "Review and clean up logs"
+      - "Database maintenance if needed"
+      - "Performance monitoring review"
+  
+  monthly:
+    tasks:
+      - "Complete security assessment"
+      - "Database backup verification"
+      - "Infrastructure cost review"
+      - "Documentation update"
+      - "Team knowledge sharing"
+
+### 🚨 Emergency Response Workflow
+critical_issue:
+  immediate_response:
+    priority_actions:
+      - "Assess impact scope"
+      - "Check system status"
+      - "Identify root cause"
+      - "Implement temporary fix if possible"
+      - "Communicate with stakeholders"
+  
+  resolution:
+    systematic_approach:
+      - "Create incident report"
+      - "Implement permanent fix"
+      - "Test thoroughly"
+      - "Deploy fix"
+      - "Post-mortem analysis"
+  
+  prevention:
+    measures:
+      - "Add monitoring alerts"
+      - "Improve logging"
+      - "Update documentation"
+      - "Enhance testing coverage"
+      - "Team training if needed"
+
+### 🔄 CI/CD Deployment Workflow
+deployment_pipeline:
+  pre_deployment:
+    checklist:
+      - "All tests passing in CI"
+      - "Code review completed"
+      - "Security scan passed"
+      - "Performance benchmarks met"
+      - "Documentation updated"
+  
+  deployment_process:
+    steps:
+      1:
+        step: "Staging Deployment"
+        actions:
+          - "Deploy to staging environment"
+          - "Run smoke tests"
+          - "Verify critical functionality"
+          - "Performance testing"
+      
+      2:
+        step: "Production Deployment"
+        actions:
+          - "Schedule deployment window"
+          - "Backup current production"
+          - "Deploy using docker-compose"
+          - "Monitor deployment logs"
+          - "Verify service health"
+  
+  post_deployment:
+    verification:
+      - "Monitor application metrics"
+      - "Check error rates"
+      - "Validate user feedback"
+      - "Rollback plan ready if needed"
+
+### 📊 Performance Optimization Workflow
+performance_tuning:
+  identification:
+    monitoring_tools:
+      - "Browser DevTools Performance tab"
+      - "Network tab analysis"
+      - "Lighthouse audits"
+      - "Backend response time logging"
+      - "Database query profiling"
+  
+  optimization_strategies:
+    frontend:
+      - "Code splitting and lazy loading"
+      - "Image optimization"
+      - "Bundle size reduction"
+      - "Caching strategies"
+      - "Minimize re-renders"
+    
+    backend:
+      - "Database query optimization"
+      - "API response caching"
+      - "Connection pooling"
+      - "Index optimization"
+      - "Memory leak detection"
+  
+  measurement:
+    kpis:
+      - "Page load time < 3 seconds"
+      - "First Contentful Paint < 1.8 seconds"
+      - "API response time < 500ms"
+      - "Database query time < 100ms"
+      - "Error rate < 1%"
+
+### 🔐 Security Audit Workflow
+security_review:
+  regular_audits:
+    frequency: "Monthly security assessments"
+    scope:
+      - "Dependency vulnerability scanning"
+      - "Code security review"
+      - "API security testing"
+      - "Authentication/Authorization review"
+      - "Data protection compliance"
+  
+  penetration_testing:
+    process:
+      - "Authorized security testing"
+      - "OWASP Top 10 assessment"
+      - "Input validation testing"
+      - "Session management review"
+      - "Report findings and remediation"
+  
+  compliance_checklist:
+    items:
+      - "GDPR/privacy compliance"
+      - "Secure password storage"
+      - "Proper error handling"
+      - "CORS configuration"
+      - "Rate limiting implementation"
+      - "Security headers"
+
+### 🤖 AI Integration Workflow
+ai_implementation:
+  model_selection:
+    criteria:
+      - "Task requirements analysis"
+      - "Cost consideration"
+      - "Performance benchmarks"
+      - "Integration complexity"
+      - "Vendor reliability"
+  
+  prompt_engineering:
+    best_practices:
+      - "Clear, specific instructions"
+      - "Context provision"
+      - "Output format specification"
+      - "Error handling scenarios"
+      - "Token usage optimization"
+  
+  monitoring:
+    metrics:
+      - "API usage costs"
+      - "Response quality scores"
+      - "Latency measurements"
+      - "Error rates"
+      - "User satisfaction feedback"
+
+### 📈 Analytics & Monitoring Workflow
+data_analysis:
+  setup:
+    tools:
+      - "Application logging"
+      - "Error tracking (Sentry-like)"
+      - "Performance monitoring"
+      - "User behavior analytics"
+      - "Business metrics tracking"
+  
+  regular_analysis:
+    schedule:
+      - "Daily: Error rate review"
+      - "Weekly: Performance trends"
+      - "Monthly: User engagement metrics"
+      - "Quarterly: Business impact analysis"
+    
+    reporting:
+      - "Automated dashboard updates"
+      - "Anomaly detection alerts"
+      - "Trend analysis"
+      - "Actionable insights generation"
+
+### 👥 Team Collaboration Workflow
+collaboration:
+  code_review:
+    process:
+      - "Pull request creation with clear description"
+      - "Automated checks (tests, linting)"
+      - "Peer review by team members"
+      - "Address feedback iterations"
+      - "Approval and merge"
+  
+  knowledge_sharing:
+    activities:
+      - "Weekly tech sync meetings"
+      - "Code walkthrough sessions"
+      - "Documentation updates"
+      - "Pair programming"
+      - "Lessons learned documentation"
+  
+  onboarding:
+    new_developer:
+      - "Environment setup guide"
+      - "Project architecture overview"
+      - "Key workflows introduction"
+      - "Mentor assignment"
+      - "Progress checkpoints"
+
+### 🗃️ Database Management Workflow
+database_ops:
+  schema_changes:
+    process:
+      - "Create migration script"
+      - "Test migration locally"
+      - "Backup production database"
+      - "Apply migration in staging"
+      - "Verify data integrity"
+      - "Apply to production during maintenance window"
+  
+  performance_tuning:
+    regular_tasks:
+      - "Index optimization"
+      - "Query plan analysis"
+      - "Table statistics update"
+      - "Vacuum and analyze operations"
+      - "Connection pool monitoring"
+  
+  backup_strategy:
+    schedule:
+      - "Daily automated backups"
+      - "Weekly full backups"
+      - "Monthly archive retention"
+      - "Backup restoration testing"
+      - "Disaster recovery plan"
+
+### 🎨 UI/UX Enhancement Workflow
+design_improvement:
+  user_research:
+    methods:
+      - "User feedback collection"
+      - "Usability testing sessions"
+      - "Analytics behavior analysis"
+      - "Competitor research"
+      - "Accessibility audit"
+  
+  implementation:
+    steps:
+      - "Create design prototypes"
+      - "Gather stakeholder feedback"
+      - "Develop design system components"
+      - "Implement responsive designs"
+      - "Conduct usability testing"
+      - "Iterate based on feedback"
+  
+  quality_assurance:
+    checklist:
+      - "Cross-browser compatibility"
+      - "Mobile responsiveness"
+      - "Accessibility compliance (WCAG)"
+      - "Performance impact assessment"
+      - "User acceptance testing"
+
+## ⚠️ Common Issues & Solutions
+troubleshooting:
+  port_conflicts:
+    issue: "Port already in use"
+    solution: |
+      Check processes: netstat -ano | findstr :<port>
+      Kill process: taskkill /PID <actual_pid> /F
+      Note: Always verify actual PID with netstat first
+    
+  database_connection:
+    issue: "Cannot connect to database"
+    solution: |
+      Verify Supabase credentials
+      Check network connectivity
+      Ensure database URL is correct in .env
+  
+  api_key_errors:
+    issue: "AI service API key invalid"
+    solution: |
+      Verify OPENAI_API_KEY in .env
+      Check API key validity on OpenAI dashboard
+      Ensure proper billing setup
+
+## 📊 Monitoring & Logging
+monitoring:
+  frontend:
+    logs_location: "Browser console"
+    common_errors: "React component errors, API call failures"
+  
+  backend:
+    logs_location: "Terminal output"
+    log_level: "info, error, debug"
+  
+  docker:
+    logs_command: "docker-compose logs -f"
+    container_status: "docker-compose ps"
+
+## 🔒 Security Best Practices
+security_guidelines:
+  - "Never commit .env files to version control"
+  - "Use strong JWT secrets (32+ characters)"
+  - "Validate all user inputs"
+  - "Implement proper CORS configuration"
+  - "Use HTTPS in production"
+  - "Regular security audits"
+
+## 📚 Documentation References
+documentation:
+  main_docs:
+    - "README.md"
+    - "PROJECT_OVERVIEW.md"
+    - "TECHNICAL_DECISIONS.md"
+  
+  setup_guides:
+    - "QUICK-START.md"
+    - "SETUP_SUPABASE.md"
+    - "CONFIG-GUIDE.md"
+  
+  api_docs:
+    - "docs/api_endpoints.md"
+    - "docs/integration_guides/"
+
+## 🔄 Update Frequency
+maintenance_schedule:
+  weekly:
+    - "Check dependency updates"
+    - "Review security vulnerabilities"
+    - "Update documentation"
+  
+  monthly:
+    - "Database backup verification"
+    - "Performance monitoring review"
+    - "Code quality assessment"
