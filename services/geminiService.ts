@@ -16,6 +16,7 @@ interface AiConfigOptions {
   systemInstruction?: string;
   responseMimeType?: string;
   temperature?: number;
+  tools?: any[];
 }
 
 const callAiUnified = async (prompt: string, options: AiConfigOptions = {}): Promise<string> => {
@@ -34,7 +35,8 @@ const callAiUnified = async (prompt: string, options: AiConfigOptions = {}): Pro
         topP: settings.aiTopP ?? 0.95,
         topK: settings.aiTopK ?? 40,
         maxOutputTokens: settings.aiMaxOutputTokens ?? 2048,
-        ...(options.responseMimeType === 'application/json' ? { responseMimeType: 'application/json' } : {})
+        ...(options.responseMimeType === 'application/json' ? { responseMimeType: 'application/json' } : {}),
+        ...(options.tools ? { tools: options.tools } : {})
       }
     });
     return result.text;
@@ -222,13 +224,13 @@ export const searchShopeeProductsFromApi = async (keyword: string): Promise<Prod
     Palavra-chave: "${keyword}"
 
     Instruções:
-    1. Busque por produtos na Shopee Brasil que correspondam à palavra-chave.
-    2. Retorne uma lista de até 20 produtos.
-    3. A resposta DEVE ser um array de objetos JSON.
+    1. Busque por produtos na Shopee Brasil que correspondam à palavra-chave. Se a palavra-chave for um link (curto ou longo), use-o para encontrar o produto específico.
+    2. Se for um link curto (ex: s.shopee.com.br), RESOLVA o link usando a ferramenta de busca para obter as informações REAIS e ATUAIS do produto.
+    3. Retorne uma lista de até 20 produtos (ou apenas o produto do link, se for o caso).
     4. Cada objeto no array deve ter EXATAMENTE os seguintes campos: \`title\`, \`price\`, \`image_url\`, e \`product_url\`.
     5. O campo \`price\` deve ser uma string formatada como "R$ XX,XX".
-    6. O campo \`image_url\` deve ser um link direto para a imagem do produto.
-    7. O campo \`product_url\` deve ser a URL completa da página do produto na Shopee.
+    6. O campo \`image_url\` deve ser um link direto para a imagem do produto (certifique-se de que seja uma URL de imagem válida e acessível).
+    7. O campo \`product_url\` deve ser a URL completa e canônica da página do produto.
     8. NÃO inclua nenhum texto, explicação ou formatação de markdown. A resposta deve ser apenas o array JSON.
 
     Exemplo de formato de saída:
@@ -246,7 +248,8 @@ export const searchShopeeProductsFromApi = async (keyword: string): Promise<Prod
     const settings = getSettings();
     const text = await callAiUnified(prompt, {
       responseMimeType: "application/json",
-      temperature: settings.aiTemperature ?? 0.1
+      temperature: settings.aiTemperature ?? 0.1,
+      tools: [{ googleSearch: {} }] as any
     });
 
     const parsedData = parseJsonFromGeminiResponse<Product[]>(text);
@@ -284,7 +287,8 @@ export const getTopSalesFromApi = async (category: string): Promise<Product[]> =
     const settings = getSettings();
     const text = await callAiUnified(prompt, {
       responseMimeType: "application/json",
-      temperature: settings.aiTemperature ?? 0.1
+      temperature: settings.aiTemperature ?? 0.1,
+      tools: [{ googleSearch: {} }] as any
     });
 
     const parsedData = parseJsonFromGeminiResponse<Product[]>(text);
@@ -352,6 +356,7 @@ export const getShopeeProductDetailsFromUrl = async (productUrl: string): Promis
       model: model,
       contents: prompt,
       config: {
+        tools: [{ googleSearch: {} }] as any,
         responseMimeType: "application/json",
       }
     });
