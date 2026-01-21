@@ -92,8 +92,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ activePage, on
         <header className="glass border-b border-white/5 px-4 sm:px-6 py-3 flex items-center justify-between gap-4 flex-shrink-0 z-30 sticky top-0 shadow-xl">
             <div className="flex items-center gap-4 md:gap-6">
                 {/* Logo (Visible on Mobile) */}
-                <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('home'); }} className="text-2xl font-bold text-gradient flex-shrink-0 md:hidden hover-scale">
-                    ACI
+                <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('home'); }} className="flex flex-col md:hidden group">
+                    <span className="text-3xl font-black text-white leading-none tracking-tighter group-hover:text-blue-500 transition-colors">ACI</span>
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">SUITE</span>
                 </a>
 
                 {/* Breadcrumbs (Desktop Only) */}

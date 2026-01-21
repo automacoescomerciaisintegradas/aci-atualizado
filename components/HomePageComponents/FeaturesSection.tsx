@@ -12,84 +12,76 @@ interface Feature {
 
 const features: Feature[] = [
   {
-    title: 'Geração de Conteúdo com IA',
-    description: 'Crie posts de blog profissionais com IA e produtos de afiliados.',
+    title: 'Geração IA',
+    description: 'Crie posts de blog e produtos com IA.',
     page: 'aci-posts' as Page,
-    icon: <BookIcon className="h-16 w-16 text-white" />,
+    icon: <BookIcon className="h-12 w-12 text-white" />,
     advantages: [
-      'Conteúdo 100% gerado com IA',
-      'Imagens e links automáticos',
-      'Pronto para vender ou divulgar',
+      'Geração 100% autônoma',
+      'Links de afiliados inclusos',
     ],
   },
   {
-    title: 'Envio em Lote para Telegram',
-    description: 'Encontre e envie múltiplas ofertas da Shopee para seus canais.',
+    title: 'Automação Telegram',
+    description: 'Envio em lote para canais e grupos.',
     page: 'shopee-lote' as Page,
-    icon: <ShoppingCartSendIcon className="h-16 w-16 text-white" />,
+    icon: <ShoppingCartSendIcon className="h-12 w-12 text-white" />,
     advantages: [
-      'Pesquisa de produtos integrada',
-      'Seleção múltipla de ofertas',
-      'Envio agendado e com intervalos',
+      'Múltiplas ofertas Shopee',
+      'Agendamento inteligente',
+    ],
+  },
+  {
+    title: 'Marketing Social',
+    description: 'Gerencie Instagram e Facebook com IA.',
+    page: 'instagram-connect' as Page,
+    icon: <BrainCircuitIcon className="h-12 w-12 text-white" />,
+    advantages: [
+      'Legendas automáticas',
+      'Análise de engajamento',
     ],
   },
 ];
 
 interface FeaturesSectionProps {
-  onNavigate: (page: Page) => void;
+  onNavigate: (page: Page, context?: { from?: Page; initialTab?: any }) => void;
 }
 
 export const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onNavigate }) => {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveIndex((prevIndex) => (prevIndex + 1) % features.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const activeFeature = features[activeIndex];
-
   return (
-    <div 
-      onClick={() => onNavigate(activeFeature.page)}
-      className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-8 text-white shadow-2xl shadow-indigo-500/30 flex flex-col justify-between h-full cursor-pointer group"
-    >
-      <div>
-        <div className="flex justify-between items-start">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 h-full">
+      {features.map((feature, index) => (
+        <div
+          key={index}
+          onClick={() => onNavigate(feature.page)}
+          className="card-premium card-interactive p-6 flex flex-col justify-between group cursor-pointer h-full"
+        >
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              {React.cloneElement(features[activeIndex].icon, { className: 'h-8 w-8 text-white opacity-80' })}
-              <h3 className="text-2xl font-bold">{activeFeature.title}</h3>
+            <div className="mb-6 p-4 rounded-2xl bg-white/[0.03] border border-white/5 w-fit group-hover:scale-110 transition-transform duration-300">
+              {React.cloneElement(feature.icon as React.ReactElement<any>, { className: 'h-10 w-10 text-blue-400' })}
             </div>
-            <p className="opacity-80 mb-6">{activeFeature.description}</p>
+
+            <h3 className="text-xl font-bold text-white mb-2 tracking-tight">{feature.title}</h3>
+            <p className="text-slate-400 text-sm leading-relaxed mb-6">{feature.description}</p>
+
+            <div className="space-y-3">
+              {feature.advantages.map(adv => (
+                <div key={adv} className="flex items-center gap-2 text-[13px] text-slate-300">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500/50" />
+                  <span>{adv}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="hidden md:block flex-shrink-0 transition-transform duration-500 group-hover:scale-110">
-            {activeFeature.icon}
+
+          <div className="mt-8 flex items-center text-blue-400 text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
+            Acessar Módulo
+            <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
           </div>
         </div>
-        
-        <div className="space-y-3">
-          <p className="font-semibold">Vantagens:</p>
-          {activeFeature.advantages.map(adv => (
-            <div key={adv} className="flex items-center gap-3 text-sm">
-              <BrainCircuitIcon className="h-5 w-5 text-lime-accent flex-shrink-0" />
-              <span>{adv}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="flex justify-center gap-2 mt-4">
-        {features.map((_, index) => (
-          <button
-            key={index}
-            onClick={(e) => { e.stopPropagation(); setActiveIndex(index); }}
-            className={`h-2 w-8 rounded-full transition-colors ${activeIndex === index ? 'bg-white' : 'bg-white/30 hover:bg-white/50'}`}
-            aria-label={`Ir para o slide ${index + 1}`}
-          />
-        ))}
-      </div>
+      ))}
     </div>
   );
 };

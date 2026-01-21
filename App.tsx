@@ -4,12 +4,12 @@ import { LinkGenerator } from './components/LinkGenerator';
 import { ProductSearchPage } from './components/ShopeeSearch';
 import { TopSalesPage } from './components/TopSales';
 import { TelegramPage } from './components/TelegramPage';
-import { AdminPage } from './components/AdminPage';
 import { AuthPage } from './components/AuthPage';
 import { AciPage } from './components/AciPage';
 import { InstagramConnectPage } from './components/InstagramConnectPage';
 import { BlogShopeePage } from './components/BlogShopeePage';
 import { HomePage } from './components/HomePage';
+import { AdminPage } from './components/AdminPage';
 import { useSettings } from './hooks/useSettings';
 import { SpinnerIcon } from './components/Icons';
 import { ProfilePage } from './components/ProfilePage';
@@ -45,8 +45,12 @@ import { ComingSoonPage } from './components/ComingSoonPage';
 import { ShopeeAffiliateProgramPage } from './components/ShopeeAffiliateProgramPage';
 import { SupportPage } from './components/SupportPage';
 import { IntegrationsHubPage } from './components/IntegrationsHubPage';
+import { UserSettingsPage } from './components/UserSettingsPage';
+import { WordPressHelp } from './components/WordPressHelp';
+import { AeoDashboard } from './components/AeoDashboard';
+import { AeoOptimizerPage } from './components/AeoOptimizerPage';
 
-export type Page = 'home' | 'product-search' | 'generate' | 'top-sales' | 'telegram' | 'admin' | 'aci-posts' | 'instagram-connect' | 'blog' | 'profile' | 'telegram-shopee' | 'faq' | 'precos' | 'multi-channel-publisher' | 'shopee-lote' | 'instagram-caption' | 'blog-creator' | 'chat' | 'image-generator' | 'instagram-profile' | 'telegram-id-catcher' | 'wordpress-blogs' | 'wordpress-create' | 'payment-methods' | 'analytics' | 'user-settings' | 'facebook-integration-tutorial' | 'user-profile' | 'user-billing' | 'user-orders' | 'credit-purchase' | 'automation' | 'shopee-affiliate' | 'whatsapp-business' | 'api-integration' | 'ai-insights' | 'advanced-analytics' | 'custom-automations' | 'priority-support' | 'billing' | 'orders' | 'integrations-hub';
+export type Page = 'home' | 'product-search' | 'generate' | 'top-sales' | 'telegram' | 'admin' | 'aci-posts' | 'instagram-connect' | 'blog' | 'profile' | 'telegram-shopee' | 'faq' | 'precos' | 'multi-channel-publisher' | 'shopee-lote' | 'instagram-caption' | 'blog-creator' | 'chat' | 'image-generator' | 'instagram-profile' | 'telegram-id-catcher' | 'wordpress-blogs' | 'wordpress-create' | 'payment-methods' | 'analytics' | 'user-settings' | 'facebook-integration-tutorial' | 'user-profile' | 'user-billing' | 'user-orders' | 'credit-purchase' | 'automation' | 'shopee-affiliate' | 'whatsapp-business' | 'api-integration' | 'ai-insights' | 'advanced-analytics' | 'custom-automations' | 'priority-support' | 'billing' | 'orders' | 'integrations-hub' | 'wordpress-help' | 'aeo-insights' | 'aeo-optimizer';
 
 const transactions = [
   { id: 1, date: '15/07/2024', type: 'Compra', description: 'Compra de 50.000 créditos', amount: '+ R$ 50,00', credits: '+50000' },
@@ -83,7 +87,7 @@ const App: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('home');
   const { settings, saveSettings, isLoading: isLoadingSettings } = useSettings();
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
-  const [navigationContext, setNavigationContext] = useState<{ from?: Page } | null>(null);
+  const [navigationContext, setNavigationContext] = useState<{ from?: Page; initialTab?: any } | null>(null);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error' | 'warning', message: string } | null>(null);
 
   // Check for callback parameters (Instagram, Payments, etc)
@@ -180,7 +184,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleNavigate = useCallback((page: Page, context?: { from: Page }) => {
+  const handleNavigate = useCallback((page: Page, context?: { from?: Page; initialTab?: any }) => {
     try {
       console.log('🔹 Navigating to:', page);
       setActivePage(page);
@@ -220,10 +224,6 @@ const App: React.FC = () => {
           case 's': // Search
             e.preventDefault();
             handleNavigate('product-search');
-            break;
-          case 'a': // Admin
-            e.preventDefault();
-            handleNavigate('admin');
             break;
           case 't': // Top Sales
             e.preventDefault();
@@ -275,14 +275,20 @@ const App: React.FC = () => {
 
     switch (activePage) {
       case 'home':
-        return <HomePage onNavigate={setActivePage} />;
+        return <HomePage onNavigate={handleNavigate} />;
       case 'admin':
-        // Todos os usuários têm acesso ao painel admin
-        return <AdminPage onBack={onBack} onNavigate={handleNavigate} />;
+        return <AdminPage onNavigate={handleNavigate} onBack={onBack} />;
       case 'blog':
         return <BlogShopeePage onNavigate={setActivePage} />;
       case 'profile':
-        return <ProfilePage onAddCreditsClick={() => handleNavigate('precos')} onDownloadExtract={handleDownloadExtract} transactions={transactions} invoices={invoices} user={user || undefined} />;
+        return <ProfilePage
+          onAddCreditsClick={() => handleNavigate('precos')}
+          onDownloadExtract={handleDownloadExtract}
+          transactions={transactions}
+          invoices={invoices}
+          user={user || undefined}
+          initialTab={navigationContext?.initialTab}
+        />;
       case 'precos':
         return <PricingPage onPaymentSuccess={handleAddCredits} />;
       case 'aci-posts':
@@ -323,8 +329,15 @@ const App: React.FC = () => {
         return <PaymentMethodsPage />;
       case 'analytics':
         return <AnalyticsPage />;
+      case 'ai-insights':
+      case 'aeo-insights':
+        return <AeoDashboard onNavigate={handleNavigate} />;
+      case 'aeo-optimizer':
+        return <AeoOptimizerPage onNavigate={handleNavigate} />;
+      case 'wordpress-help':
+        return <WordPressHelp onBack={() => handleNavigate('integrations-hub')} />;
       case 'user-settings':
-        return <SuperAdminPage onBack={onBack} onNavigate={handleNavigate} />;
+        return <UserSettingsPage onBack={onBack} onNavigate={handleNavigate} />;
       case 'facebook-integration-tutorial':
         return <FacebookIntegrationTutorialPage onBack={onBack} onNavigate={handleNavigate} />;
       case 'user-profile':

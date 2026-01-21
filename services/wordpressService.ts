@@ -24,8 +24,9 @@ const sanitizeCredentials = (settings: { wordpressUrl: string; wordpressUsername
     if (!cleanUrl.startsWith('http')) {
         cleanUrl = 'https://' + cleanUrl;
     }
+    const cleanUsername = settings.wordpressUsername.trim();
     const cleanPassword = settings.wordpressAppPassword.replace(/\s+/g, '');
-    return { cleanUrl, cleanPassword };
+    return { cleanUrl, cleanUsername, cleanPassword };
 };
 
 // Helper to try JWT authentication
@@ -53,8 +54,8 @@ export const validateWordPressCredentials = async (settings: { wordpressUrl: str
         return { success: false, message: "Credenciais incompletas." };
     }
 
-    const { cleanUrl, cleanPassword } = sanitizeCredentials(settings);
-    const basicAuth = btoa(`${settings.wordpressUsername}:${cleanPassword}`);
+    const { cleanUrl, cleanUsername, cleanPassword } = sanitizeCredentials(settings);
+    const basicAuth = btoa(`${cleanUsername}:${cleanPassword}`);
 
     try {
         // 1. Try Basic Auth
@@ -68,7 +69,7 @@ export const validateWordPressCredentials = async (settings: { wordpressUrl: str
 
         // 2. Fallback to JWT if 401
         if (response.status === 401) {
-            const token = await tryGetJwtToken(cleanUrl, settings.wordpressUsername, cleanPassword);
+            const token = await tryGetJwtToken(cleanUrl, cleanUsername, cleanPassword);
             if (token) {
                 response = await fetch(`${cleanUrl}/wp-json/wp/v2/users/me`, {
                     method: 'GET',
@@ -82,7 +83,7 @@ export const validateWordPressCredentials = async (settings: { wordpressUrl: str
 
         if (!response.ok) {
             const data = await response.json().catch(() => ({ code: 'unknown', message: response.statusText })) as WpApiResponse;
-            
+
             // Verificar se data é um objeto antes de acessar propriedades
             let errorMessage = '';
             const responseData: WpApiResponse = typeof data === 'object' && data !== null ? data : { code: 'unknown', message: response.statusText };
@@ -120,8 +121,8 @@ export const testWordPressApiConnection = async (settings: { wordpressUrl: strin
         return { success: false, message: "Credenciais incompletas." };
     }
 
-    const { cleanUrl, cleanPassword } = sanitizeCredentials(settings);
-    const basicAuth = btoa(`${settings.wordpressUsername}:${cleanPassword}`);
+    const { cleanUrl, cleanUsername, cleanPassword } = sanitizeCredentials(settings);
+    const basicAuth = btoa(`${cleanUsername}:${cleanPassword}`);
 
     try {
         // Test connection to WordPress REST API
@@ -163,10 +164,10 @@ export const testWordPressApiConnection = async (settings: { wordpressUrl: strin
 };
 
 export const publishToWordPress = async (
-    settings: Pick<Settings, 'wordpressUrl' | 'wordpressUsername' | 'wordpressAppPassword'>, 
-    title: string, 
-    content: string, 
-    css: string, 
+    settings: Pick<Settings, 'wordpressUrl' | 'wordpressUsername' | 'wordpressAppPassword'>,
+    title: string,
+    content: string,
+    css: string,
     status: 'draft' | 'publish' | 'future' = 'publish',
     categories?: number[],
     tags?: number[],
@@ -177,8 +178,8 @@ export const publishToWordPress = async (
         return { success: false, message: 'Configurações do WordPress não encontradas.' };
     }
 
-    const { cleanUrl, cleanPassword } = sanitizeCredentials(settings);
-    const basicAuth = btoa(`${settings.wordpressUsername}:${cleanPassword}`);
+    const { cleanUrl, cleanUsername, cleanPassword } = sanitizeCredentials(settings);
+    const basicAuth = btoa(`${cleanUsername}:${cleanPassword}`);
 
     // Combine CSS and content
     const finalContent = css ? `<style>${css}</style>\n${content}` : content;
@@ -231,7 +232,7 @@ export const publishToWordPress = async (
 
         // 2. Fallback to JWT if 401
         if (response.status === 401) {
-            const token = await tryGetJwtToken(cleanUrl, settings.wordpressUsername, cleanPassword);
+            const token = await tryGetJwtToken(cleanUrl, cleanUsername, cleanPassword);
             if (token) {
                 response = await makeRequest(token);
             }
@@ -244,12 +245,12 @@ export const publishToWordPress = async (
 
         const data = await response.json();
         const responseData = typeof data === 'object' && data !== null ? data : {};
-        return { 
-            success: true, 
-            message: status === 'draft' ? 'Post salvo como rascunho!' : 
-                     status === 'future' ? 'Post agendado com sucesso!' : 
-                     'Post publicado com sucesso!', 
-            postLink: (responseData as any).link 
+        return {
+            success: true,
+            message: status === 'draft' ? 'Post salvo como rascunho!' :
+                status === 'future' ? 'Post agendado com sucesso!' :
+                    'Post publicado com sucesso!',
+            postLink: (responseData as any).link
         };
 
     } catch (error) {
@@ -265,8 +266,8 @@ export const getWordPressCategories = async (
         return { success: false, message: 'Configurações do WordPress não encontradas.' };
     }
 
-    const { cleanUrl, cleanPassword } = sanitizeCredentials(settings);
-    const basicAuth = btoa(`${settings.wordpressUsername}:${cleanPassword}`);
+    const { cleanUrl, cleanUsername, cleanPassword } = sanitizeCredentials(settings);
+    const basicAuth = btoa(`${cleanUsername}:${cleanPassword}`);
 
     const makeRequest = async (token?: string) => {
         const headers: any = { 'Content-Type': 'application/json' };
@@ -288,7 +289,7 @@ export const getWordPressCategories = async (
 
         // 2. Fallback to JWT if 401
         if (response.status === 401) {
-            const token = await tryGetJwtToken(cleanUrl, settings.wordpressUsername, cleanPassword);
+            const token = await tryGetJwtToken(cleanUrl, cleanUsername, cleanPassword);
             if (token) {
                 response = await makeRequest(token);
             }
@@ -340,7 +341,7 @@ export const createWordPressCategory = async (
 
         // 2. Fallback to JWT if 401
         if (response.status === 401) {
-            const token = await tryGetJwtToken(cleanUrl, settings.wordpressUsername, cleanPassword);
+            const token = await tryGetJwtToken(cleanUrl, cleanUsername, cleanPassword);
             if (token) {
                 response = await makeRequest(token);
             }
@@ -390,7 +391,7 @@ export const getWordPressTags = async (
 
         // 2. Fallback to JWT if 401
         if (response.status === 401) {
-            const token = await tryGetJwtToken(cleanUrl, settings.wordpressUsername, cleanPassword);
+            const token = await tryGetJwtToken(cleanUrl, cleanUsername, cleanPassword);
             if (token) {
                 response = await makeRequest(token);
             }
@@ -442,7 +443,7 @@ export const createWordPressTag = async (
 
         // 2. Fallback to JWT if 401
         if (response.status === 401) {
-            const token = await tryGetJwtToken(cleanUrl, settings.wordpressUsername, cleanPassword);
+            const token = await tryGetJwtToken(cleanUrl, cleanUsername, cleanPassword);
             if (token) {
                 response = await makeRequest(token);
             }
@@ -587,7 +588,7 @@ export const uploadMediaToWordPress = async (
         const headers: any = {
             'Content-Disposition': `attachment; filename="${file.name}"`,
         };
-        
+
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         } else {
@@ -611,7 +612,7 @@ export const uploadMediaToWordPress = async (
 
         // 2. Fallback to JWT if 401
         if (response.status === 401) {
-            const token = await tryGetJwtToken(cleanUrl, settings.wordpressUsername, cleanPassword);
+            const token = await tryGetJwtToken(cleanUrl, cleanUsername, cleanPassword);
             if (token) {
                 response = await makeRequest(token);
             }
@@ -653,10 +654,10 @@ export const testWordPressAuthenticationMethods = async (settings: { wordpressUr
         if (basicAuthResponse.ok) {
             const userData = await basicAuthResponse.json();
             const userResponse = typeof userData === 'object' && userData !== null ? userData : {};
-            return { 
-                success: true, 
-                method: 'basic', 
-                message: `Autenticação Básica funcionando. Conectado como ${(userResponse as any).name || (userResponse as any).slug || 'usuário'}!` 
+            return {
+                success: true,
+                method: 'basic',
+                message: `Autenticação Básica funcionando. Conectado como ${(userResponse as any).name || (userResponse as any).slug || 'usuário'}!`
             };
         }
     } catch (error) {
@@ -678,10 +679,10 @@ export const testWordPressAuthenticationMethods = async (settings: { wordpressUr
             if (jwtResponse.ok) {
                 const userData = await jwtResponse.json();
                 const userResponse = typeof userData === 'object' && userData !== null ? userData : {};
-                return { 
-                    success: true, 
-                    method: 'jwt', 
-                    message: `Autenticação JWT funcionando. Conectado como ${(userResponse as any).name || (userResponse as any).slug || 'usuário'}!` 
+                return {
+                    success: true,
+                    method: 'jwt',
+                    message: `Autenticação JWT funcionando. Conectado como ${(userResponse as any).name || (userResponse as any).slug || 'usuário'}!`
                 };
             }
         }
@@ -714,23 +715,23 @@ export const testWordPressAuthenticationMethods = async (settings: { wordpressUr
             errorMessage = "Rota da API não encontrada. Verifique se o WordPress REST API está ativado.";
         }
 
-        return { 
-            success: false, 
-            method: 'none', 
-            message: errorMessage || `Erro na conexão: ${data.message || basicAuthResponse.statusText}` 
+        return {
+            success: false,
+            method: 'none',
+            message: errorMessage || `Erro na conexão: ${data.message || basicAuthResponse.statusText}`
         };
     } catch (error) {
         if (error instanceof TypeError && error.message.includes('fetch')) {
-            return { 
-                success: false, 
-                method: 'none', 
-                message: 'Erro de rede: Não foi possível conectar ao servidor WordPress. Verifique a URL e sua conexão de internet.' 
+            return {
+                success: false,
+                method: 'none',
+                message: 'Erro de rede: Não foi possível conectar ao servidor WordPress. Verifique a URL e sua conexão de internet.'
             };
         }
-        return { 
-            success: false, 
-            method: 'none', 
-            message: error instanceof Error ? error.message : 'Erro desconhecido durante o teste de autenticação.' 
+        return {
+            success: false,
+            method: 'none',
+            message: error instanceof Error ? error.message : 'Erro desconhecido durante o teste de autenticação.'
         };
     }
 };

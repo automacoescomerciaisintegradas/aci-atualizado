@@ -341,6 +341,12 @@ export const IntegrationsHubPage: React.FC<IntegrationsHubPageProps> = ({ onNavi
                             <p className="text-xs text-dark-text-secondary mt-1">
                                 Crie uma senha de aplicativo em Usuários {'>'} Perfil {'>'} Senhas de Aplicativo
                             </p>
+                            <button
+                                onClick={() => onNavigate('wordpress-help')}
+                                className="text-[10px] text-blue-400 hover:text-blue-300 transition-all font-bold mt-2 uppercase tracking-wider flex items-center gap-1"
+                            >
+                                <ZapIcon className="h-3 w-3" /> Falha na conexão? Solução Nginx/Apache aqui
+                            </button>
                         </div>
                         <div className="flex gap-2">
                             <button

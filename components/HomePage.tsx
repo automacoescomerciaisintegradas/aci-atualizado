@@ -2,13 +2,13 @@ import React from 'react';
 import { Page } from '../App.js';
 import { FeaturesSection } from './HomePageComponents/FeaturesSection.js';
 import { FeaturedProductSection } from './HomePageComponents/FeaturedProductSection.js';
-import { VideoOffersSection } from './HomePageComponents/VideoOffersSection';
 import { OffersSection } from './HomePageComponents/OffersSection.js';
 import { SecuritySection } from './HomePageComponents/SecuritySection.js';
 import { HomeFooter } from './HomePageComponents/HomeFooter.js';
+import { WelcomeHero } from './HomePageComponents/WelcomeHero';
 
 interface HomePageProps {
-  onNavigate: (page: Page) => void;
+  onNavigate: (page: Page, context?: { from?: Page; initialTab?: any }) => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
@@ -23,8 +23,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   ];
 
   return (
-    <div className="animate-fade-in space-y-6 md:space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6 xl:gap-8">
+    <div className="animate-fade-in space-y-8">
+      {/* Seção principal com a Tagline Oficial ACI */}
+      <WelcomeHero />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8">
         <div className="md:col-span-2 xl:col-span-2 2xl:col-span-3">
           <FeaturesSection onNavigate={onNavigate} />
         </div>
@@ -34,11 +37,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </div>
 
       <FeaturedProductSection affiliateLink={affiliateLink} images={images} />
-
       <OffersSection />
-
-
-
       <HomeFooter />
     </div>
   );

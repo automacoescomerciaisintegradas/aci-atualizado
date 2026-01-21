@@ -97,11 +97,11 @@ const callAiUnified = async (prompt: string, options: AiConfigOptions = {}): Pro
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `Erro do provedor AI: ${response.statusText}`);
+    const errorData = await response.json().catch(() => ({}) as any) as any;
+    throw new Error(errorData?.error?.message || `Erro do provedor AI: ${response.statusText}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as any;
   return isAnthropic ? data.content[0].text : data.choices[0].message.content;
 };
 
@@ -111,8 +111,8 @@ const getAiClient = (): GoogleGenAI => {
   const envApiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
   const apiKey = settings.geminiApiKey ? settings.geminiApiKey.trim() : (envApiKey ? envApiKey.trim() : undefined);
 
-  if (!apiKey || !apiKey.startsWith("AIza")) {
-    throw new Error("Chave de API do Gemini inválida ou ausente. A chave deve começar com 'AIza'. Verifique o Painel Administrativo.");
+  if (!apiKey || apiKey.length < 10) {
+    throw new Error("Chave de API do Gemini ausente ou muito curta. Verifique o Painel Administrativo.");
   }
 
   return new GoogleGenAI({ apiKey });
@@ -120,19 +120,55 @@ const getAiClient = (): GoogleGenAI => {
 
 function parseJsonFromGeminiResponse<T>(text: string): T {
   let jsonStr = text.trim();
-  // Handle markdown code fences
-  const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
+
+  // 1. Tentar remover code fences de markdown se existirem
+  const fenceRegex = /```(?:json)?\s*([\s\S]*?)\s*```/;
   const match = jsonStr.match(fenceRegex);
-  if (match && match[2]) {
-    jsonStr = match[2].trim();
+  if (match && match[1]) {
+    jsonStr = match[1].trim();
   }
 
+  // Helper para limpar JSON mal formado (tentativa básica)
+  const sanitizeJson = (str: string) => {
+    // Remove possíveis caracteres de controle não permitidos em JSON plano
+    return str.replace(/[\x00-\x1F\x7F-\x9F]/g, (match) => {
+      if (match === '\n') return '\\n';
+      if (match === '\r') return '\\r';
+      if (match === '\t') return '\\t';
+      return '';
+    });
+  };
+
   try {
-    const parsedData = JSON.parse(jsonStr);
-    return parsedData as T;
-  } catch (error) {
-    console.error("Failed to parse JSON string:", jsonStr);
-    throw new Error("A API retornou um formato JSON inválido.");
+    // Tentar o parse direto primeiro
+    return JSON.parse(jsonStr) as T;
+  } catch (initialError) {
+    // 2. Tentar extração por delimitadores { }
+    const startIdx = jsonStr.indexOf('{');
+    const endIdx = jsonStr.lastIndexOf('}');
+
+    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+      const extractedJson = jsonStr.substring(startIdx, endIdx + 1);
+      try {
+        return JSON.parse(extractedJson) as T;
+      } catch (nestedError) {
+        // 3. Tentar limpar o JSON extraído (caracteres invisíveis/quebras não escapadas)
+        try {
+          // Nota: Sanitize complexo de JSON é arriscado, mas aqui tentamos o básico
+          // para lidar com quebras de linha reais dentro de strings que a IA esqueceu de escapar
+          const sanitized = extractedJson.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+          // Re-corrigir chaves que foram escapadas acidentalmente se necessário
+          // Mas o replace(/\n/g, '\\n') vai quebrar a estrutura do JSON (quebras fora de strings)
+          // Então essa abordagem é simplista demais.
+        } catch (e) { }
+      }
+    }
+
+    console.error("Critical JSON Parse Failure. Received text:", jsonStr);
+
+    // Mostra os primeiros 100 caracteres do erro para o usuário ajudar no debug
+    const snippet = jsonStr.substring(0, 100).replace(/\n/g, ' ') + "...";
+    throw new Error(`A API enviou dados que não puderam ser processados (Snippet: ${snippet}). Certifique-se de que o texto original não contém caracteres especiais conflitantes.`);
   }
 }
 
@@ -166,7 +202,7 @@ export const generateShopeeLinkFromApi = async (productUrl: string, affiliateId:
   try {
     const text = await callAiUnified(prompt, {
       systemInstruction: "Você é um assistente de IA especialista em gerar links de afiliados para a plataforma Shopee Brasil, incluindo Sub_IDs para rastreamento.",
-      temperature: options?.temperature || 0.2
+      temperature: 0.2
     });
 
     return text.trim();
@@ -852,3 +888,56 @@ export const getTopSalesMercadoLivreFromApi = (category: string) => fetchProduct
 
 export const generateAmazonLinkFromApi = (productUrl: string, affiliateId: string) => generateAffiliateLink(genericLinkGeneratorPrompt('Amazon', productUrl, affiliateId));
 export const generateMercadoLivreLinkFromApi = (productUrl: string, affiliateId: string) => generateAffiliateLink(genericLinkGeneratorPrompt('Mercado Livre', productUrl, affiliateId));
+
+export interface AeoOptimizedContent {
+  optimizedContent: string;
+  directAnswer: string;
+  entitiesDetected: string[];
+  faqSection: { question: string; answer: string }[];
+  schemaSuggestions: string;
+}
+
+export const generateOptimizedAeoContent = async (
+  rawText: string,
+  contentType: 'blog' | 'product' | 'general'
+): Promise<AeoOptimizedContent> => {
+  const prompt = `
+    Você é um especialista em AEO (Answer Engine Optimization).
+    Sua tarefa é otimizar o conteúdo abaixo para Answer Engines.
+
+    CONTEÚDO PARA ANALISAR:
+    <content>
+    ${rawText}
+    </content>
+
+    TIPO: ${contentType}
+
+    REGRAS CRÍTICAS:
+    1. RETORNE APENAS O OBJETO JSON. NÃO use blocos de código markdown (sem \` \` \` json).
+    2. O campo "optimizedContent" deve conter o texto completo em Markdown.
+    3. TODA quebra de linha dentro das strings JSON DEVE ser escapada como "\\n".
+    4. NÃO adicione nenhum texto explicativo fora do JSON.
+
+    ESTRUTURA:
+    {
+      "optimizedContent": "Texto otimizado...",
+      "directAnswer": "Resposta curta (40-60 palavras)...",
+      "entitiesDetected": ["Entidade 1", "Entidade 2"],
+      "faqSection": [{"question": "Dúvida?", "answer": "Resposta."}],
+      "schemaSuggestions": "Tipos de Schema.org recomendados"
+    }
+  `;
+
+  try {
+    const settings = getSettings();
+    const text = await callAiUnified(prompt, {
+      responseMimeType: "application/json",
+      temperature: settings.aiTemperature ?? 0.5
+    });
+
+    return parseJsonFromGeminiResponse<AeoOptimizedContent>(text);
+  } catch (error: any) {
+    console.error("Error in AEO optimization:", error);
+    throw new Error(`Falha ao otimizar conteúdo para AEO: ${error.message || 'Erro desconhecido'}`);
+  }
+};

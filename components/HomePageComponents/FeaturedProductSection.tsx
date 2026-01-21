@@ -11,70 +11,96 @@ interface FeaturedProductSectionProps {
 export const FeaturedProductSection: React.FC<FeaturedProductSectionProps> = ({
   affiliateLink,
   images,
-  videoUrl = "https://www.tiktok.com/@fco_de_queiroz/video/7538005600488148230" // TikTok link provided by user
+  videoUrl = "https://www.tiktok.com/@fco_de_queiroz/video/7538005600488148230"
 }) => {
   return (
-    <section className="mt-16 py-16 bg-dark-card/50 rounded-2xl border border-dark-border animate-slide-in-up">
-      <div className="text-center mb-12">
-        <h2 className="text-4xl md:text-5xl font-black text-white leading-tight mb-4 tracking-tight drop-shadow-2xl">
-          ✨ Destaque da Semana: <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 animate-pulse">Mini Impressora Portátil</span>
-        </h2>
-        <p className="text-lg text-dark-text-secondary max-w-3xl mx-auto">
-          Imprima fotos, notas e o que mais sua imaginação mandar, direto do seu celular e sem usar tinta!
-        </p>
-      </div>
+    <section className="mt-16 py-12 px-6 md:px-12 bg-[#1a1c24] rounded-3xl border border-white/5 relative overflow-hidden group">
+      {/* Decorative background light */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-blue-600/5 blur-[120px] rounded-full pointer-events-none"></div>
 
-      <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-start">
-        {/* Video Column */}
-        <div className="animate-fade-in sticky top-24">
-          <div className="aspect-w-9 aspect-h-16 bg-dark-bg rounded-xl overflow-hidden shadow-2xl shadow-black/30 border border-dark-border h-[600px] relative">
-            <div className="flex items-center justify-center h-full text-slate-500">Vídeo indisponível no momento</div>
+      <div className="relative z-10">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-pink-500/10 border border-pink-500/20 rounded-full mb-6">
+            <span className="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></span>
+            <span className="text-pink-500 text-[10px] font-black uppercase tracking-widest">Destaque da Semana</span>
           </div>
+          <h2 className="text-4xl md:text-6xl font-black text-white leading-tight mb-6 tracking-tighter">
+            Mini Impressora <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">Portátil IA</span>
+          </h2>
+          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium">
+            Imprima fotos, etiquetas e notas direto do celular, sem usar uma gota de tinta.
+          </p>
         </div>
 
-        {/* Details and Images Column */}
-        <div className="space-y-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
-          <a href={images[0]} target="_blank" rel="noopener noreferrer" className="overflow-hidden rounded-xl group block border border-dark-border">
-            <img src={images[0]} alt="Mini Impressora Portátil" className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105" />
-          </a>
-
-          <div>
-            <h3 className="text-xl font-bold text-dark-text-primary mb-3">Liberte sua Criatividade</h3>
-            <p className="text-dark-text-secondary">
-              Com a mini impressora térmica portátil, você leva suas memórias para o papel em segundos. Imprima fotos, etiquetas, notas de estudo e o que mais sua imaginação permitir, direto do seu celular. É a ferramenta perfeita para organizar, decorar e eternizar momentos.
-            </p>
-            <ul className="mt-4 space-y-2 text-sm text-dark-text-secondary list-disc list-inside">
-              <li><strong>Conexão Bluetooth:</strong> Rápida e sem fios.</li>
-              <li><strong>Impressão Térmica:</strong> Diga adeus aos cartuchos de tinta!</li>
-              <li><strong>Bateria de Longa Duração:</strong> Leve para qualquer lugar.</li>
-              <li><strong>App Exclusivo:</strong> Cheio de fontes, filtros e templates.</li>
-            </ul>
+        <div className="grid lg:grid-cols-12 gap-12 items-start">
+          {/* Video Column - vertical for mobile/tiktok style */}
+          <div className="lg:col-span-4 xl:col-span-3">
+            <VideoEmbed
+              url={videoUrl}
+              className="shadow-2xl shadow-black/50 ring-1 ring-white/10"
+            />
           </div>
 
-          {/* Image Gallery */}
-          <div>
-            <h3 className="text-xl font-bold text-dark-text-primary mb-3">Galeria</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {images.slice(1).map((img, index) => (
-                <a href={img} target="_blank" rel="noopener noreferrer" key={index} className="overflow-hidden rounded-lg aspect-square group border border-dark-border">
-                  <img src={img} alt={`Mini Impressora - Imagem ${index + 2}`} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
-                </a>
-              ))}
-            </div>
-          </div>
+          {/* Details Column */}
+          <div className="lg:col-span-8 xl:col-span-9 space-y-10">
+            <div className="grid md:grid-cols-2 gap-10">
+              <div className="space-y-6">
+                <h3 className="text-2xl font-bold text-white tracking-tight">Liberte sua Criatividade</h3>
+                <p className="text-slate-400 leading-relaxed">
+                  Leve suas memórias para o papel em segundos. Ideal para organizar estudos, decorar ambientes e eternizar momentos com praticidade.
+                </p>
+                <ul className="space-y-4">
+                  {[
+                    { label: 'Conexão Bluetooth', desc: 'Rápida e sem fios.' },
+                    { label: 'Impressão Térmica', desc: 'Zero gastos com tinta.' },
+                    { label: 'Portabilidade Total', desc: 'Leve na palma da mão.' }
+                  ].map((item, i) => (
+                    <li key={i} className="flex gap-4">
+                      <div className="mt-1 flex-shrink-0 w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      </div>
+                      <div>
+                        <span className="block text-sm font-bold text-white">{item.label}</span>
+                        <span className="text-xs text-slate-500">{item.desc}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-          {/* CTA */}
-          <a
-            href={affiliateLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full text-center bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-4 px-6 rounded-lg hover:opacity-90 transition-opacity duration-300 shadow-lg shadow-orange-500/30 text-lg"
-          >
-            <div className="flex items-center justify-center gap-2">
-              <ShoppingCartIcon className="h-5 w-5" />
-              <span>Comprar Agora na Shopee</span>
+              <div className="grid grid-cols-2 gap-4">
+                {images.slice(0, 4).map((img, index) => (
+                  <div key={index} className="aspect-square rounded-2xl overflow-hidden border border-white/5 group/img relative">
+                    <img src={img} alt="Product" className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-end p-4">
+                      <span className="text-white text-[10px] font-bold uppercase tracking-widest">Ver Detalhes</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </a>
+
+            <a
+              href={affiliateLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group/btn relative flex items-center justify-between p-1 pr-6 bg-orange-600 hover:bg-orange-500 rounded-2xl transition-all shadow-xl shadow-orange-900/20 overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700 pointer-events-none"></div>
+              <div className="flex items-center gap-4">
+                <div className="p-4 bg-black/20 rounded-xl">
+                  <ShoppingCartIcon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <span className="block text-white font-black text-lg">Garantir a Minha Agora</span>
+                  <span className="text-orange-200 text-xs font-bold uppercase tracking-tighter">Oferta exclusiva Shopee</span>
+                </div>
+              </div>
+              <svg className="w-6 h-6 text-white transform group-hover/btn:translate-x-2 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </a>
+          </div>
         </div>
       </div>
     </section>

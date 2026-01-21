@@ -1,7 +1,16 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -11,7 +20,9 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <h1 className="sr-only">Painel de Controle ACI</h1>
-    <App />
+    <QueryClientProvider client={queryClient}>
+      <h1 className="sr-only">Painel de Controle ACI</h1>
+      <App />
+    </QueryClientProvider>
   </React.StrictMode>
 );

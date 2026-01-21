@@ -29,7 +29,7 @@ export type NavItemSection = {
 export type NavItem = NavItemLink | NavItemSection;
 
 export const navConfig: NavItem[] = [
-    { 
+    {
         type: 'section',
         title: 'Principal',
         icon: <DashboardIcon />,
@@ -58,8 +58,10 @@ export const navConfig: NavItem[] = [
         type: 'section',
         title: 'Criação de Conteúdo',
         icon: <BrainCircuitIcon />,
-        pages: ['multi-channel-publisher', 'blog-creator', 'aci-posts', 'instagram-caption', 'image-generator', 'chat', 'analytics'],
+        pages: ['aeo-insights', 'aeo-optimizer', 'multi-channel-publisher', 'blog-creator', 'aci-posts', 'instagram-caption', 'image-generator', 'chat', 'analytics'],
         children: [
+            { text: 'Insights AEO (GEO)', page: 'aeo-insights', icon: <TrendingUpIcon /> },
+            { text: 'Otimizador AEO', page: 'aeo-optimizer', icon: <SparklesIcon /> },
             { text: 'Publicador Multi-Canal', page: 'multi-channel-publisher', icon: <RocketIcon /> },
             { text: 'Criador de Post Blog', page: 'blog-creator', icon: <BookIcon /> },
             { text: 'Blog em Massa (CSV)', page: 'aci-posts', icon: <FileTextIcon /> },

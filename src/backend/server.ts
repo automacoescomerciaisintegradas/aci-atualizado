@@ -1,6 +1,15 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
+import { loadEnvFile } from "process";
+
+// Carregar variáveis de ambiente do arquivo .env
+try {
+    loadEnvFile();
+} catch (error) {
+    console.warn("⚠️ Arquivo .env não encontrado ou não pôde ser carregado.");
+}
+
 import cors from "cors";
 import axios from "axios";
 import { generateToken } from "./auth";
@@ -57,7 +66,7 @@ app.get("/api/metrics/cache", authMiddleware, (req: any, res) => {
     if (req.user?.role !== 'admin') {
         return res.status(403).json({ error: 'Acesso negado' });
     }
-    
+
     // TODO: Implementar quando o cacheService estiver integrado
     res.json({
         message: 'Cache metrics endpoint - implementation pending',

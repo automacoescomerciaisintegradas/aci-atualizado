@@ -1,5 +1,5 @@
 import React, { useState, useRef, ChangeEvent } from 'react';
-import { UserIcon, LockIcon, CreditIcon, ShieldCheckIcon, CameraIcon, FileTextIcon, ReceiptIcon, MailIcon, PhoneIcon, CreditCardIcon, PixIcon } from './Icons';
+import { UserIcon, LockIcon, CreditIcon, ShieldCheckIcon, CameraIcon, FileTextIcon, ReceiptIcon, MailIcon, PhoneIcon, CreditCardIcon, PixIcon, ZapIcon } from './Icons';
 import { useSettings } from '../hooks/useSettings';
 import { PricingCard } from './PricingCard';
 import { PixPaymentModal } from './PixPaymentModal';
@@ -36,9 +36,9 @@ type ProfileTab = 'perfil' | 'seguranca' | 'assinatura' | 'historico';
 const TabButton: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({ active, onClick, children }) => (
     <button
         onClick={onClick}
-        className={`px-1 py-4 text-sm font-semibold transition-colors border-b-2 flex items-center gap-2 ${active
-            ? 'border-brand-primary text-dark-text-primary'
-            : 'border-transparent text-dark-text-secondary hover:border-gray-600 hover:text-dark-text-primary'
+        className={`px-6 py-4 text-sm font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap ${active
+            ? 'border-blue-500 text-white bg-blue-500/5'
+            : 'border-transparent text-slate-500 hover:text-white hover:border-white/10'
             }`}
     >
         {children}
@@ -188,8 +188,11 @@ const ProfileTabContent: React.FC<{ user?: { name: string; email: string; photoU
     }
 
     return (
-        <div className="bg-dark-card rounded-xl shadow-2xl shadow-black/20 border border-dark-border p-6 md:p-8">
-            <h3 className="text-xl font-semibold text-dark-text-primary mb-6">Informações do Perfil</h3>
+        <div className="card-premium p-6 md:p-8">
+            <h3 className="text-xl font-bold text-white mb-8 flex items-center gap-3">
+                <UserIcon className="h-5 w-5 text-blue-400" />
+                Informações do Perfil
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
                 <div className="flex flex-col items-center gap-4">
                     <div className="relative h-32 w-32">
@@ -281,9 +284,9 @@ const ProfileTabContent: React.FC<{ user?: { name: string; email: string; photoU
                     </div>
                 </div>
             </div>
-            <div className="mt-6 pt-6 border-t border-dark-border flex justify-end items-center gap-4">
-                {saveStatus && <span className="text-sm text-green-400 animate-fade-in">{saveStatus}</span>}
-                <button onClick={handleSave} className="bg-brand-primary text-white font-bold py-2.5 px-5 rounded-lg hover:bg-brand-primary/90 transition-colors">
+            <div className="mt-8 pt-8 border-t border-white/5 flex flex-wrap justify-end items-center gap-4">
+                {saveStatus && <span className="text-sm font-medium text-emerald-400 animate-fade-in">{saveStatus}</span>}
+                <button onClick={handleSave} className="bg-blue-600 hover:bg-blue-500 text-white font-black py-3 px-8 rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95">
                     Salvar Alterações
                 </button>
             </div>
@@ -293,36 +296,43 @@ const ProfileTabContent: React.FC<{ user?: { name: string; email: string; photoU
 
 const SecurityTabContent: React.FC = () => {
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 xl:gap-8 items-start">
-            <div className="bg-dark-card rounded-xl shadow-2xl shadow-black/20 border border-dark-border p-6 md:p-8">
-                <h3 className="text-xl font-semibold text-dark-text-primary mb-6">Alterar Senha</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <div className="card-premium p-8">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                    <LockIcon className="h-5 w-5 text-blue-400" />
+                    Alterar Senha
+                </h3>
                 <form className="space-y-4">
                     <div>
-                        <label htmlFor="currentPassword">Senha Atual</label>
-                        <input id="currentPassword" type="password" placeholder="••••••••" className="w-full bg-slate-800 border border-dark-border rounded-lg p-3 mt-2" />
+                        <label className="text-sm font-medium text-slate-400 block mb-2">Senha Atual</label>
+                        <input type="password" placeholder="••••••••" className="w-full bg-white/[0.03] border border-white/5 rounded-xl p-3 text-white focus:border-blue-500/50 transition-all outline-none" />
                     </div>
                     <div>
-                        <label htmlFor="newPassword">Nova Senha</label>
-                        <input id="newPassword" type="password" placeholder="••••••••" className="w-full bg-slate-800 border border-dark-border rounded-lg p-3 mt-2" />
+                        <label className="text-sm font-medium text-slate-400 block mb-2">Nova Senha</label>
+                        <input type="password" placeholder="••••••••" className="w-full bg-white/[0.03] border border-white/5 rounded-xl p-3 text-white focus:border-blue-500/50 transition-all outline-none" />
                     </div>
-                    <div>
-                        <label htmlFor="confirmPassword">Confirmar Nova Senha</label>
-                        <input id="confirmPassword" type="password" placeholder="••••••••" className="w-full bg-slate-800 border border-dark-border rounded-lg p-3 mt-2" />
-                    </div>
-                    <div className="pt-2">
-                        <button type="submit" className="bg-brand-primary text-white font-bold py-2.5 px-5 rounded-lg hover:bg-brand-primary/90 transition-colors">
+                    <div className="pt-4">
+                        <button type="submit" className="bg-white/5 hover:bg-white/10 text-white font-bold py-3 px-6 rounded-xl border border-white/10 transition-all">
                             Atualizar Senha
                         </button>
                     </div>
                 </form>
             </div>
-            <div className="bg-dark-card rounded-xl shadow-2xl shadow-black/20 border border-dark-border p-6 md:p-8">
-                <h3 className="text-xl font-semibold text-dark-text-primary mb-6">Duplo Fator (2FA)</h3>
-                <ShieldCheckIcon className="h-12 w-12 text-green-400 mb-4" />
-                <p className="text-dark-text-secondary mb-1">Status: <span className="font-semibold text-yellow-400">Inativo</span></p>
-                <p className="text-dark-text-secondary mb-6">Adicione uma camada extra de segurança à sua conta. Ao ativar, você precisará de um código do seu app autenticator para fazer login.</p>
-                <button className="w-full bg-slate-700 hover:bg-slate-600 text-dark-text-primary font-bold py-3 px-4 rounded-lg transition-colors">
-                    Ativar 2FA
+            <div className="card-premium p-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 blur-3xl rounded-full"></div>
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                    <ShieldCheckIcon className="h-5 w-5 text-yellow-500" />
+                    Duplo Fator (2FA)
+                </h3>
+                <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+                    Adicione uma camada extra de segurança. Ao ativar, você precisará de um código do seu app autenticador para fazer login.
+                </p>
+                <div className="flex items-center justify-between p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/10 mb-8">
+                    <span className="text-sm font-bold text-yellow-500 uppercase tracking-widest">Status: Inativo</span>
+                    <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
+                </div>
+                <button className="w-full bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 font-bold py-3 rounded-xl border border-yellow-500/20 transition-all">
+                    Ativar Agora
                 </button>
             </div>
         </div>
@@ -435,26 +445,27 @@ const SubscriptionTabContent: React.FC<{ onAddCreditsClick: () => void; invoices
     return (
         <>
             {/* Header com Modelo Pay-per-Use */}
-            <div className="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 rounded-xl border border-purple-500/30 p-6 mb-8">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <span className="text-2xl">💳</span>
-                            <h3 className="text-2xl font-bold text-white">Sistema Pay-per-Use</h3>
-                            <span className={`text-xs font-medium ${userLevel.color} ${userLevel.bgColor} px-3 py-1 rounded-full flex items-center gap-1`}>
-                                {userLevel.icon} {userLevel.name}
-                            </span>
+            <div className="card-premium p-8 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[100px] rounded-full group-hover:bg-blue-600/20 transition-all duration-700"></div>
+                <div className="flex flex-wrap items-center justify-between gap-8 relative z-10">
+                    <div className="max-w-2xl">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-3 bg-blue-600/20 rounded-2xl border border-blue-500/30">
+                                <CreditIcon className="h-6 w-6 text-blue-400" />
+                            </div>
+                            <h3 className="text-2xl font-black text-white tracking-tighter">Sistema de Créditos <span className="text-blue-400">ACI</span></h3>
                         </div>
-                        <p className="text-dark-text-secondary">
-                            Pague somente pelo que usar. Sem mensalidades, sem planos fixos. Compre créditos conforme sua necessidade. Aceitamos PIX, cartão e boleto via Mercado Pago.
+                        <p className="text-slate-400 font-medium leading-relaxed">
+                            Flexibilidade total: pague somente pelo que usar. Sem planos mensais ou taxas ocultas.
+                            Seus créditos <span className="text-white">nunca expiram</span> e podem ser usados em todas as ferramentas da suíte.
                         </p>
                     </div>
                     <button
                         onClick={onAddCreditsClick}
-                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg shadow-purple-500/30 flex items-center gap-2"
+                        className="bg-blue-600 hover:bg-blue-500 text-white font-black py-4 px-8 rounded-2xl transition-all shadow-xl shadow-blue-500/20 hover:scale-[1.05] active:scale-95 flex items-center gap-3"
                     >
-                        <CreditIcon className="h-5 w-5" />
-                        Adicionar Créditos
+                        <ZapIcon className="h-5 w-5 fill-current" />
+                        Comprar Agora
                     </button>
                 </div>
             </div>
@@ -730,43 +741,42 @@ const SubscriptionTabContent: React.FC<{ onAddCreditsClick: () => void; invoices
 };
 
 const HistoryTabContent: React.FC<{ onDownloadExtract: () => void; transactions: Transaction[] }> = ({ onDownloadExtract, transactions }) => (
-    <div className="bg-dark-card rounded-xl shadow-2xl shadow-black/20 border border-dark-border p-6 md:p-8">
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
-            <h3 className="text-xl font-semibold text-dark-text-primary">Histórico de Uso de Créditos</h3>
+    <div className="card-premium p-6 md:p-8">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6 mb-8">
+            <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                <ReceiptIcon className="h-5 w-5 text-blue-400" />
+                Histórico de Transações
+            </h3>
             <button
                 onClick={onDownloadExtract}
-                className="flex items-center justify-center gap-2 text-sm bg-slate-700 hover:bg-slate-600 text-dark-text-secondary font-medium py-2 px-4 rounded-lg transition-colors w-full sm:w-auto"
+                className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest bg-white/[0.03] hover:bg-white/10 text-slate-300 py-3 px-6 rounded-xl border border-white/5 transition-all w-full sm:w-auto"
             >
                 <FileTextIcon className="h-4 w-4" />
-                <span>Baixar Extrato (.csv)</span>
+                <span>Exportar CSV</span>
             </button>
         </div>
-        <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-dark-text-secondary">
-                <thead className="text-xs text-dark-text-primary uppercase bg-slate-700/50">
+        <div className="overflow-x-auto rounded-xl border border-white/5">
+            <table className="w-full text-sm text-left">
+                <thead className="text-[10px] text-slate-500 uppercase tracking-widest bg-white/[0.02]">
                     <tr>
-                        <th scope="col" className="px-6 py-3">Data</th>
-                        <th scope="col" className="px-6 py-3">Tipo</th>
-                        <th scope="col" className="px-6 py-3">Descrição</th>
-                        <th scope="col" className="px-6 py-3 text-right">Valor</th>
-                        <th scope="col" className="px-6 py-3 text-right">Créditos</th>
+                        <th className="px-6 py-4 font-black">Data</th>
+                        <th className="px-6 py-4 font-black">Tipo</th>
+                        <th className="px-6 py-4 font-black">Descrição</th>
+                        <th className="px-6 py-4 font-black text-right">Créditos</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-white/5">
                     {transactions.map(tx => (
-                        <tr key={tx.id} className="border-b border-dark-border hover:bg-slate-800/50">
-                            <td className="px-6 py-4 whitespace-nowrap">{tx.date}</td>
+                        <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors">
+                            <td className="px-6 py-4 text-slate-400 font-medium whitespace-nowrap">{tx.date}</td>
                             <td className="px-6 py-4">
-                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${tx.type === 'Compra' ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'
+                                <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-full ${tx.type === 'Compra' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'
                                     }`}>
                                     {tx.type}
                                 </span>
                             </td>
-                            <td className="px-6 py-4 text-dark-text-primary">{tx.description}</td>
-                            <td className={`px-6 py-4 text-right font-medium ${tx.amount.startsWith('+') ? 'text-green-400' : 'text-dark-text-secondary'}`}>
-                                {tx.amount || '-'}
-                            </td>
-                            <td className={`px-6 py-4 text-right font-medium ${tx.credits.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>
+                            <td className="px-6 py-4 text-white font-medium">{tx.description}</td>
+                            <td className={`px-6 py-4 text-right font-black ${tx.credits.startsWith('+') ? 'text-emerald-400' : 'text-rose-400'}`}>
                                 {tx.credits}
                             </td>
                         </tr>

@@ -57,6 +57,16 @@
   animation: pulse-soft 2s ease-in-out infinite;
 }
 
+/* Infinite Scroll */
+@keyframes infinite-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+.animate-infinite-scroll {
+  animation: infinite-scroll 40s linear infinite;
+}
+
 /* Slide Up */
 @keyframes slide-up {
   from {
