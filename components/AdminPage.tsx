@@ -7,13 +7,14 @@ import { IntegrationsTab } from './AdminPageComponents/IntegrationsTab.js';
 import { AiTab } from './AdminPageComponents/AiTab.js';
 import { CronTab } from './AdminPageComponents/CronTab.js';
 import { AutomationTab } from './AdminPageComponents/AutomationTab.js';
+import { DeployTab } from './AdminPageComponents/DeployTab.js';
 import { useAdminValidations } from './AdminPageComponents/useAdminValidations.js';
 import { useAdminSave } from './AdminPageComponents/useAdminSave.js';
 import { useExternalValidations } from './AdminPageComponents/useExternalValidations.js';
 import { ChevronLeftIcon, SettingsIcon } from './Icons.js';
 import { Card, Button } from './AdminPageComponents/StyledComponents.js';
 
-type AdminTab = 'apiKeys' | 'integrations' | 'ai' | 'cron' | 'automation';
+type AdminTab = 'apiKeys' | 'integrations' | 'ai' | 'cron' | 'automation' | 'deploy';
 
 export const AdminPage: React.FC<{ onBack?: () => void; onNavigate: (page: Page, context?: { from: Page }) => void; }> = ({ onBack, onNavigate }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('apiKeys');
@@ -168,6 +169,9 @@ export const AdminPage: React.FC<{ onBack?: () => void; onNavigate: (page: Page,
             <TabButton active={activeTab === 'automation'} onClick={() => setActiveTab('automation')} tabType="automation">
               Automação n8n
             </TabButton>
+            <TabButton active={activeTab === 'deploy'} onClick={() => setActiveTab('deploy')} tabType="deploy">
+              Deploy VPS
+            </TabButton>
           </aside>
         </div>
 
@@ -224,6 +228,9 @@ export const AdminPage: React.FC<{ onBack?: () => void; onNavigate: (page: Page,
               <AutomationTab
                 onSave={handleSave}
               />
+            )}
+            {activeTab === 'deploy' && (
+              <DeployTab />
             )}
           </Card>
 

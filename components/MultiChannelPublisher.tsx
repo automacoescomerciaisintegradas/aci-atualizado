@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, FormEvent, useMemo } from 'react';
 import { useSettings } from '../hooks/useSettings';
 import { searchShopeeProductsFromApi, generateInstagramCaptionFromProduct, generateShopeeOfferMessageFromApi, Product, generateShopeeLinkFromApi } from '../services/geminiService';
+import { publishToWordPress } from '../services/wordpressService';
 import { SearchIcon, SpinnerIcon, AlertTriangleIcon, InstagramIcon, TelegramIcon, FileTextIcon, MagicWandIcon, RocketIcon, CheckCircleIcon, ChevronDownIcon, ChevronUpIcon, CreditIcon, ClockIcon } from './Icons';
 import { Page } from '../App';
 
@@ -109,7 +110,7 @@ export const MultiChannelPublisher: React.FC<{ onNavigate: (page: Page, context?
     // Publish Step State
     const [channels, setChannels] = useState({ instagram: true, telegram: true });
     // Gerenciamento de múltiplos blogs: { [blogId]: boolean }
-    const [selectedBlogs, setSelectedBlogs] = useState<Record<string, boolean>>({});
+    const [selectedBlogs, setSelectedBlogs] = useState<Record<string, boolean>>({ primary: true });
     const [availableBlogs, setAvailableBlogs] = useState<any[]>([]);
 
     useEffect(() => {
@@ -127,8 +128,8 @@ export const MultiChannelPublisher: React.FC<{ onNavigate: (page: Page, context?
                 if (res.ok) {
                     const data = await res.json() as { blogs: any[] };
                     setAvailableBlogs(data.blogs || []);
-                    // Selecionar todos por padrão
-                    const initialSelection: Record<string, boolean> = {};
+                    // Selecionar todos por padrão, mantendo o primary se configurado
+                    const initialSelection: Record<string, boolean> = { primary: true };
                     data.blogs?.forEach((b: any) => initialSelection[b.id] = true);
                     setSelectedBlogs(initialSelection);
                 } else {
@@ -159,6 +160,7 @@ export const MultiChannelPublisher: React.FC<{ onNavigate: (page: Page, context?
     const isInstagramConfigured = !!settings.instagramUser;
     const isTelegramConfigured = !!settings.telegramBotToken && !!settings.telegramChatId;
     const isShopeeConfigured = !!settings.shopeeAffiliateId;
+    const isPrimaryBlogConfigured = !!(settings.wordpressUrl && settings.wordpressUsername && settings.wordpressAppPassword);
 
     const handleSearch = useCallback(async (e: FormEvent) => {
         e.preventDefault();
@@ -379,6 +381,19 @@ export const MultiChannelPublisher: React.FC<{ onNavigate: (page: Page, context?
                 if (blogIds.length > 0) {
                     await Promise.all(blogIds.map(async (blogId) => {
                         try {
+                            if (blogId === 'primary' && isPrimaryBlogConfigured) {
+                                // Publicação Direta via Frontend Service para o Blog do Admin
+                                const res = await publishToWordPress(
+                                    settings,
+                                    product.title,
+                                    content.blog,
+                                    '', // CSS opcional
+                                    'publish'
+                                );
+                                if (!res.success) throw new Error(res.message);
+                                return;
+                            }
+
                             const userId = localStorage.getItem('userId') || 'default-user-id';
                             const res = await fetch(`/api/blogs/${blogId}/publish`, {
                                 method: 'POST',
@@ -400,8 +415,7 @@ export const MultiChannelPublisher: React.FC<{ onNavigate: (page: Page, context?
                             }
                         } catch (e) {
                             console.error(`Erro ao postar no blog ${blogId}`, e);
-                            // Consideramos sucesso parcial se outros canais funcionaram, ou marcamos warning?
-                            // Por enquanto, log e segue.
+                            throw e; // Lança para marcar como falha se necessário
                         }
                     }));
                 }
@@ -679,24 +693,35 @@ export const MultiChannelPublisher: React.FC<{ onNavigate: (page: Page, context?
                     {/* Seção de Blogs Dinâmica */}
                     <div className="space-y-2">
                         <h3 className="text-sm font-semibold text-dark-text-secondary uppercase tracking-wider mb-2">Blogs WordPress</h3>
-                        {availableBlogs.length === 0 ? (
+                        {availableBlogs.length === 0 && !isPrimaryBlogConfigured ? (
                             <div className="bg-slate-800/50 border border-dark-border rounded-lg p-4 text-center">
                                 <p className="text-sm text-dark-text-secondary mb-2">Nenhum blog conectado.</p>
-                                <button onClick={() => onNavigate('blogs-page', { from: 'multi-channel-publisher' })} className="text-sm text-brand-primary hover:underline font-semibold">
-                                    Conectar Blog WordPress
+                                <button onClick={() => onNavigate('admin', { from: 'multi-channel-publisher' })} className="text-sm text-brand-primary hover:underline font-semibold">
+                                    Conectar Blog WordPress (Painel Admin)
                                 </button>
                             </div>
                         ) : (
-                            availableBlogs.map(blog => (
-                                <ChannelSelector
-                                    key={blog.id}
-                                    icon={<FileTextIcon />}
-                                    title={`Blog: ${blog.name}`}
-                                    isConfigured={true} // Se está na lista, está configurado
-                                    isSelected={!!selectedBlogs[blog.id]}
-                                    onToggle={() => setSelectedBlogs(prev => ({ ...prev, [blog.id]: !prev[blog.id] }))}
-                                />
-                            ))
+                            <>
+                                {isPrimaryBlogConfigured && (
+                                    <ChannelSelector
+                                        icon={<FileTextIcon />}
+                                        title={`Blog Principal: ${settings.wordpressUrl.replace(/https?:\/\//, '')}`}
+                                        isConfigured={true}
+                                        isSelected={!!selectedBlogs['primary']}
+                                        onToggle={() => setSelectedBlogs(prev => ({ ...prev, primary: !prev.primary }))}
+                                    />
+                                )}
+                                {availableBlogs.map(blog => (
+                                    <ChannelSelector
+                                        key={blog.id}
+                                        icon={<FileTextIcon />}
+                                        title={`Blog: ${blog.name}`}
+                                        isConfigured={true}
+                                        isSelected={!!selectedBlogs[blog.id]}
+                                        onToggle={() => setSelectedBlogs(prev => ({ ...prev, [blog.id]: !prev[blog.id] }))}
+                                    />
+                                ))}
+                            </>
                         )}
                     </div>
 
