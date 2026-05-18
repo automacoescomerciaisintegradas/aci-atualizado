@@ -35,7 +35,7 @@ const BONUS_PERCENTAGE = 0.10;
 // ==========================================
 router.post('/create-pix', authMiddleware, async (req: any, res) => {
     try {
-        const { amount, packageId, description } = req.body;
+        const { amount, packageId, description, customerEmail } = req.body;
         const userId = req.user?.id;
 
         if (!userId) {
@@ -44,6 +44,16 @@ router.post('/create-pix', authMiddleware, async (req: any, res) => {
 
         if (!amount || amount < 50) {
             return res.status(400).json({ error: 'Valor mínimo: R$ 50,00' });
+        }
+
+        if (!customerEmail || typeof customerEmail !== 'string') {
+            return res.status(400).json({ error: 'E-mail é obrigatório para gerar o PIX' });
+        }
+
+        const email = customerEmail.trim().toLowerCase();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: 'E-mail inválido' });
         }
 
         if (!MP_CONFIG.accessToken) {
@@ -72,12 +82,13 @@ router.post('/create-pix', authMiddleware, async (req: any, res) => {
             notification_url: `${process.env.API_URL || 'http://localhost:4001'}/api/payments/webhook`,
             date_of_expiration: expirationDate.toISOString(),
             payer: {
-                email: req.user?.email || 'cliente@aci.com.br',
+                email,
                 first_name: req.user?.name?.split(' ')[0] || 'Cliente',
                 last_name: req.user?.name?.split(' ').slice(1).join(' ') || 'ACI',
             },
             metadata: {
                 user_id: userId,
+                customer_email: email,
                 credits_amount: baseCredits,
                 bonus_credits: bonusCredits,
                 total_credits: totalCredits,

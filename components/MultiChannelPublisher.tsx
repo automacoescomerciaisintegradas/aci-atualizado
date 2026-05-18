@@ -117,12 +117,10 @@ export const MultiChannelPublisher: React.FC<{ onNavigate: (page: Page, context?
         // Carregar blogs disponíveis
         const loadBlogs = async () => {
             try {
-                // Usando apiClient se disponível globalmente ou fetch com header
-                // Como estamos dentro de um componente React, melhor usar fetch mas precisamos do token
-                const userId = localStorage.getItem('userId') || 'default-user-id';
+                const authToken = localStorage.getItem('authToken');
                 const res = await fetch('/api/blogs', {
                     headers: {
-                        'X-User-Id': userId
+                        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
                     }
                 });
                 if (res.ok) {
@@ -133,7 +131,13 @@ export const MultiChannelPublisher: React.FC<{ onNavigate: (page: Page, context?
                     data.blogs?.forEach((b: any) => initialSelection[b.id] = true);
                     setSelectedBlogs(initialSelection);
                 } else {
-                    console.error("Erro na resposta:", await res.json());
+                    let errPayload: any = null;
+                    try {
+                        errPayload = await res.json();
+                    } catch {
+                        errPayload = { error: `HTTP ${res.status}` };
+                    }
+                    console.error("Erro na resposta ao carregar blogs:", errPayload);
                 }
             } catch (e) {
                 console.error("Erro ao carregar blogs", e);

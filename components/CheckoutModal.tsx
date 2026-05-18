@@ -53,6 +53,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, i
     } | null>(null);
     const [timer, setTimer] = useState(1800); // 30 minutos em segundos
     const [copied, setCopied] = useState(false);
+    const [customerEmail, setCustomerEmail] = useState('');
+    const [emailError, setEmailError] = useState('');
 
     // Resetar quando abrir
     useEffect(() => {
@@ -61,6 +63,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, i
             setSelectedPackage(initialPackage);
             setPixData(null);
             setTimer(1800);
+            const cachedEmail = localStorage.getItem('userEmail') || '';
+            setCustomerEmail(cachedEmail);
+            setEmailError('');
         }
     }, [isOpen, initialPackage]);
 
@@ -106,6 +111,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, i
     };
 
     const handleCreatePix = async () => {
+        const normalizedEmail = customerEmail.trim().toLowerCase();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!normalizedEmail) {
+            setEmailError('E-mail é obrigatório para gerar o PIX.');
+            return;
+        }
+        if (!emailRegex.test(normalizedEmail)) {
+            setEmailError('Digite um e-mail válido.');
+            return;
+        }
+
         setIsLoading(true);
         try {
             const amount = selectedPackage ? selectedPackage.price : customAmount;
@@ -120,7 +136,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, i
                 body: JSON.stringify({
                     amount,
                     packageId,
-                    description: `Recarga de Créditos ACI`
+                    description: `Recarga de Créditos ACI`,
+                    customerEmail: normalizedEmail
                 })
             });
 
@@ -229,6 +246,24 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, i
                             <p className="text-slate-500 mb-8 font-medium">Os créditos serão adicionados à sua conta logada.</p>
 
                             <div className="space-y-6 mb-10">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-300 mb-2">
+                                        E-mail para entrega dos créditos
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={customerEmail}
+                                        onChange={(e) => {
+                                            setCustomerEmail(e.target.value);
+                                            if (emailError) setEmailError('');
+                                        }}
+                                        placeholder="seuemail@dominio.com"
+                                        className="w-full h-12 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50"
+                                    />
+                                    {emailError && (
+                                        <p className="mt-2 text-xs text-red-400">{emailError}</p>
+                                    )}
+                                </div>
                                 <div className="p-6 bg-white/5 rounded-3xl border border-white/10 flex items-center justify-between">
                                     <div>
                                         <div className="text-xs font-black text-slate-500 uppercase mb-1">Recarga Selecionada</div>
@@ -324,6 +359,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, i
                             >
                                 Começar a Usar
                             </button>
+                            <button
+                                onClick={() => {
+                                    onClose();
+                                    window.location.href = '/?page=product-search';
+                                }}
+                                className="w-full mt-3 h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl transition-all text-sm shadow-xl uppercase tracking-wide"
+                            >
+                                Buscar Produtos Agora
+                            </button>
+                            <p className="mt-3 text-center text-xs text-slate-400">
+                                CADA CLIQUE NO BOTÃO BUSCAR CONSOME <strong className="text-amber-300">R$0,09</strong> EM CRÉDITOS.
+                            </p>
                         </div>
                     )}
                 </div>

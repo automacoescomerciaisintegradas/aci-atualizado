@@ -38,6 +38,7 @@ export interface PixPaymentRequest {
     description: string;      // Descrição do pagamento
     creditsAmount: number;    // Quantidade de créditos
     bonusCredits?: number;    // Créditos bônus
+    customerEmail?: string;   // E-mail obrigatório para checkout PIX
 }
 
 export interface PixPaymentResponse {
@@ -179,124 +180,38 @@ class PixPaymentService {
      */
     async createPixPayment(request: PixPaymentRequest): Promise<PixPaymentResponse> {
         try {
-            // Validar configuração
-            const configValidation = PaymentConfig.utils.validateConfig();
-            if (!configValidation.isValid) {
-                throw PaymentErrorFactory.configMissing(configValidation.errors.join(', '));
-            }
-
-            // Obter usuário atual
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                throw PaymentErrorFactory.invalidUser();
-            }
-
-            // Validar valor mínimo
-            if (request.amount < PaymentConfig.security.minPaymentAmount) {
-                throw PaymentErrorFactory.invalidAmount(request.amount);
-            }
-
-            // Obter perfil do usuário
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('email, full_name, personal_document')
-                .eq('id', user.id)
-                .single();
-
-            // Gerar ID único para a transação
-            const externalReference = `ACI-${user.id.substring(0, 8)}-${Date.now()}`;
-
-            // Calcular data de expiração
-            const expirationDate = new Date();
-            expirationDate.setMinutes(expirationDate.getMinutes() + PaymentConfig.mercadoPago.paymentExpirationMinutes);
-
-            // Payload para o Mercado Pago
-            const paymentPayload: MercadoPagoPaymentPayload = {
-                transaction_amount: request.amount,
-                description: request.description,
-                payment_method_id: 'pix',
-                external_reference: externalReference,
-                notification_url: PaymentConfig.mercadoPago.webhookUrl,
-                date_of_expiration: expirationDate.toISOString(),
-                payer: {
-                    email: profile?.email || user.email || '',
-                    first_name: profile?.full_name?.split(' ')[0] || 'Cliente',
-                    last_name: profile?.full_name?.split(' ').slice(1).join(' ') || 'ACI',
-                    identification: profile?.personal_document ? {
-                        type: 'CPF',
-                        number: profile.personal_document.replace(/\D/g, ''),
-                    } : undefined,
-                },
-                metadata: {
-                    user_id: user.id,
-                    credits_amount: request.creditsAmount,
-                    bonus_credits: request.bonusCredits || 0,
-                    package_id: request.packageId,
-                },
-            };
-
-            // Fazer requisição para o Mercado Pago
-            const response = await fetch(`${PaymentConfig.mercadoPago.apiUrl}/v1/payments`, {
+            const authToken = localStorage.getItem('authToken');
+            const response = await fetch('/api/payments/create-pix', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${PaymentConfig.mercadoPago.accessToken}`,
-                    'X-Idempotency-Key': externalReference,
+                    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
                 },
-                body: JSON.stringify(paymentPayload),
+                body: JSON.stringify({
+                    amount: request.amount,
+                    packageId: request.packageId,
+                    description: request.description,
+                    customerEmail: request.customerEmail || localStorage.getItem('userEmail') || undefined,
+                }),
             });
 
-            const data: MercadoPagoPaymentResponse = await response.json();
-
-            if (!response.ok) {
-                console.error('Erro Mercado Pago:', data);
-                throw PaymentErrorFactory.gatewayError('Mercado Pago', data);
+            const apiData = await response.json().catch(() => null) as any;
+            if (!response.ok || !apiData?.success) {
+                const message = apiData?.error || 'Erro ao gerar pagamento PIX';
+                return { success: false, error: { code: 'PIX_CREATE_FAILED', message } };
             }
-
-            // Extrair dados do PIX
-            const pixData = data.point_of_interaction?.transaction_data;
-
-            // Salvar transação no banco
-            const { data: transaction } = await supabase
-                .from('payment_transactions')
-                .insert({
-                    user_id: user.id,
-                    payment_method: 'pix',
-                    payment_gateway: 'mercadopago',
-                    gateway_transaction_id: data.id.toString(),
-                    amount: request.amount,
-                    currency: 'BRL',
-                    status: 'pending',
-                    pix_code: pixData?.qr_code,
-                    pix_qr_code: pixData?.qr_code_base64,
-                    pix_expires_at: expirationDate.toISOString(),
-                    package_id: request.packageId,
-                    metadata: {
-                        external_reference: externalReference,
-                        credits_amount: request.creditsAmount,
-                        bonus_credits: request.bonusCredits || 0,
-                        mercadopago_response: {
-                            id: data.id,
-                            status: data.status,
-                            status_detail: data.status_detail,
-                        },
-                    },
-                })
-                .select()
-                .single();
 
             return {
                 success: true,
-                paymentId: data.id.toString(),
-                transactionId: transaction?.id,
-                pixCode: pixData?.qr_code,
-                pixQrCode: pixData?.qr_code_base64
-                    ? `data:image/png;base64,${pixData.qr_code_base64}`
+                paymentId: apiData.payment?.id,
+                pixCode: apiData.payment?.pix?.code,
+                pixQrCode: apiData.payment?.pix?.qrCodeBase64
+                    ? `data:image/png;base64,${apiData.payment.pix.qrCodeBase64}`
                     : undefined,
-                pixQrCodeBase64: pixData?.qr_code_base64,
-                ticketUrl: data.point_of_interaction?.transaction_data?.ticket_url,
-                expiresAt: expirationDate,
-                status: data.status,
+                pixQrCodeBase64: apiData.payment?.pix?.qrCodeBase64,
+                ticketUrl: apiData.payment?.pix?.ticketUrl,
+                expiresAt: apiData.payment?.expiresAt ? new Date(apiData.payment.expiresAt) : undefined,
+                status: apiData.payment?.status,
             };
         } catch (error: unknown) {
             const paymentError = PaymentErrorHandler.handle(error);
@@ -321,27 +236,27 @@ class PixPaymentService {
      */
     async getPaymentStatus(paymentId: string): Promise<PaymentStatus | null> {
         try {
-            const response = await fetch(`${PaymentConfig.mercadoPago.apiUrl}/v1/payments/${paymentId}`, {
+            const authToken = localStorage.getItem('authToken');
+            const response = await fetch(`/api/payments/status/${paymentId}`, {
                 headers: {
-                    'Authorization': `Bearer ${PaymentConfig.mercadoPago.accessToken}`,
+                    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
                 },
             });
 
             if (!response.ok) {
-                console.error('Erro ao consultar pagamento:', await response.text());
+                console.error('Erro ao consultar pagamento:', await response.text().catch(() => ''));
                 return null;
             }
 
-            const data: MercadoPagoPaymentResponse = await response.json();
+            const data: any = await response.json();
 
             return {
-                id: data.id.toString(),
+                id: String(data.id),
                 status: data.status,
                 statusDetail: data.status_detail,
-                amount: data.transaction_amount,
-                creditsAmount: data.metadata?.credits_amount || 0,
-                paidAt: data.date_approved ? new Date(data.date_approved) : undefined,
-                expiresAt: data.date_of_expiration ? new Date(data.date_of_expiration) : undefined,
+                amount: data.amount || 0,
+                creditsAmount: data.metadata?.total_credits || 0,
+                paidAt: data.paidAt ? new Date(data.paidAt) : undefined,
             };
         } catch (error) {
             console.error('Erro ao consultar status:', error);

@@ -6,9 +6,9 @@ import { authMiddleware } from '../auth';
 const router = Router();
 
 const FACEBOOK_API_VERSION = process.env.META_API_VERSION || 'v19.0';
-const APP_ID = process.env.META_APP_ID;
-const APP_SECRET = process.env.META_APP_SECRET;
-const REDIRECT_URI = process.env.META_REDIRECT_URI;
+const APP_ID = process.env.META_APP_ID || process.env.FACEBOOK_APP_ID;
+const APP_SECRET = process.env.META_APP_SECRET || process.env.FACEBOOK_APP_SECRET;
+const REDIRECT_URI = process.env.META_REDIRECT_URI || process.env.INSTAGRAM_REDIRECT_URI;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // 1. Iniciar Login - Retorna a URL para o frontend redirecionar
