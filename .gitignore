@@ -42,6 +42,7 @@ lerna-debug.log*
 # CACHE & TEMP
 # ========================================
 .turbo
+.worktrees/
 .cache
 .parcel-cache
 *.local
