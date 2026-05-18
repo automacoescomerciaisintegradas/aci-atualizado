@@ -89,3 +89,14 @@ seed_output.txt
 *.key
 *.cert
 secrets/
+**/secrets/**
+**/credentials/**
+**/env/**
+
+# Environments
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
