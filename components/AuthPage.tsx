@@ -146,46 +146,46 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBackToLand
       <AuthHeader onBackToLanding={onBackToLanding} setView={setView} />
 
       {/* Hero Section - Bold & Impactful */}
-      <section className="relative pt-40 pb-32 lg:pt-64 lg:pb-48 min-h-screen flex flex-col justify-center overflow-hidden">
+      <section className="relative pt-20 pb-12 sm:pt-24 sm:pb-16 lg:pt-40 lg:pb-28 min-h-screen flex flex-col justify-center overflow-hidden">
         {/* Vignette Overlay */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#0A0A0A_80%)] z-0 pointer-events-none"></div>
 
-        <div className="container mx-auto px-6 lg:px-16 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-16 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             {/* Hero Text */}
             <div className="lg:w-1/2 text-center lg:text-left">
-              <div className="inline-flex items-center gap-3 px-4 py-1.5 border border-brand-secondary/30 bg-brand-secondary/10 text-brand-secondary text-xs font-bold uppercase tracking-widest mb-10 animate-fade-in rounded-full">
+              <div className="inline-flex items-center gap-3 px-4 py-1.5 border border-brand-secondary/30 bg-brand-secondary/10 text-brand-secondary text-xs font-bold uppercase tracking-widest mb-6 animate-fade-in rounded-full">
                 <span className="w-2 h-2 bg-brand-secondary rounded-full animate-pulse shadow-[0_0_10px_#CCFF00]"></span>
                 Sistema V2.0 Online
               </div>
 
-              <h1 className="text-6xl lg:text-8xl font-display font-black text-white mb-8 leading-[0.9] tracking-tighter uppercase">
+              <h1 className="text-[2.3rem] sm:text-5xl lg:text-7xl font-display font-black text-white mb-5 sm:mb-6 leading-[0.95] sm:leading-[0.92] tracking-tight sm:tracking-tighter uppercase">
                 Automatize suas <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-accent animate-gradient-x">Vendas na Shopee</span>
               </h1>
 
-              <p className="text-xl text-gray-400 mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0 font-light">
+              <p className="text-base sm:text-lg lg:text-xl text-gray-400 mb-5 sm:mb-6 leading-relaxed max-w-xl mx-auto lg:mx-0 font-light">
                 A primeira plataforma que une <strong className="text-brand-secondary">Inteligência Artificial</strong>, <strong className="text-brand-accent">Telegram</strong> e <strong className="text-brand-primary">WordPress</strong> para criar um ecossistema de vendas automático.
               </p>
-              <p className="text-lg text-gray-500 mb-12 max-w-xl mx-auto lg:mx-0 border-l-2 border-brand-primary/50 pl-6">
+              <p className="text-sm sm:text-base lg:text-lg text-gray-500 mb-6 sm:mb-8 max-w-xl mx-auto lg:mx-0 border-l-2 border-brand-primary/50 pl-4 sm:pl-5">
                 A suíte completa de ferramentas com IA para automação comercial, marketing de afiliados e gerenciamento de conteúdo.
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 sm:gap-4 w-full sm:w-auto">
                 <button
                   onClick={() => setView('signup')}
-                  className="w-full sm:w-auto px-10 py-5 bg-brand-primary text-white font-display font-black text-lg uppercase tracking-wider hover:bg-brand-primary_hover hover:scale-105 transition-all duration-300 shadow-button hover:shadow-button-hover rounded-xl"
+                  className="w-full sm:w-auto min-w-0 sm:min-w-[240px] px-6 sm:px-8 py-3.5 sm:py-4 bg-brand-primary text-white font-display font-black text-sm sm:text-base uppercase tracking-wide sm:tracking-wider hover:bg-brand-primary_hover hover:scale-105 transition-all duration-300 shadow-button hover:shadow-button-hover rounded-xl"
                 >
                   Criar Conta Grátis
                 </button>
-                <button className="w-full sm:w-auto px-10 py-5 bg-transparent border border-white/20 text-white font-display font-bold text-lg uppercase tracking-wider hover:border-brand-secondary hover:text-brand-secondary transition-all duration-300 rounded-xl">
+                <button className="w-full sm:w-auto min-w-0 sm:min-w-[200px] px-6 sm:px-8 py-3.5 sm:py-4 bg-transparent border border-white/20 text-white font-display font-bold text-sm sm:text-base uppercase tracking-wide sm:tracking-wider hover:border-brand-secondary hover:text-brand-secondary transition-all duration-300 rounded-xl">
                   Ver Demo
                 </button>
               </div>
             </div>
 
             {/* Login/Signup Form - Glassmorphism Corporate */}
-            <div className="lg:w-1/2 w-full max-w-md relative">
+            <div className="lg:w-1/2 w-full max-w-md sm:max-w-lg lg:max-w-md relative">
               <div className="absolute inset-0 bg-brand-primary/20 blur-[100px] opacity-20 rounded-full"></div>
 
               <AuthForm

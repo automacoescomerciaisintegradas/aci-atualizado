@@ -13,7 +13,6 @@ import { AdminPage } from './components/AdminPage';
 import { useSettings } from './hooks/useSettings';
 import { SpinnerIcon } from './components/Icons';
 import { ProfilePage } from './components/ProfilePage';
-import { LandingPage } from './components/LandingPage';
 import { TopNavbar } from './components/TopNavbar';
 import { PricingPage } from './components/PricingPage';
 import { TelegramShopeePage } from './components/TelegramShopeePage';
@@ -83,7 +82,6 @@ const App: React.FC = () => {
   }
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [view, setView] = useState<'landing' | 'auth'>('landing'); // Start with landing page
   const [activePage, setActivePage] = useState<Page>('home');
   const { settings, saveSettings, isLoading: isLoadingSettings } = useSettings();
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
@@ -160,7 +158,6 @@ const App: React.FC = () => {
   };
   const handleLogout = () => {
     setIsAuthenticated(false);
-    setView('landing'); // Go back to landing page on logout
     setActivePage('home');
   };
 
@@ -255,10 +252,7 @@ const App: React.FC = () => {
 
 
   if (!isAuthenticated) {
-    if (view === 'landing') {
-      return <LandingPage onAuthClick={() => setView('auth')} />;
-    }
-    return <AuthPage onLoginSuccess={handleLogin} onBackToLanding={() => setView('landing')} />;
+    return <AuthPage onLoginSuccess={handleLogin} onBackToLanding={() => { }} />;
   }
 
   if (isLoadingSettings) {

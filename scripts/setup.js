@@ -14,10 +14,12 @@ import os from 'os';
 import http from 'http';
 import readline from 'readline';
 import { fileURLToPath } from 'url';
+import { SecurityGuard, SecurityViolation } from './securityGuard.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
+const securityGuard = new SecurityGuard(ROOT_DIR);
 
 // Configuration
 const CONFIG = {
@@ -60,6 +62,16 @@ const askQuestion = (query) => new Promise((resolve) => rl.question(query, resol
 
 const runCommand = (command, args, options = {}) => {
     return new Promise((resolve, reject) => {
+        const fullCommand = `${command} ${(args || []).join(' ')}`.trim();
+        try {
+            securityGuard.validate(fullCommand);
+        } catch (e) {
+            if (e instanceof SecurityViolation) {
+                return reject(e);
+            }
+            return reject(new Error(`Security validation failed: ${e.message}`));
+        }
+
         // Construct command string for Windows shell to avoid array issues/warnings
         let spawnCmd = command;
         let spawnArgs = args;
@@ -93,7 +105,9 @@ const runCommand = (command, args, options = {}) => {
 
 const checkPrerequisite = (cmd, args = ['--version']) => {
     try {
-        execSync(`${cmd} ${args.join(' ')}`, { stdio: 'ignore' });
+        const fullCommand = `${cmd} ${args.join(' ')}`.trim();
+        securityGuard.validate(fullCommand);
+        execSync(fullCommand, { stdio: 'ignore' });
         return true;
     } catch (e) {
         return false;
@@ -102,6 +116,7 @@ const checkPrerequisite = (cmd, args = ['--version']) => {
 
 const isDockerRunning = () => {
     try {
+        securityGuard.validate('docker info');
         execSync('docker info', { stdio: 'ignore' });
         return true;
     } catch (e) {

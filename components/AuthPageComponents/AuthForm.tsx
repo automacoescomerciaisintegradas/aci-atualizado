@@ -164,17 +164,17 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   }
 
   return (
-    <div className="relative bg-neutrals-background_secondary border border-white/10 p-10 shadow-2xl backdrop-blur-sm rounded-2xl">
+    <div className="relative bg-neutrals-background_secondary border border-white/10 p-5 sm:p-7 md:p-8 shadow-2xl backdrop-blur-sm rounded-2xl">
       {/* Badge de Status */}
-      <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-gradient-to-r from-brand-primary to-brand-secondary text-black text-xs font-bold uppercase tracking-widest rounded-full shadow-lg whitespace-nowrap">
+      <div className="absolute -top-3.5 sm:-top-4 left-1/2 -translate-x-1/2 px-3 sm:px-4 py-1 sm:py-1.5 bg-gradient-to-r from-brand-primary to-brand-secondary text-black text-[10px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-widest rounded-full shadow-lg whitespace-nowrap">
         {view === 'login' ? '🔐 Área Segura' : '🎁 Ganhe R$ 10 em Créditos'}
       </div>
 
-      <div className="mb-8 mt-4">
-        <h2 className="text-3xl font-display font-bold text-white mb-2 uppercase tracking-tight">
+      <div className="mb-5 sm:mb-6 mt-2.5 sm:mt-3">
+        <h2 className="text-2xl md:text-3xl font-display font-bold text-white mb-1.5 uppercase tracking-tight">
           {view === 'login' ? 'Acesso ao Painel' : 'Criar Conta Grátis'}
         </h2>
-        <p className="text-gray-500 text-sm">
+        <p className="text-gray-500 text-xs md:text-sm">
           {view === 'login'
             ? 'Digite suas credenciais para acessar'
             : 'Preencha os dados e comece a automatizar!'
@@ -197,7 +197,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         </div>
       )}
 
-      <form className="space-y-5" onSubmit={handleFormSubmit}>
+      <form className="space-y-3.5 sm:space-y-4" onSubmit={handleFormSubmit}>
         {/* Nome Completo - apenas no signup */}
         {view === 'signup' && (
           <div className="space-y-2">
@@ -214,7 +214,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 onChange={(e) => setName(e.target.value)}
                 required
                 disabled={isLoading}
-                className="w-full pl-12 pr-4 py-3 bg-black border border-white/10 text-white placeholder-gray-600 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all text-sm outline-none rounded-lg disabled:opacity-50"
+                className="w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-3.5 bg-black border border-white/10 text-white placeholder-gray-600 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all text-sm outline-none rounded-lg disabled:opacity-50"
                 placeholder="Seu nome completo"
               />
             </div>
@@ -236,7 +236,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               onChange={handleEmailChange}
               required
               disabled={isLoading}
-              className="w-full pl-12 pr-4 py-3 bg-black border border-white/10 text-white placeholder-gray-600 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all text-sm outline-none rounded-lg disabled:opacity-50"
+              className="w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-3.5 bg-black border border-white/10 text-white placeholder-gray-600 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all text-sm outline-none rounded-lg disabled:opacity-50"
               placeholder={view === 'signup' ? 'nome@empresa.com' : 'seu@email.com'}
             />
           </div>
@@ -259,7 +259,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 required
                 disabled={isLoading}
                 maxLength={15}
-                className="w-full pl-12 pr-4 py-3 bg-black border border-white/10 text-white placeholder-gray-600 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all text-sm outline-none rounded-lg disabled:opacity-50"
+                className="w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-3.5 bg-black border border-white/10 text-white placeholder-gray-600 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all text-sm outline-none rounded-lg disabled:opacity-50"
                 placeholder="(00) 00000-0000"
               />
             </div>
@@ -282,7 +282,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               required
               disabled={isLoading}
               minLength={6}
-              className="w-full pl-12 pr-12 py-3 bg-black border border-white/10 text-white placeholder-gray-600 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all text-sm outline-none rounded-lg disabled:opacity-50"
+              className="w-full pl-11 sm:pl-12 pr-12 py-3 sm:py-3.5 bg-black border border-white/10 text-white placeholder-gray-600 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all text-sm outline-none rounded-lg disabled:opacity-50"
               placeholder={view === 'signup' ? 'Mínimo 6 caracteres' : '••••••••'}
             />
             <button
@@ -343,7 +343,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         <button
           type="submit"
           disabled={isLoading || (view === 'signup' && !acceptTerms)}
-          className="w-full py-4 px-4 bg-gradient-to-r from-brand-primary to-brand-secondary text-black font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all shadow-[0_0_30px_rgba(204,255,0,0.3)] mt-4 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-brand-primary to-brand-secondary text-black font-bold text-sm uppercase tracking-wide sm:tracking-widest hover:opacity-90 transition-all shadow-[0_0_30px_rgba(204,255,0,0.3)] mt-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <>
@@ -384,7 +384,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
       </form>
 
       {/* Footer de segurança */}
-      <div className="mt-6 pt-4 border-t border-white/5">
+      <div className="mt-5 pt-4 border-t border-white/5">
         <p className="text-center text-[10px] text-gray-600 flex items-center justify-center gap-2">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
