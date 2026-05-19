@@ -7,8 +7,10 @@
 import { Router } from 'express';
 import { authMiddleware } from '../auth';
 import { creditService } from '../../../services/creditService';
+import { paymentIdempotencyStore } from '../lib/paymentIdempotencyStore';
 
 const router = Router();
+const processingPayments = new Set<string>();
 
 // Configuração do Mercado Pago
 const MP_CONFIG = {
@@ -231,6 +233,7 @@ router.post('/webhook', async (req, res) => {
         const payment = await paymentResponse.json();
         const userId = payment.metadata?.user_id;
         const totalCredits = payment.metadata?.total_credits || 0;
+        const paymentKey = String(payment.id);
 
         console.log('💳 Pagamento:', {
             id: payment.id,
@@ -240,8 +243,22 @@ router.post('/webhook', async (req, res) => {
         });
 
         if (payment.status === 'approved') {
+            if (processingPayments.has(paymentKey)) {
+                console.log(`ℹ️ Webhook simultâneo ignorado para pagamento ${paymentKey}`);
+                return;
+            }
+
+            const alreadyProcessed = await paymentIdempotencyStore.isProcessed(paymentKey);
+            if (alreadyProcessed) {
+                console.log(`ℹ️ Webhook duplicado persistente ignorado para pagamento ${paymentKey}`);
+                return;
+            }
+
             if (userId && totalCredits > 0) {
                 try {
+                    // Marca antes de processar para bloquear corrida de webhooks simultâneos
+                    processingPayments.add(paymentKey);
+
                     await creditService.addCredits(
                         userId,
                         totalCredits,
@@ -253,9 +270,12 @@ router.post('/webhook', async (req, res) => {
                             bonus_credits: payment.metadata?.bonus_credits || 0,
                         }
                     );
+                    await paymentIdempotencyStore.markProcessed(paymentKey);
                     console.log(`✅ Pagamento Aprovado: ${totalCredits.toLocaleString('pt-BR')} créditos -> ${userId.substring(0, 8)}`);
                 } catch (error) {
                     console.error('❌ Erro ao adicionar créditos:', error);
+                } finally {
+                    processingPayments.delete(paymentKey);
                 }
             }
         } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
